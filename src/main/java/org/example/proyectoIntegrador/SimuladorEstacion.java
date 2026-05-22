@@ -21,6 +21,7 @@ public class SimuladorEstacion {
         Random rnd = new Random();
 
         void actualizar() {
+
             temperatura = limitar(temperatura + (rnd.nextDouble() - 0.5), 20.0, 38.0);
             humedadAire = limitar(humedadAire + (rnd.nextDouble() * 2 - 1), 50.0, 95.0);
             presion = limitar(presion + (rnd.nextDouble() - 0.5), 1000.0, 1020.0);
