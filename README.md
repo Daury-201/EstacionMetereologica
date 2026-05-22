@@ -127,13 +127,7 @@ EstacionMeteorologica/
 ├── .gitignore
 │
 ├── docs/
-│   └── Reporte_Proyecto_Integrador_MQTT.pdf
-│
-├── evidencias/
-│   ├── mqtt-explorer.png
-│   ├── publicador.png
-│   ├── lector.png
-│   └── arquitectura.png
+│   └── Reporte Simulacion MQTT.pdf
 │
 ├── release/
 │   ├── simulador.jar
