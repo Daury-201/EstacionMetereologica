@@ -280,18 +280,10 @@ Durante las pruebas se utilizó MQTT Explorer para:
 El reporte completo de la asignación se encuentra disponible en:
 
 ```text
-/docs/Reporte_Proyecto_Integrador_MQTT.pdf
+/docs/Reporte Simulacion MQTT.pdf
 ```
 
----
 
-# Repositorio del Proyecto
-
-Repositorio oficial en GitHub:
-
-```text
-https://github.com/TU-USUARIO/EstacionMeteorologica
-```
 
 ---
 
