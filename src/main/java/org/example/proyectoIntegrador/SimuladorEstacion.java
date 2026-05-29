@@ -1,6 +1,8 @@
 package org.example.proyectoIntegrador;
 
 import org.eclipse.paho.client.mqttv3.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Random;
 
 public class SimuladorEstacion {
@@ -21,7 +23,6 @@ public class SimuladorEstacion {
         Random rnd = new Random();
 
         void actualizar() {
-
             temperatura = limitar(temperatura + (rnd.nextDouble() - 0.5), 20.0, 38.0);
             humedadAire = limitar(humedadAire + (rnd.nextDouble() * 2 - 1), 50.0, 95.0);
             presion = limitar(presion + (rnd.nextDouble() - 0.5), 1000.0, 1020.0);
@@ -58,6 +59,9 @@ public class SimuladorEstacion {
         climaEstacion2.temperatura = 22.0;
         climaEstacion2.humedadSuelo = 80.0;
 
+        // Formateador estándar ISO 8601 (Ejemplo: 2026-05-27T21:02:05)
+        DateTimeFormatter formateadorFecha = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
         try {
             MqttClient cliente = new MqttClient(BROKER, clientId);
             MqttConnectOptions opciones = new MqttConnectOptions();
@@ -74,23 +78,27 @@ public class SimuladorEstacion {
 
                 EstadoClima[] climas = {climaEstacion1, climaEstacion2};
 
+                // Capturamos el momento exacto en el que se toman las lecturas de esta iteración
+                String timestampActual = LocalDateTime.now().format(formateadorFecha);
+
                 for (int i = 0; i < 2; i++) {
                     int numEstacion = i + 1;
                     String base = "/itt363-grupo2/estacion-" + numEstacion + "/sensores/";
                     EstadoClima climaActual = climas[i];
 
-                    publicar(cliente, base + "temperatura", String.format("%.2f", climaActual.temperatura));
-                    publicar(cliente, base + "humedad_aire", String.format("%.2f", climaActual.humedadAire));
-                    publicar(cliente, base + "presion", String.format("%.2f", climaActual.presion));
-                    publicar(cliente, base + "velocidad_viento", String.format("%.2f", climaActual.velocidadViento));
-                    publicar(cliente, base + "direccion_viento", climaActual.getDireccionViento());
-                    publicar(cliente, base + "lluvia", String.format("%.2f", climaActual.lluviaAcumulada));
-                    publicar(cliente, base + "humedad_suelo", String.format("%.2f", climaActual.humedadSuelo));
+                    // Enviamos los datos concatenando el valor leído con el timestamp usando el separador "|"
+                    publicar(cliente, base + "temperatura", String.format("%.2f", climaActual.temperatura), timestampActual);
+                    publicar(cliente, base + "humedad_aire", String.format("%.2f", climaActual.humedadAire), timestampActual);
+                    publicar(cliente, base + "presion", String.format("%.2f", climaActual.presion), timestampActual);
+                    publicar(cliente, base + "velocidad_viento", String.format("%.2f", climaActual.velocidadViento), timestampActual);
+                    publicar(cliente, base + "direccion_viento", climaActual.getDireccionViento(), timestampActual);
+                    publicar(cliente, base + "lluvia", String.format("%.2f", climaActual.lluviaAcumulada), timestampActual);
+                    publicar(cliente, base + "humedad_suelo", String.format("%.2f", climaActual.humedadSuelo), timestampActual);
 
-                    System.out.println("  [Estacion " + numEstacion + "] -> T: " + String.format("%.1f", climaActual.temperatura) + "°C | H: " + String.format("%.1f", climaActual.humedadAire) + "% | Viento: " + climaActual.getDireccionViento() + " | Lluvia Acum: " + String.format("%.1f", climaActual.lluviaAcumulada) + "mm");
+                    System.out.println("  [Estacion " + numEstacion + "] -> T: " + String.format("%.1f", climaActual.temperatura) + "°C | H: " + String.format("%.1f", climaActual.humedadAire) + "% | Sincronizado a: " + timestampActual);
                 }
 
-                System.out.println("--- Sincronización completada ---");
+                System.out.println("--- Sincronización completa ");
                 Thread.sleep(5000);
             }
         } catch (Exception e) {
@@ -98,8 +106,9 @@ public class SimuladorEstacion {
         }
     }
 
-    private static void publicar(MqttClient cliente, String topic, String valor) throws MqttException {
-        MqttMessage mensaje = new MqttMessage(valor.replace(",", ".").getBytes());
+    private static void publicar(MqttClient cliente, String topic, String valor, String timestamp) throws MqttException {
+        String payloadConTiempo = valor.replace(",", ".") + "|" + timestamp;
+        MqttMessage mensaje = new MqttMessage(payloadConTiempo.getBytes());
         mensaje.setQos(1);
         cliente.publish(topic, mensaje);
     }
