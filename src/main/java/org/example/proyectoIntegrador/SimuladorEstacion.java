@@ -53,7 +53,7 @@ public class SimuladorEstacion {
     }
 
     public static void main(String[] args) {
-        String clientId = "SimuladorG2-Optimizado";
+        String clientId = "SimuladorG2-" + System.currentTimeMillis();
 
         EstadoClima climaEstacion1 = new EstadoClima();
         EstadoClima climaEstacion2 = new EstadoClima();
@@ -61,6 +61,7 @@ public class SimuladorEstacion {
         climaEstacion2.humedadSuelo = 80.0;
 
         DateTimeFormatter formateadorFecha = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+        DateTimeFormatter formatoConsola = DateTimeFormatter.ofPattern("HH:mm:ss");
 
         try {
             MqttClient cliente = new MqttClient(BROKER, clientId, new MemoryPersistence());
@@ -70,33 +71,38 @@ public class SimuladorEstacion {
             opciones.setAutomaticReconnect(true);
 
             cliente.connect(opciones);
-            System.out.println("Publicador conectado exitosamente.");
+
+            System.out.println("╔══════════════════════════════════════════════════════════════════════════════════════════╗");
+            System.out.println("║                       MÓDULO DE TRANSMISIÓN DE SENSORES ACTIVO                           ║");
+            System.out.println("╚══════════════════════════════════════════════════════════════════════════════════════════╝\n");
 
             while (true) {
                 climaEstacion1.actualizar();
                 climaEstacion2.actualizar();
 
                 EstadoClima[] climas = {climaEstacion1, climaEstacion2};
-
                 String timestampActual = LocalDateTime.now().format(formateadorFecha);
+                String horaConsola = LocalDateTime.now().format(formatoConsola);
 
                 for (int i = 0; i < 2; i++) {
                     int numEstacion = i + 1;
                     String base = "/itt363-grupo2/estacion-" + numEstacion + "/sensores/";
-                    EstadoClima climaActual = climas[i];
+                    EstadoClima c = climas[i];
 
-                    publicar(cliente, base + "temperatura", String.format("%.2f", climaActual.temperatura), timestampActual);
-                    publicar(cliente, base + "humedad_aire", String.format("%.2f", climaActual.humedadAire), timestampActual);
-                    publicar(cliente, base + "presion", String.format("%.2f", climaActual.presion), timestampActual);
-                    publicar(cliente, base + "velocidad_viento", String.format("%.2f", climaActual.velocidadViento), timestampActual);
-                    publicar(cliente, base + "direccion_viento", climaActual.getDireccionViento(), timestampActual);
-                    publicar(cliente, base + "lluvia", String.format("%.2f", climaActual.lluviaAcumulada), timestampActual);
-                    publicar(cliente, base + "humedad_suelo", String.format("%.2f", climaActual.humedadSuelo), timestampActual);
+                    publicar(cliente, base + "temperatura", String.format("%.2f", c.temperatura), timestampActual);
+                    publicar(cliente, base + "humedad_aire", String.format("%.2f", c.humedadAire), timestampActual);
+                    publicar(cliente, base + "presion", String.format("%.2f", c.presion), timestampActual);
+                    publicar(cliente, base + "velocidad_viento", String.format("%.2f", c.velocidadViento), timestampActual);
+                    publicar(cliente, base + "direccion_viento", c.getDireccionViento(), timestampActual);
+                    publicar(cliente, base + "lluvia", String.format("%.2f", c.lluviaAcumulada), timestampActual);
+                    publicar(cliente, base + "humedad_suelo", String.format("%.2f", c.humedadSuelo), timestampActual);
 
-                    System.out.println("  [Estacion " + numEstacion + "] -> T: " + String.format("%.1f", climaActual.temperatura) + "°C | H: " + String.format("%.1f", climaActual.humedadAire) + "% | Sincronizado a: " + timestampActual);
+                    // Impresión detallada con todos los sensores
+                    System.out.printf("[%s] [Estación %d] T: %5.1f°C | H: %5.1f%% | P: %6.1fhPa | V: %4.1fkm/h | Dir: %-2s | L: %4.1fmm | HS: %5.1f%%%n",
+                            horaConsola, numEstacion, c.temperatura, c.humedadAire, c.presion, c.velocidadViento, c.getDireccionViento(), c.lluviaAcumulada, c.humedadSuelo);
                 }
 
-                System.out.println("--- Sincronización completa ");
+                System.out.println("────────────────────────────────────────────────────────────────────────────────────────────");
                 Thread.sleep(5000);
             }
         } catch (Exception e) {
