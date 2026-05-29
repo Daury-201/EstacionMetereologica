@@ -97,7 +97,6 @@ public class SimuladorEstacion {
                     publicar(cliente, base + "lluvia", String.format("%.2f", c.lluviaAcumulada), timestampActual);
                     publicar(cliente, base + "humedad_suelo", String.format("%.2f", c.humedadSuelo), timestampActual);
 
-                    // Impresión detallada con todos los sensores
                     System.out.printf("[%s] [Estación %d] T: %5.1f°C | H: %5.1f%% | P: %6.1fhPa | V: %4.1fkm/h | Dir: %-2s | L: %4.1fmm | HS: %5.1f%%%n",
                             horaConsola, numEstacion, c.temperatura, c.humedadAire, c.presion, c.velocidadViento, c.getDireccionViento(), c.lluviaAcumulada, c.humedadSuelo);
                 }
