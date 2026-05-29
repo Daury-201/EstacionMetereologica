@@ -1,6 +1,7 @@
 package org.example.proyectoIntegrador;
 
 import org.eclipse.paho.client.mqttv3.*;
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Random;
@@ -52,18 +53,17 @@ public class SimuladorEstacion {
     }
 
     public static void main(String[] args) {
-        String clientId = "SimuladorG2-" + System.currentTimeMillis();
+        String clientId = "SimuladorG2-Optimizado";
 
         EstadoClima climaEstacion1 = new EstadoClima();
         EstadoClima climaEstacion2 = new EstadoClima();
         climaEstacion2.temperatura = 22.0;
         climaEstacion2.humedadSuelo = 80.0;
 
-        // Formateador estándar ISO 8601 (Ejemplo: 2026-05-27T21:02:05)
         DateTimeFormatter formateadorFecha = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
         try {
-            MqttClient cliente = new MqttClient(BROKER, clientId);
+            MqttClient cliente = new MqttClient(BROKER, clientId, new MemoryPersistence());
             MqttConnectOptions opciones = new MqttConnectOptions();
             opciones.setUserName(USUARIO);
             opciones.setPassword(CLAVE.toCharArray());
@@ -78,7 +78,6 @@ public class SimuladorEstacion {
 
                 EstadoClima[] climas = {climaEstacion1, climaEstacion2};
 
-                // Capturamos el momento exacto en el que se toman las lecturas de esta iteración
                 String timestampActual = LocalDateTime.now().format(formateadorFecha);
 
                 for (int i = 0; i < 2; i++) {
@@ -86,7 +85,6 @@ public class SimuladorEstacion {
                     String base = "/itt363-grupo2/estacion-" + numEstacion + "/sensores/";
                     EstadoClima climaActual = climas[i];
 
-                    // Enviamos los datos concatenando el valor leído con el timestamp usando el separador "|"
                     publicar(cliente, base + "temperatura", String.format("%.2f", climaActual.temperatura), timestampActual);
                     publicar(cliente, base + "humedad_aire", String.format("%.2f", climaActual.humedadAire), timestampActual);
                     publicar(cliente, base + "presion", String.format("%.2f", climaActual.presion), timestampActual);
