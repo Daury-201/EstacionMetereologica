@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lecturas Meteorológicas</title>
-    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
 <div class="page-shell">
@@ -16,130 +16,9 @@
         </p>
         <p class="header-date" id="fecha-actual">Cargando fecha...</p>
     </header>
-
-    <main class="content-layout">
-        <section class="image-card">
-            <h2>Imagen de la estación</h2>
-            <div class="image-frame">
-                <img src="/img.png" alt="Imagen de evidencia de la estación meteorológica">
-            </div>
-        </section>
-
-        <section class="table-card">
-            <div class="table-card-header">
-                <div>
-                    <p class="section-label">Vista tabular</p>
-                    <h2>Lecturas históricas</h2>
-                </div>
-                <span class="rows-badge" id="total-filas">0 registros</span>
-            </div>
-
-            <div class="table-container">
-                <table class="data-table">
-                    <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Estación</th>
-                        <th>Temperatura</th>
-                        <th>Humedad aire</th>
-                        <th>Presión</th>
-                        <th>Velocidad viento</th>
-                        <th>Dirección viento</th>
-                        <th>Lluvia</th>
-                        <th>Humedad suelo</th>
-                        <th>Fecha</th>
-                    </tr>
-                    </thead>
-                    <tbody id="tabla-body">
-                    <tr>
-                        <td colspan="10" class="empty-cell">
-                            <div class="empty-state">
-                                <div class="empty-icon">⏳</div>
-                                <div>
-                                    <strong>Cargando lecturas...</strong>
-                                    <p>Esperando respuesta del servidor para mostrar los registros.</p>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="table-footer">
-                <div class="footer-info">
-                    Última actualización:
-                    <span id="ultima-actualizacion">--</span>
-                </div>
-            </div>
-        </section>
-    </main>
 </div>
 
-<script>
-    function actualizarFecha() {
-        const ahora = new Date();
-        const opciones = {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        };
 
-        document.getElementById('fecha-actual').textContent =
-            ahora.toLocaleDateString('es-DO', opciones);
-    }
 
-    function mostrarErrorTabla(mensaje) {
-        document.getElementById('tabla-body').innerHTML = `
-            <tr>
-                <td colspan="10" class="empty-cell">
-                    <div class="empty-state">
-                        <div class="empty-icon">⚠</div>
-                        <div>
-                            <strong>Error cargando datos</strong>
-                            <p>${mensaje}</p>
-                        </div>
-                    </div>
-                </td>
-            </tr>
-        `;
-        document.getElementById('total-filas').textContent = '0 registros';
-        document.getElementById('ultima-actualizacion').textContent = '--';
-    }
-
-    async function cargarTabla() {
-        try {
-            const response = await fetch('/tabla', { cache: 'no-store' });
-
-            if (!response.ok) {
-                const textoError = await response.text();
-                throw new Error('HTTP ' + response.status + ' - ' + textoError);
-            }
-
-            const data = await response.json();
-
-            if (!data || typeof data.filasHtml !== 'string') {
-                throw new Error('Respuesta JSON inválida');
-            }
-
-            document.getElementById('tabla-body').innerHTML = data.filasHtml;
-            document.getElementById('total-filas').textContent = data.totalFilas + ' registros';
-            document.getElementById('ultima-actualizacion').textContent =
-                new Date().toLocaleTimeString('es-DO');
-        } catch (error) {
-            console.error('Error en /tabla:', error);
-            mostrarErrorTabla('No fue posible obtener la información desde el servicio.');
-        }
-    }
-
-    actualizarFecha();
-    setInterval(actualizarFecha, 60000);
-
-    cargarTabla();
-    setInterval(cargarTabla, 10000);
-</script>
 </body>
 </html>
