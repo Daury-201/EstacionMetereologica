@@ -1,4 +1,4 @@
-package com.grupo2.mqtt;
+package com.grupo2;
 
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;

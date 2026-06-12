@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estación Meteorológica</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+<div class="contenedor">
+
+    <div class="encabezado">
+        <div>
+            <p class="subtitulo">Proyecto Integrador · Grupo 2</p>
+            <h1>Estación Meteorológica</h1>
+            <p class="subtitulo">Lecturas almacenadas en el sistema</p>
+        </div>
+        <button onclick="refrescar()">Actualizar</button>
+    </div>
+
+    <table id="tabla-lecturas">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Estación</th>
+            <th>Fecha / Hora</th>
+            <th>Temp (°C)</th>
+            <th>Hum. Aire (%)</th>
+            <th>Presión (hPa)</th>
+            <th>Vel. Viento (km/h)</th>
+            <th>Dir. Viento</th>
+            <th>Lluvia (mm)</th>
+            <th>Hum. Suelo (%)</th>
+        </tr>
+        </thead>
+        <tbody id="cuerpo-tabla">
+        <tr th:each="l : ${lecturas}">
+            <td th:text="${l.id}"></td>
+            <td th:text="${l.estacionId}"></td>
+            <td th:text="${l.fechaHoraFormateada}"></td>
+            <td th:text="${l.temperatura}"></td>
+            <td th:text="${l.humedadAire}"></td>
+            <td th:text="${l.presion}"></td>
+            <td th:text="${l.velocidadViento}"></td>
+            <td th:text="${l.direccionViento}"></td>
+            <td th:text="${l.lluvia}"></td>
+            <td th:text="${l.humedadSuelo}"></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div class="paginacion">
+        <button id="btn-anterior" onclick="paginaAnterior()" disabled>&#8592; Anterior</button>
+        <span id="info-pagina">Página 1</span>
+        <button id="btn-siguiente" onclick="paginaSiguiente()">Siguiente &#8594;</button>
+    </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+
+<script src="/js/lecturas.js"></script>
+
+</body>
+</html>
