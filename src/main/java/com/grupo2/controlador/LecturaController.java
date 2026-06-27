@@ -52,4 +52,5 @@ public class LecturaController {
     public void enviarNuevaLectura(LecturaSensor lectura) {
         messagingTemplate.convertAndSend("/topic/lecturas", lectura);
     }
+
 }

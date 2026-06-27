@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estación Meteorológica - Login</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}" href="../static/css/styles.css">
+    <script th:src="@{/js/login.js}" src="../static/js/login.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+</head>
+<body>
+<div class="login-container">
+
+    <div class="login-left">
+            <div class="bg-shape blob-1"></div>
+            <div class="bg-shape blob-2"></div>
+            <div class="bg-shape blob-3"></div>
+            <div class="bg-shape blob-4"></div>
+            <div class="bg-shape blob-5"></div>
+
+        <div class="login-left-content">
+            <div class="slider-container">
+
+                <div class="slide active">
+                    <div class="hero-animation">
+                        <svg class="wifi-waves wifi-left" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <path class="wave wave1" d="M 100,70 A 30,30 0 0,0 70,100" />
+                            <path class="wave wave2" d="M 100,45 A 55,55 0 0,0 45,100" />
+                            <path class="wave wave3" d="M 100,20 A 80,80 0 0,0 20,100" />
+                        </svg>
+                        <svg class="wifi-waves wifi-right" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <path class="wave wave1" d="M 0,70 A 30,30 0 0,1 30,100" />
+                            <path class="wave wave2" d="M 0,45 A 55,55 0 0,1 55,100" />
+                            <path class="wave wave3" d="M 0,20 A 80,80 0 0,1 80,100" />
+                        </svg>
+                        <img src="../static/assets/Veleta.gif" th:src="@{/assets/Veleta.gif}" alt="Veleta animada" />
+                    </div>
+                    <h1 class="hero-title">El Clima de tu Entorno Conectado</h1>
+                    <p class="hero-subtitle">Monitorea las condiciones atmosféricas de tu zona con información actualizada.</p>
+                </div>
+
+                <div class="slide">
+                    <div class="iso-dashboard-container" id="iso-container">
+                        <div class="iso-scene" id="iso-scene">
+                            <div class="iso-cloud cloud-1"></div>
+                            <div class="iso-cloud cloud-2"></div>
+
+                            <div class="iso-panel iso-left">
+                                <div class="iso-panel-content left-content">
+                                    <div class="iso-chart-bar" style="height: 40%;"></div>
+                                    <div class="iso-chart-bar" style="height: 70%;"></div>
+                                    <div class="iso-chart-bar" style="height: 50%;"></div>
+                                    <div class="iso-chart-bar" style="height: 90%;"></div>
+                                </div>
+                            </div>
+
+                            <div class="iso-panel iso-right">
+                                <div class="iso-panel-content right-content">
+                                    <div class="iso-line-chart">
+                                        <svg viewBox="0 0 100 50">
+                                            <path d="M0,40 L20,30 L40,45 L60,15 L80,25 L100,5" fill="none" stroke="#7C3AED" stroke-width="4" stroke-linecap="round"/>
+                                            <circle cx="60" cy="15" r="4" fill="#34D399"/>
+                                            <circle cx="100" cy="5" r="4" fill="#34D399"/>
+                                        </svg>
+                                    </div>
+                                    <div class="iso-text-line"></div>
+                                    <div class="iso-text-line short"></div>
+                                </div>
+                            </div>
+
+                            <div class="iso-panel iso-center">
+                                <div class="iso-panel-content main-content">
+                                    <div class="iso-header">
+                                        <div class="iso-avatar"></div>
+                                        <div class="iso-title">Estado Estación</div>
+                                    </div>
+                                    <div class="iso-stats">
+                                        <div class="iso-stat-circle">
+                                            <span>28°</span>
+                                        </div>
+                                        <div class="iso-stat-bars">
+                                            <div class="iso-bar-row"><div class="iso-fill" style="width: 80%; background:#34D399;"></div></div>
+                                            <div class="iso-bar-row"><div class="iso-fill" style="width: 60%; background:#7C3AED;"></div></div>
+                                            <div class="iso-bar-row"><div class="iso-fill" style="width: 40%; background:#E5E7EB;"></div></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="iso-cloud cloud-3"></div>
+                            <div class="iso-cloud cloud-4"></div>
+                        </div>
+                    </div>
+                    <h1 class="hero-title">Análisis de Datos en 3D</h1>
+                    <p class="hero-subtitle">Visualiza métricas climatológicas precisas procesadas desde nuestra red de sensores.</p>
+                </div>
+
+                <div class="slide">
+                    <div class="iso-dashboard-container" id="map-container-3d">
+                        <div class="map-scene" id="map-scene">
+                            <div class="map-wrapper">
+
+                                <div class="map-base">
+                                    <div class="map-grid">
+                                        <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+                                            <path d="M 0,20 Q 25,10 50,25 T 100,10" fill="none" stroke="rgba(124, 58, 237, 0.2)" stroke-width="1.5"/>
+                                            <path d="M 0,50 Q 35,30 60,55 T 100,40" fill="none" stroke="rgba(124, 58, 237, 0.2)" stroke-width="1.5"/>
+                                            <path d="M 0,80 Q 20,90 50,75 T 100,85" fill="none" stroke="rgba(124, 58, 237, 0.2)" stroke-width="1.5"/>
+
+                                            <path d="M 35,45 L 80,45 L 60,80 Z" fill="none" stroke="rgba(52, 211, 153, 0.4)" stroke-width="1" stroke-dasharray="2,2"/>
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <div class="sensor-panel" style="--nx: -170px; --ny: -110px; --nz: 20px;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2" class="weather-icon"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                                    <span>65%</span>
+                                </div>
+
+                                <div class="sensor-panel" style="--nx: -180px; --ny: 90px; --nz: 80px;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" class="weather-icon"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path></svg>
+                                    <span>35°C</span>
+                                </div>
+
+                                <div class="sensor-panel" style="--nx: 170px; --ny: -110px; --nz: 70px;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" class="weather-icon"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 3"/></svg>
+                                    <span>1012 hPa</span>
+                                </div>
+
+                                <div class="sensor-panel" style="--nx: 170px; --ny: 100px; --nz: 25px;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2" class="weather-icon"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
+                                    <span>22 km/h</span>
+                                </div>
+
+                                <div class="map-node node-active" style="--nx: -50px; --ny: -15px; --nz: 35px;">
+                                    <div class="node-stem"></div>
+                                    <div class="node-pulse"></div>
+                                    <div class="node-core"></div>
+                                    <div class="node-tooltip" style="--tz: 30px;">
+                                        Campus Norte<br><span style="color:#34D399;">Conectada</span>
+                                    </div>
+                                </div>
+
+                                <div class="map-node node-inactive" style="--nx: 90px; --ny: -15px; --nz: 25px;">
+                                    <div class="node-stem"></div>
+                                    <div class="node-core"></div>
+                                    <div class="node-tooltip" style="--tz: 30px;">
+                                        Nodo Este<br><span style="color:#EF4444;">Sin señal</span>
+                                    </div>
+                                </div>
+
+                                <div class="map-node node-active" style="--nx: 30px; --ny: 60px; --nz: 45px;">
+                                    <div class="node-stem"></div>
+                                    <div class="node-pulse"></div>
+                                    <div class="node-core"></div>
+                                    <div class="node-tooltip" style="--tz: 30px;">
+                                        Laboratorio<br><span style="color:#34D399;">Conectada</span>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <h1 class="hero-title">Mapa de Infraestructura</h1>
+                    <p class="hero-subtitle">Explora el mapa interactivo y supervisa la conectividad de cada estación remota.</p>
+                </div>
+
+            </div>
+
+            <div class="hero-dots">
+                <span class="dot active"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="login-right">
+        <div class="login-card">
+            <div class="login-card-top"></div>
+            <div class="login-card-content">
+                <div class="login-icon">
+                    <lottie-player
+                            src="../static/assets/clima.json"
+                            th:src="@{/assets/clima.json}"
+                            background="transparent"
+                            speed="1"
+                            style="width: 100px; height: 100px;"
+                            loop
+                            autoplay>
+                    </lottie-player>
+                </div>
+
+                <h1 class="login-title">Estación Meteorológica</h1>
+                <p class="login-subtitle">Ingresa tus credenciales para continuar</p>
+
+                <form class="login-form">
+                    <input type="text" placeholder="Usuario" required>
+                    <input type="password" placeholder="Contraseña" required>
+                    <button type="submit" class="login-btn">Ingresar</button>
+                </form>
+
+                <a href="#" class="forgot-pwd">¿Olvidaste tu contraseña?</a>
+                <div class="divider"></div>
+                <p class="create-account">
+                    ¿No tienes cuenta? <a href="#">Crear cuenta</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+</body>
+</html>
