@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Estación Meteorológica - Login</title>
-    <link rel="stylesheet" th:href="@{/css/styles.css}" href="../static/css/styles.css">
+    <link rel="stylesheet" th:href="@{/css/login.css}" href="../static/css/login.css">
     <script th:src="@{/js/login.js}" src="../static/js/login.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
@@ -195,7 +195,7 @@
                 <h1 class="login-title">Estación Meteorológica</h1>
                 <p class="login-subtitle">Ingresa tus credenciales para continuar</p>
 
-                <form class="login-form">
+                <form class="login-form" onsubmit="event.preventDefault(); window.location.href='/inicio';">
                     <input type="text" placeholder="Usuario" required>
                     <input type="password" placeholder="Contraseña" required>
                     <button type="submit" class="login-btn">Ingresar</button>

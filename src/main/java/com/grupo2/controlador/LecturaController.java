@@ -23,16 +23,6 @@ public class LecturaController {
         this.messagingTemplate = messagingTemplate;
     }
 
-    // Vista principal
-    @GetMapping("/")
-    public String index(Model model) {
-        List<LecturaSensor> lecturas = service.getPrimeraPagina();
-        model.addAttribute("lecturas", lecturas);
-        model.addAttribute("total", service.getTotalRegistros());
-        model.addAttribute("tamanioPagina", LecturaService.TAMANIO_PAGINA);
-        return "index";
-    }
-
     @GetMapping("/api/lecturas")
     @ResponseBody
     public List<LecturaSensor> getLecturas(
@@ -51,6 +41,20 @@ public class LecturaController {
     // Método para enviar nueva lectura por WebSocket (llamado desde LectorEstacion)
     public void enviarNuevaLectura(LecturaSensor lectura) {
         messagingTemplate.convertAndSend("/topic/lecturas", lectura);
+    }
+
+    @GetMapping("/api/lecturas/historial/{estacionId}")
+    @ResponseBody
+    public List<LecturaSensor> getHistorial(
+            @org.springframework.web.bind.annotation.PathVariable int estacionId,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime fechaInicio,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime fechaFin,
+            @RequestParam(defaultValue = "100") int limite) {
+        
+        if (fechaInicio != null && fechaFin != null) {
+            return service.getHistorialPorRango(estacionId, fechaInicio, fechaFin, limite);
+        }
+        return service.getHistorialPorEstacion(estacionId, limite);
     }
 
 }

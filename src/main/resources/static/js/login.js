@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", function() {
     let slideTimer;
     let interactionTimeout;
 
-    const slideDurations = [4000, 3500, 3500];
+    const slideDurations = [4500, 4000, 4000];
 
     function goToSlide(index) {
         dots[currentSlide].classList.remove('active');

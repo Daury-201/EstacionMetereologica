@@ -28,4 +28,12 @@ public class LecturaService {
     public long getTotalRegistros() {
         return repo.contarTotal();
     }
+
+    public List<LecturaSensor> getHistorialPorEstacion(int estacionId, int limite) {
+        return repo.findHistorialPorEstacion(estacionId, limite);
+    }
+
+    public List<LecturaSensor> getHistorialPorRango(int estacionId, java.time.LocalDateTime inicio, java.time.LocalDateTime fin, int limite) {
+        return repo.findHistorialPorRango(estacionId, inicio, fin, limite);
+    }
 }

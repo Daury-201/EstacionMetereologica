@@ -71,4 +71,24 @@ public class LecturaRepository {
         Long total = jdbcTemplate.queryForObject(sql, Long.class);
         return total != null ? total : 0;
     }
+
+    public List<LecturaSensor> findHistorialPorEstacion(int estacionId, int limite) {
+        String sql = """
+            SELECT * FROM lecturas_sensores
+            WHERE estacion_id = ?
+            ORDER BY fecha_hora DESC
+            LIMIT ?
+        """;
+        return jdbcTemplate.query(sql, mapper, estacionId, limite);
+    }
+
+    public List<LecturaSensor> findHistorialPorRango(int estacionId, java.time.LocalDateTime inicio, java.time.LocalDateTime fin, int limite) {
+        String sql = """
+            SELECT * FROM lecturas_sensores
+            WHERE estacion_id = ? AND fecha_hora >= ? AND fecha_hora <= ?
+            ORDER BY fecha_hora DESC
+            LIMIT ?
+        """;
+        return jdbcTemplate.query(sql, mapper, estacionId, java.sql.Timestamp.valueOf(inicio), java.sql.Timestamp.valueOf(fin), limite);
+    }
 }

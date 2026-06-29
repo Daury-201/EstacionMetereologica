@@ -2,6 +2,7 @@ package com.grupo2;
 
 import com.grupo2.controlador.LecturaController;
 import com.grupo2.modelo.LecturaSensor;
+import com.grupo2.servicio.AlarmaService;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
@@ -30,11 +31,14 @@ public class LectorEstacion {
 
     private final JdbcTemplate jdbcTemplate;
     private final LecturaController lecturaController;
+    private final AlarmaService alarmaService;
 
     public LectorEstacion(JdbcTemplate jdbcTemplate,
-                          LecturaController lecturaController) {
+                          LecturaController lecturaController,
+                          AlarmaService alarmaService) {
         this.jdbcTemplate = jdbcTemplate;
         this.lecturaController = lecturaController;
+        this.alarmaService = alarmaService;
     }
 
     private static final DateTimeFormatter FORMATO_ENTRADA =
@@ -59,8 +63,12 @@ public class LectorEstacion {
             );
 
             MqttConnectOptions opciones = new MqttConnectOptions();
-            opciones.setUserName(usuario);
-            opciones.setPassword(clave.toCharArray());
+            if (usuario != null && !usuario.isEmpty()) {
+                opciones.setUserName(usuario);
+            }
+            if (clave != null && !clave.isEmpty()) {
+                opciones.setPassword(clave.toCharArray());
+            }
             opciones.setAutomaticReconnect(true);
             opciones.setCleanSession(true);
 
@@ -116,12 +124,14 @@ public class LectorEstacion {
                         if (sensor.equals("direccion_viento")) {
                             jdbcTemplate.update(sql, estacionId, timestamp, valor);
                         } else {
-                            jdbcTemplate.update(sql, estacionId, timestamp,
-                                    Double.parseDouble(valor));
+                            Double valDouble = Double.parseDouble(valor);
+                            jdbcTemplate.update(sql, estacionId, timestamp, valDouble);
+                            // Evaluar alarmas para sensores numéricos
+                            alarmaService.evaluarSensor(estacionId, sensor, valDouble);
                         }
                         String sqlSelect =
                                 "SELECT * FROM lecturas_sensores " +
-                                        "WHERE estacion_id = ? AND fecha_hora = ?::timestamp";
+                                        "WHERE estacion_id = ? ORDER BY fecha_hora DESC LIMIT 1";
 
                         List<LecturaSensor> resultado = jdbcTemplate.query(
                                 sqlSelect,
@@ -155,7 +165,7 @@ public class LectorEstacion {
 
                                     return l;
                                 },
-                                estacionId, timestamp
+                                estacionId
                         );
 
                         if (!resultado.isEmpty() && sensor.equals("humedad_suelo")) {
