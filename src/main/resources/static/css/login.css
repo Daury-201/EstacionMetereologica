@@ -5,25 +5,21 @@
     --card-bg: #FFFFFF;
     --text-main: #1A1A2E;
 }
-
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
-
 body {
     font-family: 'Inter', sans-serif;
     height: 100vh;
     overflow: hidden;
 }
-
 .login-container {
     display: flex;
     width: 100vw;
     height: 100vh;
 }
-
 .login-left {
     flex: 1;
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-gradient-end) 100%);
@@ -33,14 +29,12 @@ body {
     position: relative;
     overflow: hidden;
 }
-
 .bg-shape {
     position: absolute;
     pointer-events: none;
     z-index: 0;
     background: rgba(255, 255, 255, 0.04);
 }
-
 .blob-1 {
     width: 350px;
     height: 350px;
@@ -57,7 +51,6 @@ body {
     right: -120px;
     animation: float2 15s ease-in-out infinite;
 }
-
 .blob-3 {
     width: 180px;
     height: 80px;
@@ -66,7 +59,6 @@ body {
     right: -50px;
     animation: float1 10s ease-in-out infinite reverse;
 }
-
 .blob-4 {
     width: 60px;
     height: 60px;
@@ -75,7 +67,6 @@ body {
     left: 12%;
     animation: float2 8s ease-in-out infinite;
 }
-
 .blob-5 {
     width: 120px;
     height: 110px;
@@ -84,17 +75,14 @@ body {
     left: 8%;
     animation: float1 14s ease-in-out infinite;
 }
-
 @keyframes float1 {
     0%, 100% { transform: translate(0, 0) rotate(0deg); }
     50% { transform: translate(25px, -20px) rotate(8deg); }
 }
-
 @keyframes float2 {
     0%, 100% { transform: translate(0, 0) rotate(0deg); }
     50% { transform: translate(-20px, 25px) rotate(-8deg); }
 }
-
 .login-left-content {
     display: flex;
     flex-direction: column;
@@ -103,7 +91,6 @@ body {
     padding: 40px;
     color: white;
 }
-
 .hero-animation {
     margin-top: 40px;
     margin-bottom: 60px;
@@ -111,13 +98,11 @@ body {
     display: flex;
     justify-content: center;
 }
-
 .hero-animation img {
     width: 380px;
     height: auto;
     z-index: 2;
 }
-
 .hero-animation::after {
     content: '';
     position: absolute;
@@ -127,7 +112,6 @@ body {
     background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0) 70%);
     z-index: 1;
 }
-
 .wifi-waves {
     position: absolute;
     width: 90px;
@@ -135,19 +119,16 @@ body {
     z-index: 1;
     filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.4));
 }
-
 .wifi-left {
     top: -40px;
     left: 10px;
     transform: rotate(-35deg);
 }
-
 .wifi-right {
     top: -40px;
     right: 10px;
     transform: rotate(35deg);
 }
-
 .wave {
     stroke: rgba(255, 255, 255, 0.85);
     stroke-width: 4;
@@ -156,17 +137,14 @@ body {
     opacity: 0;
     animation: fadeWave 2s infinite ease-out;
 }
-
 .wave1 { animation-delay: 0s; }
 .wave2 { animation-delay: 0.3s; }
 .wave3 { animation-delay: 0.6s; }
-
 @keyframes fadeWave {
     0% { opacity: 0; transform: scale(0.95); }
     15% { opacity: 1; transform: scale(1); }
     100% { opacity: 0; transform: scale(1.05); }
 }
-
 .hero-title {
     font-size: 30px;
     font-weight: 700;
@@ -175,14 +153,12 @@ body {
     text-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
     margin-top: -15px;
 }
-
 .hero-subtitle {
     font-size: 14px;
     color: rgba(255, 255, 255, 0.9);
     font-weight: 400;
     text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
-
 .hero-dots {
     display: flex;
     gap: 8px;
@@ -190,7 +166,6 @@ body {
     justify-content: center;
     align-items: center;
 }
-
 .dot {
     width: 8px;
     height: 8px;
@@ -199,19 +174,16 @@ body {
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
 }
-
 .dot.active {
     width: 28px;
     background-color: #FFFFFF;
     box-shadow: 0 0 8px rgba(255,255,255,0.5);
 }
-
 .slider-container {
     width: 100%;
     display: grid;
     place-items: center;
 }
-
 .slide {
     grid-area: 1 / 1;
     width: 100%;
@@ -224,7 +196,6 @@ body {
     transform: translateX(30px) scale(0.95);
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
 .slide.active {
     opacity: 1;
     visibility: visible;
@@ -232,7 +203,6 @@ body {
     transform: translateX(0) scale(1);
     z-index: 10;
 }
-
 .login-right {
     flex: 1;
     background-color: var(--bg-color);
@@ -240,7 +210,6 @@ body {
     justify-content: center;
     align-items: center;
 }
-
 .login-card {
     background-color: var(--card-bg);
     width: 380px;
@@ -248,19 +217,16 @@ body {
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0,0,0,0.05);
     overflow: hidden;
 }
-
 .login-card-top {
     height: 4px;
     background: linear-gradient(90deg, var(--primary-color) 0%, var(--primary-gradient-end) 100%);
 }
-
 .login-card-content {
     padding: 40px;
     display: flex;
     flex-direction: column;
     align-items: center;
 }
-
 .login-icon {
     width: 140px;
     height: 96px;
@@ -271,27 +237,23 @@ body {
     align-items: center;
     margin-bottom: 24px;
 }
-
 .login-title {
     font-size: 20px;
     font-weight: 700;
     color: var(--text-main);
     margin-bottom: 8px;
 }
-
 .login-subtitle {
     font-size: 12px;
     color: #6B7280;
     margin-bottom: 32px;
 }
-
 .login-form {
     width: 100%;
     display: flex;
     flex-direction: column;
     gap: 16px;
 }
-
 .login-form input {
     width: 100%;
     padding: 14px 16px;
@@ -304,21 +266,17 @@ body {
     outline: none;
     transition: all 0.3s ease;
 }
-
 .login-form input:hover {
     background-color: #E5E7EB;
 }
-
 .login-form input:focus {
     background-color: #FFFFFF;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.15);
 }
-
 .login-form input::placeholder {
     color: #9CA3AF;
 }
-
 .login-btn {
     width: 100%;
     padding: 14px;
@@ -334,17 +292,14 @@ body {
     box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
 .login-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(124, 58, 237, 0.45);
 }
-
 .login-btn:active {
     transform: translateY(1px);
     box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
 }
-
 .forgot-pwd {
     font-size: 12px;
     color: #6B7280;
@@ -352,34 +307,28 @@ body {
     margin-top: 24px;
     font-weight: 600;
 }
-
 .divider {
     width: 100%;
     height: 1px;
     background-color: #F3F4F6;
     margin: 24px 0;
 }
-
 .create-account {
     font-size: 12px;
     color: #9CA3AF;
 }
-
 .create-account a {
     color: var(--primary-color);
     text-decoration: none;
     font-weight: 600;
     transition: color 0.2s ease;
 }
-
 .forgot-pwd, .create-account a {
     transition: color 0.2s ease;
 }
-
 .forgot-pwd:hover, .create-account a:hover {
     color: var(--primary-color);
 }
-
 @keyframes fadeSlideIn {
     from {
         opacity: 0;
@@ -390,7 +339,6 @@ body {
         transform: translateX(0);
     }
 }
-
 .iso-dashboard-container {
     width: 380px;
     height: 380px;
@@ -402,7 +350,6 @@ body {
     position: relative;
     z-index: 5;
 }
-
 .iso-scene {
     width: 0px;
     height: 0px;
@@ -411,7 +358,6 @@ body {
     transform: rotateX(5deg) rotateY(0deg) rotateZ(0deg);
     transition: transform 0.15s ease-out;
 }
-
 .iso-panel {
     position: absolute;
     background: #FFFFFF;
@@ -428,7 +374,6 @@ body {
     animation: isoFloat 4s ease-in-out infinite;
     top: 0; left: 0;
 }
-
 .iso-center {
     width: 220px; height: 180px;
     margin-top: -90px; margin-left: -110px;
@@ -449,7 +394,6 @@ body {
     z-index: 4;
     animation-delay: -2s;
 }
-
 .iso-panel-content {
     width: 100%; height: 100%;
     position: absolute;
@@ -459,7 +403,6 @@ body {
     flex-direction: column;
     transform: translateZ(1px);
 }
-
 .left-content {
     flex-direction: row;
     align-items: flex-end;
@@ -471,11 +414,9 @@ body {
     background: linear-gradient(to top, var(--primary-color), var(--primary-gradient-end));
     border-radius: 4px;
 }
-
 .iso-line-chart { flex: 1; width: 100%; }
 .iso-text-line { width: 100%; height: 6px; background: #F3F4F6; border-radius: 3px; margin-top: 8px; }
 .iso-text-line.short { width: 60%; }
-
 .iso-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
 .iso-avatar { width: 24px; height: 24px; background: var(--primary-gradient-end); border-radius: 50%; }
 .iso-title { font-size: 14px; font-weight: bold; color: var(--text-main); }
@@ -491,7 +432,6 @@ body {
 .iso-stat-bars { flex: 1; display: flex; flex-direction: column; gap: 8px; }
 .iso-bar-row { width: 100%; height: 8px; background: #F3F4F6; border-radius: 4px; overflow: hidden; }
 .iso-fill { height: 100%; border-radius: 4px; }
-
 .iso-cloud {
     position: absolute; top: 0; left: 0;
     width: 60px; height: 20px;
@@ -506,17 +446,14 @@ body {
 }
 .iso-cloud::before { width: 30px; height: 30px; top: -15px; left: 10px; }
 .iso-cloud::after { width: 20px; height: 20px; top: -8px; left: 35px; }
-
 .cloud-1 { --tx: -130px; --ty: -100px; --tz: 10px; --s: 1; animation-delay: -1s; opacity: 0.9;}
 .cloud-2 { --tx: 120px; --ty: -130px; --tz: 0px; --s: 0.8; animation-delay: -2.5s; opacity: 0.8;}
 .cloud-3 { --tx: -150px; --ty: 80px; --tz: 80px; --s: 1.2; animation-delay: -3.5s;}
 .cloud-4 { --tx: 140px; --ty: 70px; --tz: 100px; --s: 0.9; animation-delay: -4s;}
-
 @keyframes isoFloat {
     0%, 100% { transform: translateX(var(--tx)) translateY(var(--ty)) translateZ(var(--tz)) scale(var(--s, 1)) translateY(0px); }
     50% { transform: translateX(var(--tx)) translateY(var(--ty)) translateZ(var(--tz)) scale(var(--s, 1)) translateY(-15px); }
 }
-
 .map-scene {
     width: 0px;
     height: 0px;
@@ -525,7 +462,6 @@ body {
     transform: rotateX(15deg) rotateY(15deg) rotateZ(-3deg);
     transition: transform 0.15s ease-out;
 }
-
 .sensor-thermo {
     position: absolute;
     top: 50%; left: 50%;
@@ -549,7 +485,6 @@ body {
     width: 4px; height: 25px;
     background: #EF4444; border-radius: 2px;
 }
-
 .sensor-panel {
     position: absolute;
     top: 50%; left: 50%;
@@ -566,14 +501,12 @@ body {
     animation: nodeFloat 3s ease-in-out infinite alternate-reverse;
 }
 .weather-icon { width: 14px; height: 14px; }
-
 .map-wrapper {
     position: relative;
     transform-style: preserve-3d;
     animation: isoFloat 5s ease-in-out infinite alternate;
     --tx: 0px; --ty: 0px; --tz: 0px;
 }
-
 .map-base {
     position: absolute;
     width: 360px; height: 240px;
@@ -588,7 +521,6 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.8);
     transform: translateZ(0px);
 }
-
 .map-grid {
     position: absolute;
     width: 100%; height: 100%;
@@ -601,7 +533,6 @@ body {
     overflow: hidden;
 }
 .map-grid svg { width: 100%; height: 100%; }
-
 .map-node {
     position: absolute;
     top: 0; left: 0;
@@ -609,7 +540,6 @@ body {
     transform: translateX(var(--nx)) translateY(var(--ny)) translateZ(var(--nz));
     animation: nodeFloat 3s ease-in-out infinite alternate;
 }
-
 .node-stem {
     position: absolute;
     width: 2px;
@@ -620,7 +550,6 @@ body {
     transform: rotateX(-90deg) translateY(0px);
     pointer-events: none;
 }
-
 .node-core {
     position: absolute;
     width: 12px; height: 12px;
@@ -631,7 +560,6 @@ body {
 }
 .node-active .node-core { background: #34D399; }
 .node-inactive .node-core { background: #EF4444; }
-
 .node-pulse {
     position: absolute;
     width: 24px; height: 24px;
@@ -640,7 +568,6 @@ body {
     border-radius: 50%;
     animation: mapPulse 2s infinite;
 }
-
 .node-tooltip {
     position: absolute;
     width: 90px;
@@ -657,7 +584,6 @@ body {
     pointer-events: none;
     box-shadow: 0 10px 15px rgba(0,0,0,0.2);
 }
-
 @keyframes nodeFloat {
     0% { transform: translateX(var(--nx)) translateY(var(--ny)) translateZ(var(--nz)); }
     100% { transform: translateX(var(--nx)) translateY(var(--ny)) translateZ(calc(var(--nz) + 12px)); }

@@ -3,8 +3,6 @@ let historialIds = [0];
 let paginaActual = 0;
 let totalRegistros = 0;
 let totalPaginas = 1;
-
-// Calcular total al cargar la página
 document.addEventListener("DOMContentLoaded", function () {
     fetch('/api/lecturas/total')
         .then(r => r.json())
@@ -15,13 +13,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 `Página 1 de ${totalPaginas}`;
         });
 });
-
 function refrescar() {
     historialIds = [0];
     paginaActual = 0;
     cargarPagina(0);
 }
-
 function paginaSiguiente() {
     const filas = document.querySelectorAll("#cuerpo-tabla tr");
     if (filas.length === 0) return;
@@ -30,7 +26,6 @@ function paginaSiguiente() {
     paginaActual++;
     cargarPagina(ultimoId);
 }
-
 function paginaAnterior() {
     if (paginaActual <= 1) {
         paginaActual = 0;
@@ -40,7 +35,6 @@ function paginaAnterior() {
         cargarPagina(historialIds[paginaActual]);
     }
 }
-
 function cargarPagina(ultimoId) {
     Promise.all([
         fetch(`/api/lecturas?ultimoId=${ultimoId}`).then(r => r.json()),
@@ -57,13 +51,11 @@ function cargarPagina(ultimoId) {
             datos.length < TAMANO;
     });
 }
-
 function renderizarTabla(datos) {
     const tbody = document.getElementById("cuerpo-tabla");
     tbody.innerHTML = "";
     datos.forEach(l => tbody.insertAdjacentHTML("beforeend", filaHtml(l)));
 }
-
 function filaHtml(l) {
     return `<tr>
         <td>${l.id}</td>
@@ -78,23 +70,18 @@ function filaHtml(l) {
         <td>${l.humedadSuelo ?? '-'}</td>
     </tr>`;
 }
-
-// WebSocket
 const socket = new SockJS('/ws');
 const stompClient = Stomp.over(socket);
-
 stompClient.connect({}, function () {
     stompClient.subscribe('/topic/lecturas', function (mensaje) {
         if (paginaActual === 0) {
             const l = JSON.parse(mensaje.body);
             const tbody = document.getElementById("cuerpo-tabla");
             tbody.insertAdjacentHTML("afterbegin", filaHtml(l));
-
             const filas = tbody.querySelectorAll("tr");
             if (filas.length > TAMANO) {
                 filas[filas.length - 1].remove();
             }
-
             totalRegistros++;
             totalPaginas = Math.ceil(totalRegistros / TAMANO);
             document.getElementById("info-pagina").innerText =

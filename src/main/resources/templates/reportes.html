@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes - Estación Meteorológica</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard.css(v='2.19')}" href="../static/css/dashboard.css">
+    <link rel="stylesheet" th:href="@{/css/reportes.css(v='5.0')}" href="../static/css/reportes.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <link rel="stylesheet" th:href="@{/css/components.css(v='1.0')}">
+    <script th:src="@{/js/utils.js(v='1.0')}" defer></script>
+</head>
+<body class="theme-light">
+<div class="dashboard-container">
+    <aside th:replace="~{fragments/components :: sidebar(activePage='reportes')}"></aside>
+    <main class="main-area">
+        <header th:replace="~{fragments/components :: topNav(pageTitle='Reportes')}"></header>
+        <div class="dashboard-content-area">
+            <div class="reports-filters-card card">
+                <form id="report-filter-form">
+                    <div class="filter-group">
+                        <label>Estación</label>
+                        <select id="estacionId" name="estacionId">
+                            <option value="0">Todas </option>
+                            <option th:each="est : ${estaciones}" th:value="${est.id}" th:text="${est.nombre}"></option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Fecha inicio</label>
+                        <input type="date" id="fechaInicio" name="fechaInicio" required>
+                    </div>
+                    <div class="filter-group">
+                        <label>Fecha fin</label>
+                        <input type="date" id="fechaFin" name="fechaFin" required>
+                    </div>
+                    <div class="filter-group">
+                        <label>Variable</label>
+                        <select id="variable" name="variable">
+                            <option value="all">Todas</option>
+                            <option value="temp">Temperatura</option>
+                            <option value="hum">Humedad</option>
+                            <option value="pres">Presión</option>
+                            <option value="viento">Viento</option>
+                            <option value="dir">Dirección</option>
+                            <option value="lluvia">Lluvia</option>
+                            <option value="suelo">Humedad Suelo</option>
+                        </select>
+                    </div>
+                    <div class="filter-actions">
+                        <button type="button" id="btn-generar-pdf" class="btn btn-primary rebound-effect">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Generar Reporte
+                        </button>
+                        <button type="button" id="btn-exportar-csv" class="btn btn-outline-success rebound-effect">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            Exportar CSV
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="reports-summary">
+                <div class="summary-card skeleton-card" id="card-inactividad">
+                    <div class="summary-header">
+                        <div class="icon-box" style="background: rgba(16, 185, 129, 0.1); color: #10B981;" id="icon-inactividad">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                        </div>
+                        <span class="summary-title">Estado de Señal</span>
+                    </div>
+                    <div class="summary-value" id="val-inactividad" style="font-size: 16px;">--</div>
+                </div>
+                <div class="summary-card skeleton-card" id="card-alarmas">
+                    <div class="summary-header">
+                        <div class="icon-box" style="background: rgba(245, 158, 11, 0.1); color: #F59E0B;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                        </div>
+                        <span class="summary-title">Alarmas en Período</span>
+                    </div>
+                    <div class="summary-value" id="val-alarmas">--</div>
+                </div>
+                <div class="summary-card skeleton-card" id="card-registros">
+                    <div class="summary-header">
+                        <div class="icon-box" style="background: rgba(59, 130, 246, 0.1); color: #3B82F6;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        </div>
+                        <span class="summary-title">Total Registros</span>
+                    </div>
+                    <div class="summary-value" id="val-registros">--</div>
+                </div>
+            </div>
+            <div class="management-charts-container" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-bottom: 24px;">
+                <div class="card" style="padding: 20px;">
+                    <h3 style="font-size: 15px; color: #1E293B; margin-bottom: 15px; font-weight: 600;">Disponibilidad de Lecturas</h3>
+                    <div id="chart-uptime" style="min-height: 250px;"></div>
+                </div>
+                <div class="card" style="padding: 20px;">
+                    <h3 style="font-size: 15px; color: #1E293B; margin-bottom: 15px; font-weight: 600;">Distribución de Alarmas</h3>
+                    <div id="chart-donut" style="min-height: 250px;"></div>
+                </div>
+                <div class="card" style="padding: 20px;">
+                    <h3 style="font-size: 15px; color: #1E293B; margin-bottom: 15px; font-weight: 600;">Frecuencia de Alarmas por Día</h3>
+                    <div id="chart-bar-dia" style="min-height: 250px;"></div>
+                </div>
+                <div class="card" style="padding: 20px;">
+                    <h3 style="font-size: 15px; color: #1E293B; margin-bottom: 15px; font-weight: 600;">Origen de Fallos por Sensor</h3>
+                    <div id="chart-bar-sensor" style="min-height: 250px;"></div>
+                </div>
+            </div>
+            <div id="hidden-met-chart" style="position: absolute; left: -9999px; top: -9999px; width: 800px; height: 350px; visibility: hidden;"></div>
+            <div id="hidden-met-chart-hum" style="position: absolute; left: -9999px; top: -9999px; width: 800px; height: 350px; visibility: hidden;"></div>
+            <div id="hidden-met-chart-pres" style="position: absolute; left: -9999px; top: -9999px; width: 800px; height: 350px; visibility: hidden;"></div>
+            <div id="hidden-met-chart-lluvia" style="position: absolute; left: -9999px; top: -9999px; width: 800px; height: 350px; visibility: hidden;"></div>
+            <div class="table-card card">
+                <div class="table-header-row">
+                    <h3>Lecturas registradas</h3>
+                    <span class="table-meta" id="table-meta">0 registros</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th data-col="fecha" data-sort="fecha">FECHA / HORA <span class="sort-icon">▲▼</span></th>
+                                <th data-col="temp" data-sort="temp">TEMP. (°C) <span class="sort-icon">▲▼</span></th>
+                                <th data-col="hum" data-sort="hum">HUMEDAD (%) <span class="sort-icon">▲▼</span></th>
+                                <th data-col="pres" data-sort="pres">PRESIÓN (HPA) <span class="sort-icon">▲▼</span></th>
+                                <th data-col="viento" data-sort="viento">VIENTO (KM/H) <span class="sort-icon">▲▼</span></th>
+                                <th data-col="dir" data-sort="dir">DIRECCIÓN <span class="sort-icon">▲▼</span></th>
+                                <th data-col="lluvia" data-sort="lluvia">LLUVIA (MM) <span class="sort-icon">▲▼</span></th>
+                                <th data-col="suelo" data-sort="suelo">H. SUELO (%) <span class="sort-icon">▲▼</span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="report-tbody">
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination-area" id="pagination-container" style="display: none;"></div>
+            </div>
+        </div>
+    </main>
+</div>
+<div class="modal-overlay" id="export-modal">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h3>Configuración del Reporte</h3>
+            <button type="button" class="close-btn" id="btn-close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p style="color: #64748B; font-size: 13px; margin-bottom: 20px;">
+                Selecciona los elementos que deseas incluir en el documento PDF final.
+            </p>
+            <div class="filter-group" style="margin-bottom: 20px;">
+                <label for="nombre-reporte" style="display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 6px;">Nombre del archivo (opcional)</label>
+                <input type="text" id="nombre-reporte" placeholder="Ej: Reporte_Mensual" style="width: 100%; box-sizing: border-box; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; font-size: 14px; outline: none; transition: border-color 0.2s;">
+            </div>
+            <label class="toggle-option">
+                <div class="toggle-info">
+                    <span class="toggle-title">Gráficos de Gestión</span>
+                    <span class="toggle-desc">Métricas de salud, alarmas, y disponibilidad de sensores.</span>
+                </div>
+                <div class="toggle-switch">
+                    <input type="checkbox" id="chk-gestion" checked>
+                    <span class="slider"></span>
+                </div>
+            </label>
+            <label class="toggle-option">
+                <div class="toggle-info">
+                    <span class="toggle-title">Tabla de Lecturas</span>
+                    <span class="toggle-desc">Historial detallado de todas las lecturas registradas.</span>
+                </div>
+                <div class="toggle-switch">
+                    <input type="checkbox" id="chk-tabla" checked>
+                    <span class="slider"></span>
+                </div>
+            </label>
+            <label class="toggle-option" id="opt-grafico-met">
+                <div class="toggle-info">
+                    <span class="toggle-title">Gráfico Meteorológico</span>
+                    <span class="toggle-desc" id="desc-grafico-met">Curva climática de la variable seleccionada.</span>
+                </div>
+                <div class="toggle-switch">
+                    <input type="checkbox" id="chk-grafico-met">
+                    <span class="slider"></span>
+                </div>
+            </label>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline rebound-effect" id="btn-cancel-modal">Cancelar</button>
+            <button type="button" class="btn btn-primary rebound-effect" id="btn-confirm-export">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Descargar PDF
+            </button>
+        </div>
+    </div>
+</div>
+<script th:inline="javascript">
+    window.estacionesData = /*[[${estaciones}]]*/ [];
+</script>
+<script th:src="@{/js/notificaciones.js(v='1.2')}"></script>
+<script src="../static/js/reportes.js" th:src="@{/js/reportes.js(v='11.0')}"></script>
+</body>
+</html>

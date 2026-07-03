@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Estación Meteorológica</title>
     <link rel="stylesheet" th:href="@{/css/dashboard.css(v='2.19')}" href="../static/css/dashboard.css">
+    <link rel="stylesheet" th:href="@{/css/components.css(v='1.0')}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js'></script>
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
@@ -12,181 +13,11 @@
     <link href='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css' rel='stylesheet' />
 </head>
 <body class="theme-light">
-
 <div class="dashboard-container">
-
-    <aside class="sidebar">
-        <script>
-            if (localStorage.getItem('sidebarCollapsed') === 'true') {
-                document.currentScript.parentElement.classList.add('collapsed');
-            }
-        </script>
-        <div class="sidebar-header">
-            <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-            </svg>
-            <div class="brand-info">
-                <span class="brand-name">Estación</span>
-                <span class="brand-sub">Grupo 2 - PUCMM</span>
-            </div>
-            <button id="sidebarToggle" class="sidebar-toggle-btn" title="Alternar panel">
-                <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="9" y1="3" x2="9" y2="21"></line>
-                </svg>
-            </button>
-        </div>
-
-        <ul class="nav-menu">
-            <li>
-                <a href="/inicio" class="nav-item active">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 10.5l8.3-6.5a2 2 0 0 1 2.4 0l8.3 6.5"/>
-                        <path d="M5 10.5V20a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V10.5"/>
-                        <path d="M9 22v-7a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v7"/>
-                    </svg>
-                    Inicio
-                </a>
-            </li>
-            <li>
-                <a href="/estaciones" class="nav-item">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="4" r="2" />
-                        <path d="M12 6v16" />
-                        <path d="M8 22l4-10 4 10" />
-                        <path d="M6 7c-2 2-2 6 0 8" />
-                        <path d="M3 4c-4 4-4 12 0 16" />
-                        <path d="M18 7c2 2 2 6 0 8" />
-                        <path d="M21 4c4 4 4 12 0 16" />
-                    </svg>
-                    Estaciones
-                </a>
-            </li>
-            <li>
-            <a href="/graficos" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="6" y1="20" x2="6" y2="14"/>
-                <line x1="12" y1="20" x2="12" y2="10"/>
-                <line x1="18" y1="20" x2="18" y2="4"/>
-                <polyline points="2 16 8 8 13 12 22 2"/>
-            </svg>
-                Gráficos y Análisis
-            </a>
-        </li>
-            <li>
-                <a href="/alarmas" class="nav-item">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M10.3 3.8l-8.5 14.7A2 2 0 0 0 3.5 21.5h17a2 2 0 0 0 1.7-3L13.7 3.8a2 2 0 0 0-3.4 0z"/>
-                        <line x1="12" y1="9" x2="12" y2="14"/>
-                        <line x1="12" y1="18" x2="12.01" y2="18"/>
-                    </svg>
-                    Alarmas
-                </a>
-            </li>
-            <li>
-                <a href="#" class="nav-item">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M18 2H6a2 2 0 0 0-2 2v12l6 6h8a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z" />
-                        <path d="M4 16h4a2 2 0 0 1 2 2v4" />
-                        <line x1="9" y1="8" x2="15" y2="8" />
-                        <line x1="9" y1="12" x2="15" y2="12" />
-                    </svg>
-                    Reportes
-                </a>
-            </li>
-            <li>
-                <a href="#" class="nav-item">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <g transform="rotate(45 12 12)">
-                            <path d="M12 22v-5"/>
-                            <path d="M9 8V2"/>
-                            <path d="M15 8V2"/>
-                            <path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/>
-                        </g>
-                    </svg>
-                    Integración
-                </a>
-            </li>
-            <li>
-                <a href="#" class="nav-item">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="3" />
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                    </svg>
-                    Configuración
-                </a>
-            </li>
-        </ul>
-
-        <div class="sidebar-footer">
-            <a href="/" class="logout-btn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-                </svg>
-                Cerrar sesión
-            </a>
-        </div>
-    </aside>
-
+    <aside th:replace="~{fragments/components :: sidebar(activePage='inicio')}"></aside>
     <main class="main-area">
-
-        <header class="top-nav">
-            <div class="nav-left">
-                <h1>Inicio</h1>
-            </div>
-
-            <div class="nav-center">
-                <div class="search-container" style="position: relative;">
-                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    <input type="text" id="station-search" class="search-input" placeholder="Buscar por nombre o código..." autocomplete="off">
-                    <div id="search-dropdown" class="search-dropdown">
-                    </div>
-                </div>
-            </div>
-
-            <div class="nav-right">
-                <div class="top-badge badge-status" id="status-badge-btn" style="position: relative; cursor: pointer; transition: transform 0.1s;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
-                    <span>0/0 Estaciones Activas</span>
-                    <div id="summary-dropdown" class="summary-dropdown">
-                    </div>
-                </div>
-
-                <div class="top-badge badge-alarms" id="alarms-badge-btn" style="position: relative; cursor: pointer;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                    <span>Alarmas</span>
-                    <div class="notification-dot" id="globalAlarmBadge" th:text="${totalAlarmasActivas}">0</div>
-                    
-                    <!-- Dropdown de alarmas activas -->
-                    <div id="alarms-dropdown" class="summary-dropdown" style="width: 320px;">
-                        <div class="summary-dropdown-header" style="display: flex; justify-content: space-between; align-items: center;">
-                            <span>Alarmas Activas</span>
-                            <span class="badge badge-danger" style="font-size: 10px; padding: 2px 6px;" id="dropdownActiveCount" th:text="${totalAlarmasActivas} + ' Activas'">0 Activas</span>
-                        </div>
-                        <div id="alarms-dropdown-items" style="max-height: 280px; overflow-y: auto;">
-                            <!-- Cargado dinámicamente -->
-                        </div>
-                        <div style="padding: 10px 16px; border-top: 1px solid #E5E7EB; background: #F9FAFB; border-radius: 0 0 12px 12px; text-align: center;">
-                            <a href="/alarmas" style="font-size: 12px; color: var(--primary); text-decoration: none; font-weight: 600; display: block;">Ver todo en la sección de alarmas</a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="profile-dropdown">
-                    <div class="avatar">G2</div>
-                    <div class="profile-info">
-                        <span class="profile-name">Grupo 2</span>
-                        <span class="profile-role">Administrador</span>
-                    </div>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" width="16" height="16" style="margin-right: 4px;"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-            </div>
-        </header>
-
-
-        <!-- Contenedor Scrollable del Dashboard -->
+        <header th:replace="~{fragments/components :: topNav(pageTitle='Inicio')}"></header>
         <div class="dashboard-content-area">
-            
-            <!-- Barra de Pronóstico (Weather Forecast) -->
             <div class="forecast-bar">
                 <div class="forecast-header">
                     <h2 class="forecast-title">Pronóstico</h2>
@@ -196,18 +27,13 @@
                     </div>
                 </div>
                 <div class="forecast-days" id="forecastDaysContainer">
-                    <!-- Los días se inyectarán vía JS -->
                 </div>
             </div>
-
-            <!-- Tarjeta del Mapa (En la parte superior) -->
             <div class="map-view-card">
                 <div id="map-root"></div>
-                
                 <button class="expand-map-btn" id="expandMapBtn" title="Maximizar mapa" onclick="toggleMapExpansion()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
                 </button>
-                
                 <div class="map-style-switcher">
                     <button class="style-btn active" data-style="mapbox://styles/mapbox/outdoors-v12">Relieve</button>
                     <button class="style-btn" data-style="mapbox://styles/mapbox/light-v11">Claro</button>
@@ -215,23 +41,16 @@
                     <button class="style-btn" data-style="mapbox://styles/mapbox/satellite-streets-v12">Satelital</button>
                 </div>
             </div>
-
-            <!-- Grid de Información y Gráficos (Abajo del mapa) -->
             <div class="dashboard-bottom-grid">
-                
                 <div class="dashboard-left-column">
-                    <!-- Tarjeta de Clima Detallado (Estilo OWM) -->
                 <div class="owm-card weather-card" id="weatherCard">
-                    <!-- Cabecera de Imagen Dinámica con Deslizamiento -->
                     <div class="weather-photo-header" id="weatherPhotoHeader">
-                        <!-- Flechas de navegación para deslizar -->
                         <button class="nav-arrow prev" onclick="navigateStation(-1, event)" title="Estación anterior">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><polyline points="15 18 9 12 15 6"></polyline></svg>
                         </button>
                         <button class="nav-arrow next" onclick="navigateStation(1, event)" title="Siguiente estación">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><polyline points="9 18 15 12 9 6"></polyline></svg>
                         </button>
-
                         <div class="weather-header-top">
                             <div class="station-meta">
                                 <h2 id="activeStationName">--</h2>
@@ -239,7 +58,6 @@
                             </div>
                             <span id="activeTime" class="weather-time">--:--</span>
                         </div>
-                        
                         <div class="weather-header-bottom">
                             <div class="weather-temp-group">
                                 <span class="weather-temp" id="activeTemp">--</span>
@@ -251,8 +69,6 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Mosaico inferior de 6 Métricas -->
                     <div class="weather-metrics-grid">
                         <div class="metric-box">
                             <span class="metric-icon">🌬️</span>
@@ -298,8 +114,6 @@
                         </div>
                     </div>
                     </div>
-                    
-                    <!-- WIDGET DE ESTILO DE VIDA -->
                     <div class="owm-card lifestyle-card" id="lifestyleWidget">
                         <div class="ls-icon-container">
                             <div class="ls-icon-wrapper" id="lsIconWrapper">
@@ -311,9 +125,8 @@
                             <p id="lsDesc">Condiciones ideales para actividades al aire libre. ¡Disfruta el día!</p>
                         </div>
                     </div>
-                </div>                <!-- Gráficos de Historial (Divididos) -->
+                </div>
                 <div class="charts-split-container">
-                    <!-- Gráfico de Temperatura -->
                     <div class="owm-card trend-chart-card">
                         <div class="card-header-compact">
                             <h3>🌡️ Temperatura</h3>
@@ -325,7 +138,6 @@
                             <div id="tempTrendChart" style="height: 200px; min-height: 200px; width: 100%;"></div>
                         </div>
                     </div>
-                    <!-- Gráfico de Humedad -->
                     <div class="owm-card trend-chart-card">
                         <div class="card-header-compact">
                             <h3>💧 Humedad</h3>
@@ -338,20 +150,16 @@
                         </div>
                     </div>
                 </div>
-                
             </div>
         </div>
     </main>
-
 </div>
-
 <script th:inline="javascript">
     window.estacionesData = /*[[${estaciones}]]*/ [];
-
+    window.mapboxApiKey = /*[[${mapboxApiKey}]]*/ '';
     function toggleMapExpansion() {
         const isExpanded = document.body.classList.toggle('map-fullscreen');
         const expandBtn = document.getElementById('expandMapBtn');
-        
         if (expandBtn) {
             if (isExpanded) {
                 expandBtn.innerHTML = `
@@ -365,7 +173,6 @@
                 expandBtn.title = "Maximizar mapa";
             }
         }
-        
         if (window.map) {
             setTimeout(() => {
                 window.map.resize();
@@ -376,6 +183,5 @@
 <script th:src="@{/js/notificaciones.js(v='1.2')}"></script>
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script th:src="@{/js/dashboard.js(v='2.18')}"></script>
-
 </body>
 </html>

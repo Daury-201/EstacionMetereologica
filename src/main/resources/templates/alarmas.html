@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Alarmas - Dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/estaciones.css(v='1.3')}" href="../static/css/estaciones.css">
+    <link rel="stylesheet" th:href="@{/css/alarmas.css}" href="../static/css/alarmas.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <link rel="stylesheet" th:href="@{/css/components.css(v='1.0')}">
+    <script th:src="@{/js/utils.js(v='1.0')}" defer></script>
+</head>
+<body>
+    <aside th:replace="~{fragments/components :: sidebar(activePage='alarmas')}"></aside>
+<main class="main-content" style="flex: 1; display: flex; flex-direction: column; overflow-y: auto;">
+    <header class="top-nav">
+        <div class="nav-left">
+            <h1 class="page-title">Alarmas y Alertas</h1>
+        </div>
+        <div class="top-actions">
+            <div class="top-badge last-sync-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+                <span id="nav-last-sync" th:text="${ultimaSincronizacionGlobal != null ? 'Última sincronización: ' + #temporals.format(ultimaSincronizacionGlobal, 'dd/MM/yyyy HH:mm') : 'Sin sincronizaciones'}">Última sincronización: --</span>
+            </div>
+            <div class="top-badge badge-alarms" id="alarms-badge-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <span>Alarmas</span>
+                <div class="notification-dot" id="globalAlarmBadge" th:text="${totalAlarmasActivas != null ? totalAlarmasActivas : 0}">0</div>
+                <div id="alarms-dropdown" class="summary-dropdown" style="width: 320px;">
+                    <div class="summary-dropdown-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>Alarmas Activas</span>
+                        <span class="badge badge-danger" style="font-size: 10px; padding: 2px 6px;" id="dropdownActiveCount" th:text="${totalAlarmasActivas != null ? totalAlarmasActivas : 0} + ' Activas'">0 Activas</span>
+                    </div>
+                    <div id="alarms-dropdown-items" style="max-height: 280px; overflow-y: auto;">
+                    </div>
+                    <div style="padding: 10px 16px; border-top: 1px solid #E5E7EB; background: #F9FAFB; border-radius: 0 0 12px 12px; text-align: center;">
+                        <a href="/alarmas" style="font-size: 12px; color: var(--primary); text-decoration: none; font-weight: 600; display: block;">Ver todo en la sección de alarmas</a>
+                    </div>
+                </div>
+            </div>
+            <div class="profile-dropdown">
+                <div class="avatar">G2</div>
+                <div class="profile-info">
+                    <span class="profile-name">Grupo 2</span>
+                    <span class="profile-role">Administrador</span>
+                </div>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" width="16" height="16" style="margin-right: 4px;"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+        </div>
+    </header>
+    <div class="content-area" style="padding: 24px; flex: 1;">
+        <div th:if="${exito}" class="alert-success" style="padding: 12px 16px; background-color: var(--success-bg); color: var(--success); border-radius: 8px; margin-bottom: 20px; font-weight: 500; display: flex; align-items: center; gap: 8px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            <span th:text="${exito}">Operación exitosa</span>
+        </div>
+        <div class="summary-cards-grid">
+            <div class="summary-card">
+                <div class="summary-icon gray"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="24" height="24"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg></div>
+                <div class="summary-info">
+                    <span class="summary-label">TOTAL ALARMAS</span>
+                    <strong class="summary-value" id="cardTotalCount" th:text="${totalCount}">0</strong>
+                    <span class="summary-sub">Historial completo</span>
+                </div>
+            </div>
+            <div class="summary-card text-danger">
+                <div class="summary-icon danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="24" height="24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+                <div class="summary-info">
+                    <span class="summary-label">CRÍTICAS</span>
+                    <strong class="summary-value" id="cardActivasCount" th:text="${activasCount}">0</strong>
+                    <span class="summary-sub text-danger">Requieren atención</span>
+                </div>
+            </div>
+            <div class="summary-card text-warning">
+                <div class="summary-icon warning"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="24" height="24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+                <div class="summary-info">
+                    <span class="summary-label">EN ADVERTENCIA</span>
+                    <strong class="summary-value" id="cardAdvertenciaCount" th:text="${advertenciaCount}">0</strong>
+                    <span class="summary-sub text-warning">Cerca del umbral</span>
+                </div>
+            </div>
+            <div class="summary-card text-success">
+                <div class="summary-icon success"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="24" height="24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+                <div class="summary-info">
+                    <span class="summary-label">RESUELTAS</span>
+                    <strong class="summary-value" id="cardResueltasCount" th:text="${resueltasCount}">0</strong>
+                    <span class="summary-sub">Últimas 24 horas</span>
+                </div>
+            </div>
+        </div>
+        <div class="split-grid">
+            <div class="panel-card" style="flex: 2; min-width: 0;">
+                <h3 class="panel-title">Alarmas activas</h3>
+                <div id="batchToolbar" class="batch-toolbar hidden">
+                    <span class="batch-toolbar-info"><span id="selectedCount">0</span> alarmas seleccionadas</span>
+                    <div class="batch-toolbar-actions">
+                        <button class="btn btn-batch-ack" id="btnBatchAck">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" style="margin-right: 6px; vertical-align: text-bottom;"><path d="M18 11V6a2 2 0 0 0-4 0v4"/><path d="M14 10V4a2 2 0 0 0-4 0v6"/><path d="M10 10.5V3a2 2 0 0 0-4 0v9"/><path d="M6 12v-1a2 2 0 0 0-4 0v5a11 11 0 0 0 11 11h2.5a8.5 8.5 0 0 0 8.5-8.5V14a2 2 0 0 0-4 0"/></svg> Reconocer
+                        </button>
+                        <button class="btn btn-batch-resolve" id="btnBatchResolve">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" style="margin-right: 6px; vertical-align: text-bottom;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Resolver
+                        </button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px; text-align: center;"><input type="checkbox" id="selectAllActivas"></th>
+                                <th>ESTACIÓN</th>
+                                <th>SENSOR</th>
+                                <th>VALOR</th>
+                                <th>UMBRAL</th>
+                                <th>TIEMPO</th>
+                                <th>ESTADO</th>
+                                <th>ACCIONES</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activeAlarmsTable">
+                            <tr th:each="alarma : ${activas}" th:classappend="${alarma.reconocida} ? 'row-reconocida' : ''" th:data-row-id="${alarma.id}">
+                                <td style="text-align: center;"><input type="checkbox" class="row-checkbox" th:value="${alarma.id}"></td>
+                                <td th:text="${alarma.estacionNombre}">Estación Norte</td>
+                                <td class="sensor-cell">
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        <span th:if="${#strings.containsIgnoreCase(alarma.sensor, 'temp')}" style="color: #EF4444;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg></span>
+                                        <span th:if="${#strings.containsIgnoreCase(alarma.sensor, 'hum') and not #strings.containsIgnoreCase(alarma.sensor, 'suelo')}" style="color: #3B82F6;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg></span>
+                                        <span th:if="${#strings.containsIgnoreCase(alarma.sensor, 'suelo')}" style="color: #84CC16;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M12 10a6 6 0 0 0-6 6c0 1.5.5 2.8 1.3 3.8l4.7-9.8z"/><path d="M12 10a6 6 0 0 1 6 6c0 1.5-.5 2.8-1.3 3.8l-4.7-9.8z"/><path d="M12 22a6 6 0 0 1-6-6"/></svg></span>
+                                        <span th:if="${#strings.containsIgnoreCase(alarma.sensor, 'vien')}" style="color: #8B5CF6;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></svg></span>
+                                        <span th:if="${#strings.containsIgnoreCase(alarma.sensor, 'lluv')}" style="color: #0EA5E9;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M20 16.2A6.5 6.5 0 0 0 17.5 4h-1.6A7.5 7.5 0 0 0 2 11.5c0 1.2.3 2.3.8 3.3"/><path d="M16 14v6"/><path d="M8 14v6"/><path d="M12 16v6"/></svg></span>
+                                        <span th:if="${#strings.containsIgnoreCase(alarma.sensor, 'pres')}" style="color: #10B981;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="m12 14 4-4"/><path d="M3.34 16A10 10 0 1 1 20.66 16"/><circle cx="12" cy="14" r="2"/></svg></span>
+                                        <span style="text-transform: capitalize; font-weight: 500;" th:text="${#strings.replace(alarma.sensor, '_', ' ')}">Temperatura</span>
+                                    </div>
+                                </td>
+                                <td class="value-cell" th:classappend="${alarma.gravedad == 'CRITICA' ? 'text-danger' : 'text-warning'}" style="font-weight: 600;" th:text="${alarma.valor}">38.7°C</td>
+                                <td>
+                                    <div th:if="${#strings.contains(alarma.umbralExcedido, '>')}" class="umbral-pill umbral-up">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                                        <span th:text="${#strings.replace(#strings.replace(alarma.umbralExcedido, '>= ', ''), '> ', '')}"> 40.0 %</span>
+                                    </div>
+                                    <div th:if="${#strings.contains(alarma.umbralExcedido, '<')}" class="umbral-pill umbral-down">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                                        <span th:text="${#strings.replace(#strings.replace(alarma.umbralExcedido, '<= ', ''), '< ', '')}"> 10.0 %</span>
+                                    </div>
+                                    <div th:if="${not #strings.contains(alarma.umbralExcedido, '>') and not #strings.contains(alarma.umbralExcedido, '<')}" class="umbral-pill umbral-up">
+                                        <span th:text="${alarma.umbralExcedido}">Umbral</span>
+                                    </div>
+                                </td>
+                                <td class="time-cell" style="color: #64748B;">
+                                    <div style="display: flex; align-items: center; gap: 4px;">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                        <span th:text="${#temporals.format(alarma.fechaHora, 'HH:mm:ss')}">16:50:43</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge" th:classappend="${alarma.gravedad == 'CRITICA' ? 'badge-danger' : 'badge-warning'}" th:text="${alarma.gravedad == 'CRITICA' ? 'Crítica' : 'Advertencia'}">Activa</span>
+                                </td>
+                                <td>
+                                    <div class="action-buttons-group">
+                                        <button class="action-btn ack-btn" th:data-id="${alarma.id}" title="Reconocer Alarma" th:disabled="${alarma.reconocida}">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M18 11V6a2 2 0 0 0-4 0v4"/><path d="M14 10V4a2 2 0 0 0-4 0v6"/><path d="M10 10.5V3a2 2 0 0 0-4 0v9"/><path d="M6 12v-1a2 2 0 0 0-4 0v5a11 11 0 0 0 11 11h2.5a8.5 8.5 0 0 0 8.5-8.5V14a2 2 0 0 0-4 0"/></svg>
+                                        </button>
+                                        <button class="action-btn view-btn" th:data-id="${alarma.id}" title="Ver Detalles">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                        </button>
+                                        <button class="action-btn resolve-btn" th:data-id="${alarma.id}" title="Resolver Alarma">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(activas)}" class="empty-row">
+                                <td colspan="8">No hay alarmas activas en este momento.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--border);">
+                    <div id="activasPaginationInfo" style="font-size: 13px; color: var(--text-muted);">
+                        Mostrando 0 alarmas activas — Página 1 de 1
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <button class="page-btn" id="activasPrevBtn" style="cursor: pointer; padding: 6px; border: 1px solid var(--border); background: var(--white); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        </button>
+                        <span id="activasPageNum" style="font-size: 13px; font-weight: 600; min-width: 28px; text-align: center; color: var(--text-main);">1</span>
+                        <button class="page-btn" id="activasNextBtn" style="cursor: pointer; padding: 6px; border: 1px solid var(--border); background: var(--white); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="panel-card" style="flex: 1; min-width: 320px;">
+                <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 16px;">
+                    <div>
+                        <h3 class="panel-title" style="margin-bottom: 4px; font-size: 16px; font-weight: 700; color: #1E293B;">Umbrales Actuales</h3>
+                        <p class="panel-subtitle" style="margin: 0; font-size: 13px; color: #64748B;">Vista de lectura rápida</p>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center; width: 100%;">
+                        <select id="estacionSelector" style="flex: 1; padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; outline: none; background-color: #F8FAFC; color: #334155;">
+                            <option value="">Global </option>
+                            <option th:each="est : ${estaciones}" th:value="${est.id}" th:text="${est.nombre}"></option>
+                        </select>
+                        <button type="button" id="btnOpenConfigModal" class="btn-primary rebound-effect" style="padding: 8px 16px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(124, 58, 237, 0.2); border-radius: 8px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                            </svg>
+                            Editar
+                        </button>
+                    </div>
+                </div>
+                <div id="readonlyThresholdsList" style="display: flex; flex-direction: column; gap: 12px; max-height: 480px; overflow-y: auto; padding-right: 8px; transition: opacity 0.3s ease;">
+                    <div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px;">Cargando umbrales...</div>
+                </div>
+            </div>
+        </div>
+        <div class="panel-card" style="margin-top: 24px;">
+            <h3 class="panel-title">Historial de alarmas resueltas</h3>
+            <div class="history-filters">
+                <div class="filter-group">
+                    <label>Desde Fecha</label>
+                    <input type="date" id="filterFechaInicio">
+                </div>
+                <div class="filter-group">
+                    <label>Hasta Fecha</label>
+                    <input type="date" id="filterFechaFin">
+                </div>
+                <div class="filter-group">
+                    <label>Sensor</label>
+                    <select id="filterSensor">
+                        <option value="todos">Todos</option>
+                        <option value="temperatura">Temperatura</option>
+                        <option value="humedad_aire">Humedad Aire</option>
+                        <option value="humedad_suelo">Humedad Suelo</option>
+                        <option value="velocidad_viento">Velocidad Viento</option>
+                        <option value="lluvia">Lluvia</option>
+                        <option value="presion">Presión Atmosférica</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Gravedad</label>
+                    <select id="filterGravedad">
+                        <option value="todas">Todas</option>
+                        <option value="ADVERTENCIA">Advertencia</option>
+                        <option value="CRITICA">Crítica</option>
+                    </select>
+                </div>
+                <button type="button" class="btn-filter" id="btnApplyFilters">Aplicar Filtros</button>
+            </div>
+            <div class="table-container">
+                <table class="modern-table">
+                    <thead>
+                        <tr>
+                            <th>ESTACIÓN</th>
+                            <th>SENSOR</th>
+                            <th>VALOR</th>
+                            <th>UMBRAL</th>
+                            <th>DURACIÓN</th>
+                            <th>RESUELTA EN</th>
+                            <th>ESTADO</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resolvedAlarmsTable">
+                        <tr th:each="alarma : ${resueltas}">
+                            <td th:text="${alarma.estacionNombre}">Estación Norte</td>
+                            <td class="sensor-cell">
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span th:if="${#strings.containsIgnoreCase(alarma.sensor, 'temp')}" style="color: #EF4444;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg></span>
+                                    <span th:if="${#strings.containsIgnoreCase(alarma.sensor, 'hum') and not #strings.containsIgnoreCase(alarma.sensor, 'suelo')}" style="color: #3B82F6;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg></span>
+                                    <span th:if="${#strings.containsIgnoreCase(alarma.sensor, 'suelo')}" style="color: #84CC16;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M12 10a6 6 0 0 0-6 6c0 1.5.5 2.8 1.3 3.8l4.7-9.8z"/><path d="M12 10a6 6 0 0 1 6 6c0 1.5-.5 2.8-1.3 3.8l-4.7-9.8z"/><path d="M12 22a6 6 0 0 1-6-6"/></svg></span>
+                                    <span th:if="${#strings.containsIgnoreCase(alarma.sensor, 'vien')}" style="color: #8B5CF6;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></svg></span>
+                                    <span th:if="${#strings.containsIgnoreCase(alarma.sensor, 'lluv')}" style="color: #0EA5E9;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M20 16.2A6.5 6.5 0 0 0 17.5 4h-1.6A7.5 7.5 0 0 0 2 11.5c0 1.2.3 2.3.8 3.3"/><path d="M16 14v6"/><path d="M8 14v6"/><path d="M12 16v6"/></svg></span>
+                                    <span th:if="${#strings.containsIgnoreCase(alarma.sensor, 'pres')}" style="color: #10B981;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="m12 14 4-4"/><path d="M3.34 16A10 10 0 1 1 20.66 16"/><circle cx="12" cy="14" r="2"/></svg></span>
+                                    <span style="text-transform: capitalize; font-weight: 500;" th:text="${#strings.replace(alarma.sensor, '_', ' ')}">Temperatura</span>
+                                </div>
+                            </td>
+                            <td th:text="${alarma.valor}" style="font-weight: 600;">38.7°C</td>
+                            <td>
+                                <div th:if="${#strings.contains(alarma.umbralExcedido, '>')}" class="umbral-pill umbral-up">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                                    <span th:text="${#strings.replace(#strings.replace(alarma.umbralExcedido, '>= ', ''), '> ', '')}"> 40.0 %</span>
+                                </div>
+                                <div th:if="${#strings.contains(alarma.umbralExcedido, '<')}" class="umbral-pill umbral-down">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                                    <span th:text="${#strings.replace(#strings.replace(alarma.umbralExcedido, '<= ', ''), '< ', '')}"> 10.0 %</span>
+                                </div>
+                                <div th:if="${not #strings.contains(alarma.umbralExcedido, '>') and not #strings.contains(alarma.umbralExcedido, '<')}" class="umbral-pill umbral-up">
+                                    <span th:text="${alarma.umbralExcedido}">Umbral</span>
+                                </div>
+                            </td>
+                            <td class="time-cell" style="color: #64748B;">
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                    <span th:text="${alarma.duracionMinutos + ' min'}">12 min</span>
+                                </div>
+                            </td>
+                            <td class="time-cell" style="color: #64748B;">
+                                <span th:text="${#temporals.format(alarma.fechaHoraResolucion, 'dd/MM/yyyy HH:mm')}">--</span>
+                            </td>
+                            <td>
+                                <span class="badge badge-success">Resuelta</span>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(resueltas)}" class="empty-row">
+                            <td colspan="7">No hay registro de alarmas resueltas.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination-area" style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--border);">
+                <div class="pagination-info" id="resolvedPaginationInfo" style="font-size: 13px; color: var(--text-muted);">
+                    Mostrando 0 alarmas resueltas — Página 1 de 1
+                </div>
+                <div class="pagination-controls" id="resolvedPaginationControls" style="display: flex; align-items: center; gap: 8px;">
+                    <button class="page-btn" id="resolvedPrevBtn" style="cursor: pointer; padding: 6px; border: 1px solid var(--border); background: var(--white); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    </button>
+                    <span id="resolvedPageNum" style="font-size: 13px; font-weight: 600; min-width: 28px; text-align: center; color: var(--text-main);">1</span>
+                    <button class="page-btn" id="resolvedNextBtn" style="cursor: pointer; padding: 6px; border: 1px solid var(--border); background: var(--white); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<div id="resolveModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" id="closeResolveModal">&times;</span>
+        <h3 class="modal-title">Resolver Alarma</h3>
+        <p class="modal-subtitle">Introduce notas sobre las acciones correctivas tomadas:</p>
+        <form id="resolveForm">
+            <input type="hidden" id="resolveAlarmId">
+            <textarea id="resolveNotes" class="modal-textarea" placeholder="Ej: Se encendió el extractor auxiliar de calor para bajar la temperatura."></textarea>
+            <div class="modal-buttons">
+                <button type="button" class="btn-cancel" id="btnCancelResolve">Cancelar</button>
+                <button type="submit" class="btn-confirm">Confirmar y Resolver</button>
+            </div>
+        </form>
+    </div>
+</div>
+<div id="detailsModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" id="closeDetailsModal">&times;</span>
+        <h3 class="modal-title">Detalles de Alarma</h3>
+        <div class="details-grid">
+            <div class="detail-item"><strong>Estación:</strong> <span id="detailEstacion">--</span></div>
+            <div class="detail-item"><strong>Sensor:</strong> <span id="detailSensor">--</span></div>
+            <div class="detail-item"><strong>Valor Leído:</strong> <span id="detailValor">--</span></div>
+            <div class="detail-item"><strong>Límite Excedido:</strong> <span id="detailUmbral">--</span></div>
+            <div class="detail-item"><strong>Fecha y Hora:</strong> <span id="detailFecha">--</span></div>
+            <div class="detail-item"><strong>Gravedad:</strong> <span id="detailGravedad">--</span></div>
+            <div class="detail-item" style="grid-column: span 2;">
+                <strong>Notas / Acciones Correctivas:</strong>
+                <p id="detailNotas" class="detail-notas-text">Ninguna nota disponible.</p>
+            </div>
+        </div>
+        <div class="modal-buttons" style="justify-content: flex-end; margin-top: 20px;">
+            <button type="button" class="btn-cancel" id="btnCloseDetails">Cerrar</button>
+        </div>
+    </div>
+</div>
+<div class="toast-container" id="toastContainer"></div>
+<div id="configThresholdsModal" class="modal-overlay">
+    <div class="modal-dialog" style="max-width: 960px; width: 92%;">
+        <div class="th-modal-header">
+            <div>
+                <h3 class="th-modal-title">Configuración de Umbrales</h3>
+                <p class="th-modal-subtitle">Define los límites de advertencia y críticos por sensor</p>
+            </div>
+            <button id="btnCloseConfigModal" class="th-close-btn">&times;</button>
+        </div>
+        <div style="padding: 0; display: flex; flex-direction: column; min-height: 0; overflow: hidden; flex: 1;">
+            <form id="thresholdAjaxForm" style="display: flex; flex-direction: column; margin: 0; flex: 1; min-height: 0;">
+                <div class="th-scope-bar">
+                    <div class="target-pills">
+                        <label class="target-pill">
+                            <input type="radio" name="applyTarget" value="global" checked>
+                            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" style="vertical-align: text-bottom; margin-right: 4px;"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg> Global</span>
+                        </label>
+                        <label class="target-pill">
+                            <input type="radio" name="applyTarget" value="specific">
+                            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" style="vertical-align: text-bottom; margin-right: 4px;"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> Por Estación</span>
+                        </label>
+                    </div>
+                    <p class="th-scope-hint">Afecta a todas las estaciones registradas en el sistema</p>
+                </div>
+                <div id="multiStationSelectWrapper" style="display: none;" class="th-station-picker">
+                    <p class="th-station-picker-label">Selecciona las estaciones a configurar:</p>
+                    <div class="th-station-grid" id="stationCheckboxGrid">
+                        <th:block th:each="est : ${estaciones}">
+                            <label class="th-station-chip" th:data-id="${est.id}">
+                                <input type="checkbox" class="th-station-check" th:value="${est.id}" th:id="'chk-est-'+${est.id}">
+                                <span class="th-station-chip-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" style="vertical-align: text-bottom;"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></svg></span>
+                                <span class="th-station-chip-name" th:text="${est.nombre}">Estación</span>
+                                <span class="th-station-chip-check">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>
+                                </span>
+                            </label>
+                        </th:block>
+                    </div>
+                </div>
+                <div class="th-form-scroll">
+                    <div id="dynamicFormSensors">
+                    </div>
+                </div>
+                <div class="th-modal-footer">
+                    <button type="button" class="th-btn-cancel rebound-effect" id="btnCancelConfig">Cancelar</button>
+                    <button type="submit" class="th-btn-save rebound-effect" id="btnSaveThresholds">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
+                        Guardar Umbrales
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script th:src="@{/js/notificaciones.js(v='1.2')}"></script>
+<script th:src="@{/js/alarmas_config.js(v='1.1')}" src="../static/js/alarmas_config.js"></script>
+<script th:src="@{/js/alarmas.js(v='1.2')}" src="../static/js/alarmas.js"></script>
+</body>
+</html>

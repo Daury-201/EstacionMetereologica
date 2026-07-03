@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Reporte Estación Meteorológica</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 15mm;
+            @bottom-center {
+                content: "Página " counter(page) " de " counter(pages);
+                font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                font-size: 9pt;
+                color: #94a3b8;
+            }
+        }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #334155;
+            margin: 0;
+            padding: 0;
+            font-size: 12px;
+        }
+        /* ----- Header ----- */
+        .report-header {
+            width: 100%;
+            border-bottom: 3px solid #7c3aed;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        .report-header table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .report-header td {
+            vertical-align: middle;
+        }
+        .report-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0f172a;
+            margin: 0 0 5px 0;
+        }
+        .report-subtitle {
+            font-size: 13px;
+            color: #64748b;
+            margin: 0;
+        }
+        .report-brand {
+            text-align: right;
+            color: #7c3aed;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        /* ----- Metadata Cards ----- */
+        .metadata-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 15px 0;
+            margin: 0 -15px 25px -15px;
+        }
+        .metadata-table td {
+            width: 50%;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 12px 15px;
+            vertical-align: top;
+        }
+        .meta-label {
+            display: block;
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: bold;
+            color: #64748b;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+        .meta-value {
+            display: block;
+            font-size: 15px;
+            font-weight: bold;
+            color: #0f172a;
+        }
+        /* ----- Summary Stats ----- */
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #0f172a;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+            margin-top: 30px;
+        }
+        .stats-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 10px;
+            margin-left: -10px;
+            margin-right: -10px;
+        }
+        .stats-table td {
+            width: 25%;
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-top: 3px solid #cbd5e1;
+            padding: 12px;
+            text-align: center;
+        }
+        .stats-table td.stat-temp { border-top-color: #ef4444; }
+        .stats-table td.stat-hum { border-top-color: #3b82f6; }
+        .stats-table td.stat-pres { border-top-color: #8b5cf6; }
+        .stats-table td.stat-lluv { border-top-color: #10b981; }
+        .stat-label {
+            display: block;
+            font-size: 11px;
+            color: #64748b;
+            margin-bottom: 5px;
+        }
+        .stat-value {
+            display: block;
+            font-size: 18px;
+            font-weight: bold;
+            color: #0f172a;
+        }
+        /* ----- Data Table ----- */
+        table.data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 11px;
+        }
+        table.data-table th {
+            background-color: #f1f5f9;
+            color: #475569;
+            padding: 10px 8px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-top: 1px solid #cbd5e1;
+            border-bottom: 2px solid #cbd5e1;
+            text-align: right;
+            letter-spacing: 0.2px;
+        }
+        table.data-table th:first-child { text-align: left; }
+        table.data-table td {
+            padding: 8px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: right;
+            color: #334155;
+        }
+        table.data-table td:first-child { text-align: left; color: #0f172a; font-weight: bold; }
+        table.data-table tr:nth-child(even) td {
+            background-color: #f8fafc;
+        }
+        .empty-row td {
+            text-align: center !important;
+            padding: 20px !important;
+            color: #64748b !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="report-header">
+        <table>
+            <tr>
+                <td>
+                    <div class="report-title">Reporte Meteorológico</div>
+                    <div class="report-subtitle">Generado automáticamente por el sistema</div>
+                </td>
+                <td class="report-brand">
+                    GRUPO 2 - PUCMM
+                </td>
+            </tr>
+        </table>
+    </div>
+    <table class="metadata-table">
+        <tr>
+            <td>
+                <span class="meta-label">Estación Seleccionada</span>
+                <span class="meta-value" th:text="${estacionNombre}">Todas</span>
+            </td>
+            <td>
+                <span class="meta-label">Rango de Fechas</span>
+                <span class="meta-value" th:text="${rangoFechas}">--</span>
+            </td>
+        </tr>
+    </table>
+    <div class="section-title">Resumen del Período</div>
+    <table class="stats-table">
+        <tr>
+            <td class="stat-temp">
+                <span class="stat-label">Temp. Promedio</span>
+                <span class="stat-value" th:text="${#numbers.formatDecimal(tempPromedio, 1, 1)} + ' °C'"></span>
+            </td>
+            <td class="stat-hum">
+                <span class="stat-label">Humedad Promedio</span>
+                <span class="stat-value" th:text="${#numbers.formatDecimal(humedadPromedio, 1, 0)} + ' %'"></span>
+            </td>
+            <td class="stat-pres">
+                <span class="stat-label">Presión Promedio</span>
+                <span class="stat-value" th:text="${#numbers.formatDecimal(presionPromedio, 1, 0)} + ' hPa'"></span>
+            </td>
+            <td class="stat-lluv">
+                <span class="stat-label">Lluvia Acumulada</span>
+                <span class="stat-value" th:text="${#numbers.formatDecimal(lluviaAcumulada, 1, 1)} + ' mm'"></span>
+            </td>
+        </tr>
+    </table>
+    <div th:if="${incluirMeteorologia}">
+        <div th:if="${variableFiltro != 'all' and chartImage != null and chartImage != ''}">
+            <div class="section-title" th:text="${'Evolución de ' + (variableFiltro == 'temp' ? 'Temperatura' : (variableFiltro == 'hum' ? 'Humedad' : (variableFiltro == 'pres' ? 'Presión' : (variableFiltro == 'lluvia' ? 'Lluvia' : (variableFiltro == 'all' ? 'Todas las Variables' : 'Variable')))))}">Gráfico</div>
+            <div style="text-align: center; margin-bottom: 25px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <img th:src="${chartImage}" style="max-width: 100%; width: 500px; height: auto; max-height: 200px;" />
+            </div>
+        </div>
+        <div th:if="${variableFiltro == 'all'}">
+            <div class="section-title">Evolución de Todas las Variables</div>
+            <table style="width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 15px; margin-left: -15px; margin-right: -15px;">
+                <tr>
+                    <td style="width: 50%; vertical-align: top;">
+                        <div style="text-align: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px;">
+                            <h4 style="margin-top: 0; margin-bottom: 10px; color: #334155; font-size: 13px;">Temperatura (°C)</h4>
+                            <img th:if="${chartImage != null and chartImage != ''}" th:src="${chartImage}" style="max-width: 100%; width: 300px; height: auto; max-height: 150px;" />
+                        </div>
+                    </td>
+                    <td style="width: 50%; vertical-align: top;">
+                        <div style="text-align: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px;">
+                            <h4 style="margin-top: 0; margin-bottom: 10px; color: #334155; font-size: 13px;">Humedad (%)</h4>
+                            <img th:if="${chartImageHum != null and chartImageHum != ''}" th:src="${chartImageHum}" style="max-width: 100%; width: 300px; height: auto; max-height: 150px;" />
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width: 50%; vertical-align: top;">
+                        <div style="text-align: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px;">
+                            <h4 style="margin-top: 0; margin-bottom: 10px; color: #334155; font-size: 13px;">Presión (hPa)</h4>
+                            <img th:if="${chartImagePres != null and chartImagePres != ''}" th:src="${chartImagePres}" style="max-width: 100%; width: 300px; height: auto; max-height: 150px;" />
+                        </div>
+                    </td>
+                    <td style="width: 50%; vertical-align: top;">
+                        <div style="text-align: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px;">
+                            <h4 style="margin-top: 0; margin-bottom: 10px; color: #334155; font-size: 13px;">Lluvia (mm)</h4>
+                            <img th:if="${chartImageLluvia != null and chartImageLluvia != ''}" th:src="${chartImageLluvia}" style="max-width: 100%; width: 300px; height: auto; max-height: 150px;" />
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div th:if="${incluirGestion}" style="page-break-before: always;">
+        <div class="section-title" style="margin-top: 0;">Métricas de Gestión y Salud </div>
+        <table style="width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 15px; margin-left: -15px; margin-right: -15px;">
+            <tr>
+                <td style="width: 50%; vertical-align: top;">
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; text-align: center;">
+                        <h4 style="margin-top: 0; margin-bottom: 15px; color: #334155;">Disponibilidad de Lecturas</h4>
+                        <img th:if="${chartUptime != null and chartUptime != ''}" th:src="${chartUptime}" style="max-width: 100%; width: 250px; height: auto; max-height: 200px;" />
+                        <div th:unless="${chartUptime != null and chartUptime != ''}" style="color: #94a3b8; font-style: italic;">Sin datos</div>
+                    </div>
+                </td>
+                <td style="width: 50%; vertical-align: top;">
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; text-align: center;">
+                        <h4 style="margin-top: 0; margin-bottom: 15px; color: #334155;">Distribución de Alarmas</h4>
+                        <img th:if="${chartDonut != null and chartDonut != ''}" th:src="${chartDonut}" style="max-width: 100%; width: 250px; height: auto; max-height: 200px;" />
+                        <div th:unless="${chartDonut != null and chartDonut != ''}" style="color: #94a3b8; font-style: italic;">Sin datos</div>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 50%; vertical-align: top;">
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; text-align: center;">
+                        <h4 style="margin-top: 0; margin-bottom: 15px; color: #334155;">Alarmas por Día</h4>
+                        <img th:if="${chartBarDia != null and chartBarDia != ''}" th:src="${chartBarDia}" style="max-width: 100%; width: 250px; height: auto; max-height: 200px;" />
+                        <div th:unless="${chartBarDia != null and chartBarDia != ''}" style="color: #94a3b8; font-style: italic;">Sin datos</div>
+                    </div>
+                </td>
+                <td style="width: 50%; vertical-align: top;">
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; text-align: center;">
+                        <h4 style="margin-top: 0; margin-bottom: 15px; color: #334155;">Origen de Fallos (Sensor)</h4>
+                        <img th:if="${chartBarSensor != null and chartBarSensor != ''}" th:src="${chartBarSensor}" style="max-width: 100%; width: 250px; height: auto; max-height: 200px;" />
+                        <div th:unless="${chartBarSensor != null and chartBarSensor != ''}" style="color: #94a3b8; font-style: italic;">Sin datos</div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div th:if="${incluirTablaLecturas}" style="page-break-before: always;">
+        <div class="section-title" style="margin-top: 0;">Lecturas Detalladas</div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Fecha / Hora</th>
+                    <th th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'temp'}">Temp (°C)</th>
+                    <th th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'hum'}">Hum (%)</th>
+                    <th th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'pres'}">Pres (hPa)</th>
+                    <th th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'viento'}">Viento (km/h)</th>
+                    <th th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'viento'}">Dir.</th>
+                    <th th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'lluvia'}">Lluvia (mm)</th>
+                    <th th:if="${variableFiltro == null or variableFiltro == 'all'}">Suelo (%)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="l : ${lecturas}">
+                    <td th:text="${#temporals.format(l.fechaHora, 'dd/MM/yyyy HH:mm:ss')}"></td>
+                    <td th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'temp'}" th:text="${l.temperatura}"></td>
+                    <td th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'hum'}" th:text="${l.humedadAire}"></td>
+                    <td th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'pres'}" th:text="${l.presion}"></td>
+                    <td th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'viento'}" th:text="${l.velocidadViento}"></td>
+                    <td th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'viento'}" th:text="${l.direccionViento}"></td>
+                    <td th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'lluvia'}" th:text="${l.lluvia}"></td>
+                    <td th:if="${variableFiltro == null or variableFiltro == 'all'}" th:text="${l.humedadSuelo}"></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(lecturas)}" class="empty-row">
+                    <td colspan="8">No se encontraron registros para el período seleccionado.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Estaciones</title>
+    <link rel="stylesheet" th:href="@{/css/estaciones.css(v='1.3')}" href="../static/css/estaciones.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css' rel='stylesheet' />
+    <style>
+        .mapboxgl-ctrl-bottom-left, .mapboxgl-ctrl-bottom-right { display: none !important; }
+        .map-picker-container { position: relative; width: 100%; height: 350px; border-radius: 8px; overflow: hidden; border: 1px solid #E5E7EB; margin-bottom: 16px; }
+        .crosshair-target { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 10; color: #7C3AED; }
+    </style>
+    <link rel="stylesheet" th:href="@{/css/components.css(v='1.0')}">
+    <script th:src="@{/js/utils.js(v='1.0')}" defer></script>
+</head>
+<body>
+    <aside th:replace="~{fragments/components :: sidebar(activePage='estaciones')}"></aside>
+<main class="main-content">
+    <header class="top-nav">
+        <div class="nav-left" style="display: flex; align-items: center; gap: 32px;">
+            <h1 class="page-title">Estaciones</h1>
+            <button class="btn-primary rebound-effect" onclick="openModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Nueva Estación
+            </button>
+        </div>
+        <div class="top-badge last-sync-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+            <span id="nav-last-sync" th:text="${ultimaSincronizacionGlobal != null ? 'Última sincronización: ' + #temporals.format(ultimaSincronizacionGlobal, 'dd/MM/yyyy HH:mm') : 'Sin sincronizaciones'}">Última sincronización: --</span>
+        </div>
+        <div class="top-actions">
+            <div class="top-badge badge-alarms" id="alarms-badge-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <span>Alarmas</span>
+                <div class="notification-dot" id="globalAlarmBadge" th:text="${totalAlarmasActivas != null ? totalAlarmasActivas : 0}">0</div>
+                <div id="alarms-dropdown" class="summary-dropdown" style="width: 320px;">
+                    <div class="summary-dropdown-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>Alarmas Activas</span>
+                        <span class="badge badge-danger" style="font-size: 10px; padding: 2px 6px;" id="dropdownActiveCount" th:text="${totalAlarmasActivas != null ? totalAlarmasActivas : 0} + ' Activas'">0 Activas</span>
+                    </div>
+                    <div id="alarms-dropdown-items" style="max-height: 280px; overflow-y: auto;">
+                    </div>
+                    <div style="padding: 10px 16px; border-top: 1px solid #E5E7EB; background: #F9FAFB; border-radius: 0 0 12px 12px; text-align: center;">
+                        <a href="/alarmas" style="font-size: 12px; color: var(--primary); text-decoration: none; font-weight: 600; display: block;">Ver todo en la sección de alarmas</a>
+                    </div>
+                </div>
+            </div>
+            <div class="profile-dropdown">
+                <div class="avatar">G2</div>
+                <div class="profile-info">
+                    <span class="profile-name">Grupo 2</span>
+                    <span class="profile-role">Administrador</span>
+                </div>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" width="16" height="16" style="margin-right: 4px;"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+        </div>
+    </header>
+    <div class="content-area">
+        <div th:if="${exito}" id="global-success-alert" class="alert alert-success" style="background-color: #D1FAE5; color: #059669; padding: 12px 16px; border-radius: 8px; margin-bottom: 24px; border: 1px solid #34D399; transition: opacity 0.5s;">
+            <strong th:text="${exito}"></strong>
+        </div>
+        <div class="search-container">
+            <div class="search-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="table-search-input" placeholder="Buscar estación por nombre, código o ubicación">
+            </div>
+        </div>
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-title">Total Estaciones</div>
+                <div class="metric-value" th:text="${#lists.size(estaciones)}">3</div>
+                <div class="metric-sub">
+                    <div class="dot green"></div> <span th:text="${#lists.size(estaciones)} + ' total registradas'">3 total registradas</span>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">En línea ahora</div>
+                <div class="metric-value" th:text="${totalEnLinea}">1</div>
+                <div class="metric-sub">
+                    <div class="dot green"></div> Comunicando
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Sin comunicación</div>
+                <div class="metric-value" th:text="${totalSinSenal}">0</div>
+                <div class="metric-sub">
+                    <div class="dot red"></div> Más de 10 min sin datos
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Con advertencia</div>
+                <div class="metric-value" th:text="${totalConAlarmas}">0</div>
+                <div class="metric-sub">
+                    <div class="dot yellow"></div> Alarma activa
+                </div>
+            </div>
+        </div>
+        <div class="table-container">
+            <div class="table-header-row">
+                <div class="table-title">Lista de estaciones</div>
+                <div class="table-tabs">
+                    <button class="tab active" onclick="filterTable('Todas', this)">Todas</button>
+                    <button class="tab" onclick="filterTable('En línea', this)">En línea</button>
+                    <button class="tab" onclick="filterTable('Con alarmas', this)">Con alarmas</button>
+                    <button class="tab" onclick="filterTable('Sin señal', this)">Fuera de línea</button>
+                </div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ESTACIÓN</th>
+                        <th>UBICACIÓN</th>
+                        <th>ESTADO</th>
+                        <th>ALARMAS</th>
+                        <th>LATITUD</th>
+                        <th>LONGITUD</th>
+                        <th>ÚLTIMA LECTURA</th>
+                        <th>ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody id="estacionesTableBody">
+                    <tr th:id="'row-estacion-' + ${est.id}" th:each="est, iterStat : ${estaciones}" class="station-row" th:data-estado="${est.estado}" th:data-alarmas="${est.alarmasActivas != null and !est.alarmasActivas.isEmpty()}"
+                        th:with="colors=${'color: #3B82F6; background-color: #DBEAFE;,color: #7C3AED; background-color: #EDE9FE;,color: #10B981; background-color: #D1FAE5;,color: #F59E0B; background-color: #FEF3C7;,color: #F43F5E; background-color: #FFE4E6;,color: #06B6D4; background-color: #CFFAFE;'.split(',')}">
+                        <td>
+                            <div class="station-info">
+                                <div class="station-icon" th:style="${colors[iterStat.index % 6]}">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M4 7h16l-3 8H7Z"></path>
+                                        <path d="M10 7v14"></path>
+                                        <path d="M14 7v14"></path>
+                                        <path d="M12 7V3"></path>
+                                        <path d="M10 3h4"></path>
+                                    </svg>
+                                </div>
+                                <div class="station-name">
+                                    <strong th:text="${est.nombre}">Estación Norte</strong>
+                                    <span th:text="${est.codigo}">EST-001</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td th:text="${est.ubicacion}">Santiago, RD</td>
+                        <td th:id="'estado-cell-' + ${est.id}">
+                            <div th:classappend="${est.estado == 'En línea' ? 'pill-success' : 'pill-danger'}" class="pill">
+                                <div class="dot" th:classappend="${est.estado == 'En línea' ? 'green' : 'red'}"></div>
+                                <span th:text="${est.estado}">En línea</span>
+                            </div>
+                        </td>
+                        <td th:id="'alarmas-cell-' + ${est.id}">
+                            <div th:if="${#lists.isEmpty(est.alarmasActivas)}" class="pill pill-success" style="background: #D1FAE5; color: #059669; border: 1px solid #10B981;">
+                                Sin alarmas
+                            </div>
+                            <div th:if="${not #lists.isEmpty(est.alarmasActivas)}" class="pill pill-warning" style="background: #FEF3C7; color: #D97706; border: 1px solid #F59E0B; font-weight: bold; animation: pulse 2s infinite;">
+                                <span th:text="${#lists.size(est.alarmasActivas)} + ' Alarmas'">1 Alarma</span>
+                            </div>
+                        </td>
+                        <td th:text="${est.latitud != null ? est.latitud : '—'}">19.45</td>
+                        <td th:text="${est.longitud != null ? est.longitud : '—'}">-70.69</td>
+                        <td th:id="'lectura-cell-' + ${est.id}" th:classappend="${est.estado == 'Sin señal' ? 'text-red' : 'text-muted'}" th:text="${est.ultimaLectura != null ? est.ultimaLectura : '—'}">Hace 1 min</td>
+                        <td>
+                            <div class="actions">
+                                <button class="action-btn" title="Ver Telemetría"
+                                        th:data-id="${est.id}"
+                                        th:data-nombre="${est.nombre}"
+                                        th:data-codigo="${est.codigo}"
+                                        th:data-estado="${est.estado}"
+                                        th:data-temperatura="${est.temperatura}"
+                                        th:data-humedad="${est.humedadAire}"
+                                        th:data-viento="${est.velocidadViento}"
+                                        th:data-presion="${est.presion}"
+                                        th:data-dirviento="${est.direccionViento}"
+                                        th:data-lluvia="${est.lluvia}"
+                                        th:data-hsuelo="${est.humedadSuelo}"
+                                        th:data-fecha="${est.fechaHoraLectura}"
+                                        th:data-alarmas="${est.alarmasActivas}"
+                                        onclick="openTelemetryModalFromBtn(this)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                </button>
+                                <button class="action-btn" title="Editar" th:attr="onclick=|openEditModal('${est.id}', '${est.codigo}', '${est.nombre}', '${est.ubicacion}', '${est.latitud}', '${est.longitud}', '${est.estado}')|">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                </button>
+                                <button type="button" class="action-btn delete" title="Eliminar" th:attr="onclick=|openDeleteModal('${est.id}', '${est.nombre}')|">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(estaciones)}">
+                        <td colspan="8" style="text-align: center; padding: 40px;">
+                            <div style="color: var(--text-muted);">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="48" height="48" style="margin-bottom: 16px; opacity: 0.5;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                <p>No hay estaciones registradas en la red.</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="pagination-area">
+                <div class="pagination-info">Mostrando <span th:text="${#lists.size(estaciones)}">2</span> estaciones — Página 1 de 1</div>
+                <div class="pagination-controls">
+                    <button class="page-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    </button>
+                    <button class="page-btn active">1</button>
+                    <button class="page-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<div id="estacionModal" class="modal-overlay">
+    <div class="modal-content" style="position: relative;">
+        <button class="modal-close" onclick="closeModal()" style="position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 24px; cursor: pointer; color: #9CA3AF;">&times;</button>
+        <h2>Crear Nueva Estación</h2>
+        <div th:if="${error != null and modalToOpen == 'estacionModal'}" class="alert alert-danger" style="background-color: #FEE2E2; color: #DC2626; padding: 12px 16px; border-radius: 8px; margin-bottom: 24px; border: 1px solid #F87171; font-size: 14px;">
+            <strong th:text="${error}"></strong>
+        </div>
+        <form th:action="@{/estaciones/guardar}" method="post">
+            <div class="form-group">
+                <label>Código Identificador</label>
+                <input type="text" id="codigo" name="codigo" required placeholder="Ej: EST-001" th:value="${estacionConError != null and modalToOpen == 'estacionModal' ? estacionConError.codigo : ''}">
+            </div>
+            <div class="form-group">
+                <label>Nombre de la Estación</label>
+                <input type="text" id="nombre" name="nombre" required placeholder="Ej: Estación Norte" th:value="${estacionConError != null and modalToOpen == 'estacionModal' ? estacionConError.nombre : ''}">
+            </div>
+            <div class="form-group" style="display: flex; gap: 12px; align-items: flex-end;">
+                <div style="flex: 1;">
+                    <label>Ubicación Geográfica</label>
+                    <input type="text" id="ubicacion" name="ubicacion" required placeholder="Ej: Santiago, RD" th:value="${estacionConError != null and modalToOpen == 'estacionModal' ? estacionConError.ubicacion : ''}" readonly style="background-color: #F3F4F6; cursor: not-allowed; color: #6B7280;">
+                </div>
+                <button type="button" class="btn-primary" style="height: 42px; background-color: #111827;" onclick="openMapPicker('create')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="margin-right: 6px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    Mapa
+                </button>
+            </div>
+            <div style="display: flex; gap: 16px;">
+                <div class="form-group" style="flex: 1;">
+                    <label>Latitud</label>
+                    <input type="number" step="any" id="latitud" name="latitud" required placeholder="0.000000" th:value="${estacionConError != null and modalToOpen == 'estacionModal' ? estacionConError.latitud : ''}" readonly style="background-color: #F3F4F6; cursor: not-allowed; color: #6B7280;">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Longitud</label>
+                    <input type="number" step="any" id="longitud" name="longitud" required placeholder="-0.000000" th:value="${estacionConError != null and modalToOpen == 'estacionModal' ? estacionConError.longitud : ''}" readonly style="background-color: #F3F4F6; cursor: not-allowed; color: #6B7280;">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Estado Inicial</label>
+                <select id="estado" name="estado">
+                    <option value="En línea" th:selected="${estacionConError != null and modalToOpen == 'estacionModal' and estacionConError.estado == 'En línea'}">En línea</option>
+                    <option value="Sin señal" th:selected="${estacionConError != null and modalToOpen == 'estacionModal' and estacionConError.estado == 'Sin señal'}">Sin señal</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeModal()">Cancelar</button>
+                <button type="submit" class="btn-primary">Guardar Estación</button>
+            </div>
+        </form>
+    </div>
+</div>
+<div id="telemetryModal" class="modal-overlay" style="display: none; align-items: center; justify-content: center; z-index: 1000;">
+    <div class="modal-content light-panel tm-fade-in" style="position: relative; max-width: 650px; width: 100%; border-radius: 16px;">
+        <button class="modal-close" onclick="closeTelemetryModal()" style="position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 28px; cursor: pointer; color: #6B7280; z-index: 10; transition: color 0.2s;">&times;</button>
+        <div class="telemetry-header">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div id="tm-icon" class="station-icon" style="background: rgba(124, 58, 237, 0.1); color: var(--primary); padding: 14px; border-radius: 14px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28"><path d="M4 7h16l-3 8H7Z"></path><path d="M10 7v14"></path><path d="M14 7v14"></path><path d="M12 7V3"></path><path d="M10 3h4"></path></svg>
+                </div>
+                <div>
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 4px;">
+                        <h2 id="tm-nombre" style="margin: 0; color: #111827; font-size: 22px; font-weight: 700; letter-spacing: -0.5px;">Estación Norte</h2>
+                        <div id="tm-estado" class="pill" style="font-size: 12px; padding: 4px 8px;">
+                            <div class="dot green"></div> <span>En línea</span>
+                        </div>
+                    </div>
+                    <span id="tm-codigo" style="color: #6B7280; font-size: 14px; font-weight: 500;">EST-001</span>
+                </div>
+            </div>
+        </div>
+        <div class="telemetry-body">
+            <div class="telemetry-grid">
+                <div class="tm-card tm-slide-up" style="animation-delay: 0.1s;" id="tc-temperatura">
+                    <div class="tm-label"><svg class="anim-temp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="margin-right:4px;"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path></svg>TEMPERATURA</div>
+                    <div class="tm-value"><span id="tv-temperatura">--</span> °C</div>
+                </div>
+                <div class="tm-card tm-slide-up" style="animation-delay: 0.15s;" id="tc-humedad">
+                    <div class="tm-label"><svg class="anim-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="margin-right:4px;"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>HUMEDAD DEL AIRE</div>
+                    <div class="tm-value"><span id="tv-humedad">--</span>%</div>
+                </div>
+                <div class="tm-card tm-slide-up" style="animation-delay: 0.2s;" id="tc-viento">
+                    <div class="tm-label"><svg class="anim-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="margin-right:4px;"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"></path></svg>VELOCIDAD VIENTO</div>
+                    <div class="tm-value"><span id="tv-viento">--</span> km/h</div>
+                </div>
+                <div class="tm-card tm-slide-up" style="animation-delay: 0.25s;" id="tc-presion">
+                    <div class="tm-label"><svg class="anim-bounce" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="margin-right:4px;"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4l3 3"></path></svg>PRESIÓN ATMOSFÉRICA</div>
+                    <div class="tm-value"><span id="tv-presion">--</span> hPa</div>
+                </div>
+                <div class="tm-card tm-slide-up" style="animation-delay: 0.3s;" id="tc-dirviento">
+                    <div class="tm-label"><svg class="anim-compass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="margin-right:4px;"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>DIRECCIÓN VIENTO</div>
+                    <div class="tm-value"><span id="tv-dirviento">--</span></div>
+                </div>
+                <div class="tm-card tm-slide-up" style="animation-delay: 0.35s;" id="tc-lluvia">
+                    <div class="tm-label"><svg class="anim-drop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="margin-right:4px;"><path d="M8 19v1M12 21v1M16 19v1M8 15v1M12 17v1M16 15v1M8 11v1M12 13v1M16 11v1"></path></svg>PRECIPITACIÓN</div>
+                    <div class="tm-value"><span id="tv-lluvia">--</span> mm</div>
+                </div>
+                <div class="tm-card tm-slide-up" style="animation-delay: 0.4s;" id="tc-hsuelo">
+                    <div class="tm-label"><svg class="anim-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="margin-right:4px;"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>HUMEDAD DEL SUELO</div>
+                    <div class="tm-value"><span id="tv-hsuelo">--</span>%</div>
+                </div>
+            </div>
+            <div class="telemetry-footer tm-slide-up" style="animation-delay: 0.5s;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                Última lectura: <span id="tv-fecha" style="font-weight: 600; color: #4B5563;">--</span>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="estacionEditModal" class="modal-overlay">
+    <div class="modal-content" style="position: relative;">
+        <button class="modal-close" onclick="closeEditModal()" style="position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 24px; cursor: pointer; color: #9CA3AF;">&times;</button>
+        <h2>Editar Estación</h2>
+        <div th:if="${exitoEdit != null and modalToOpen == 'estacionEditModal'}" id="edit-success-alert" class="alert alert-success" style="background-color: #D1FAE5; color: #059669; padding: 12px 16px; border-radius: 8px; margin-bottom: 24px; border: 1px solid #34D399; font-size: 14px; transition: opacity 0.5s;">
+            <strong th:text="${exitoEdit}"></strong>
+        </div>
+        <div th:if="${error != null and modalToOpen == 'estacionEditModal'}" class="alert alert-danger" style="background-color: #FEE2E2; color: #DC2626; padding: 12px 16px; border-radius: 8px; margin-bottom: 24px; border: 1px solid #F87171; font-size: 14px;">
+            <strong th:text="${error}"></strong>
+        </div>
+        <form th:action="@{/estaciones/guardar}" method="post">
+            <input type="hidden" id="edit-id" name="id" th:value="${estacionConError != null and modalToOpen == 'estacionEditModal' ? estacionConError.id : ''}">
+            <div class="form-group">
+                <label>Código Identificador</label>
+                <input type="text" id="edit-codigo" name="codigo" required placeholder="Ej: EST-001" th:value="${estacionConError != null and modalToOpen == 'estacionEditModal' ? estacionConError.codigo : ''}" oninput="checkEditChanges()">
+            </div>
+            <div class="form-group">
+                <label>Nombre de la Estación</label>
+                <input type="text" id="edit-nombre" name="nombre" required placeholder="Ej: Estación Norte" th:value="${estacionConError != null and modalToOpen == 'estacionEditModal' ? estacionConError.nombre : ''}" oninput="checkEditChanges()">
+            </div>
+            <div class="form-group" style="display: flex; gap: 12px; align-items: flex-end;">
+                <div style="flex: 1;">
+                    <label>Ubicación Geográfica</label>
+                    <input type="text" id="edit-ubicacion" name="ubicacion" required placeholder="Ej: Santiago, RD" th:value="${estacionConError != null and modalToOpen == 'estacionEditModal' ? estacionConError.ubicacion : ''}" readonly style="background-color: #F3F4F6; cursor: not-allowed; color: #6B7280;">
+                </div>
+                <button type="button" class="btn-primary" style="height: 42px; background-color: #111827;" onclick="openMapPicker('edit')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="margin-right: 6px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    Mapa
+                </button>
+            </div>
+            <div style="display: flex; gap: 16px;">
+                <div class="form-group" style="flex: 1;">
+                    <label>Latitud</label>
+                    <input type="number" step="any" id="edit-latitud" name="latitud" required placeholder="0.000000" th:value="${estacionConError != null and modalToOpen == 'estacionEditModal' ? estacionConError.latitud : ''}" readonly style="background-color: #F3F4F6; cursor: not-allowed; color: #6B7280;">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Longitud</label>
+                    <input type="number" step="any" id="edit-longitud" name="longitud" required placeholder="-0.000000" th:value="${estacionConError != null and modalToOpen == 'estacionEditModal' ? estacionConError.longitud : ''}" readonly style="background-color: #F3F4F6; cursor: not-allowed; color: #6B7280;">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Estado Inicial</label>
+                <select id="edit-estado" name="estado" onchange="checkEditChanges()">
+                    <option value="En línea" th:selected="${estacionConError != null and modalToOpen == 'estacionEditModal' and estacionConError.estado == 'En línea'}">En línea</option>
+                    <option value="Sin señal" th:selected="${estacionConError != null and modalToOpen == 'estacionEditModal' and estacionConError.estado == 'Sin señal'}">Sin señal</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeEditModal()">Cancelar</button>
+                <button type="submit" id="btn-edit-submit" class="btn-primary" style="opacity: 0.5; cursor: not-allowed;" disabled>Actualizar Estación</button>
+            </div>
+        </form>
+    </div>
+</div>
+<div id="estacionDeleteModal" class="modal-overlay">
+    <div class="modal-content" style="position: relative; max-width: 420px; text-align: center; padding-top: 40px;">
+        <button class="modal-close" onclick="closeDeleteModal()" style="position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 24px; cursor: pointer; color: #9CA3AF;">&times;</button>
+        <div style="width: 56px; height: 56px; border-radius: 50%; background-color: #FEE2E2; color: #DC2626; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+        </div>
+        <h2 style="margin-bottom: 8px;">¿Eliminar Estación?</h2>
+        <p style="color: #6B7280; font-size: 14px; margin-bottom: 32px; line-height: 1.5;">
+            Estás a punto de eliminar la estación <strong id="delete-station-name" style="color: #111827;"></strong>. Todos los datos y lecturas asociadas se perderán. Esta acción no se puede deshacer.
+        </p>
+        <form id="deleteForm" method="post" style="display: flex; gap: 12px;">
+            <button type="button" class="btn-cancel" onclick="closeDeleteModal()" style="flex: 1; padding: 12px;">Cancelar</button>
+            <button type="submit" class="btn-primary" style="background-color: #DC2626; flex: 1; justify-content: center; padding: 12px; border: none;">Sí, eliminar estación</button>
+        </form>
+    </div>
+</div>
+<div id="mapPickerModal" class="modal-overlay" style="z-index: 1000;">
+    <div class="modal-content" style="max-width: 600px; padding: 24px;">
+        <button type="button" class="modal-close" onclick="closeMapPicker()" style="position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 24px; cursor: pointer; color: #9CA3AF; z-index: 100;">&times;</button>
+        <h2 style="margin-bottom: 8px;">Seleccionar Ubicación</h2>
+        <p style="color: #6B7280; font-size: 14px; margin-bottom: 16px;">Mueve el mapa para colocar el pin en la ubicación exacta de la estación.</p>
+        <div class="map-picker-container" id="picker-map-root">
+            <div class="crosshair-target">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="36" height="36" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 0 1 0-5 2.5 2.5 0 0 1 0 5z"/>
+                </svg>
+            </div>
+        </div>
+        <div style="display: flex; gap: 16px; background: #F3F4F6; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+            <div style="flex: 1;">
+                <label style="font-size: 11px; color: #6B7280; text-transform: uppercase; display: block; margin-bottom: 4px;">Lugar Detectado</label>
+                <div id="picker-address" style="font-size: 14px; font-weight: 500; color: #111827;">Buscando...</div>
+            </div>
+            <div style="text-align: right;">
+                <label style="font-size: 11px; color: #6B7280; text-transform: uppercase; display: block; margin-bottom: 4px;">Coordenadas</label>
+                <div id="picker-coords" style="font-size: 14px; font-weight: 500; color: #4B5563;">0.000, 0.000</div>
+            </div>
+        </div>
+        <div class="modal-actions" style="margin-top: 0;">
+            <button type="button" class="btn-cancel" onclick="closeMapPicker()">Cancelar</button>
+            <button type="button" class="btn-primary" onclick="confirmMapSelection()">Confirmar Ubicación</button>
+        </div>
+    </div>
+</div>
+<script th:inline="javascript">
+    // --- VARIABLES MAPBOX ---
+    const MAPBOX_TOKEN = /*[[${mapboxApiKey}]]*/ '';
+    mapboxgl.accessToken = MAPBOX_TOKEN;
+    let pickerMap = null;
+    let currentPickerMode = 'create'; // 'create' o 'edit'
+    let currentLngLat = null;
+    let currentAddress = '';
+    // --- FUNCIONES DEL MAP PICKER ---
+    function initMapPicker() {
+        if (pickerMap) return; // Ya inicializado
+        pickerMap = new mapboxgl.Map({
+            container: 'picker-map-root',
+            style: 'mapbox://styles/mapbox/streets-v12', // Estilo de calles para más precisión
+            center: [-70.6667, 19.4500], // Centro por defecto (Rep. Dom.)
+            zoom: 12
+        });
+        pickerMap.on('move', () => {
+            const center = pickerMap.getCenter();
+            currentLngLat = center;
+            document.getElementById('picker-coords').textContent = `${center.lat.toFixed(5)}, ${center.lng.toFixed(5)}`;
+        });
+        pickerMap.on('moveend', () => {
+            // Geocodificación inversa
+            fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${currentLngLat.lng},${currentLngLat.lat}.json?access_token=${MAPBOX_TOKEN}&types=place,locality,neighborhood,address`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.features && data.features.length > 0) {
+                        currentAddress = data.features[0].place_name;
+                        // Simplificar nombre (quitar el país al final si es muy largo)
+                        let simpleName = currentAddress.split(',').slice(0, 2).join(',');
+                        document.getElementById('picker-address').textContent = simpleName;
+                        currentAddress = simpleName;
+                    } else {
+                        document.getElementById('picker-address').textContent = 'Ubicación desconocida';
+                        currentAddress = '';
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('picker-address').textContent = 'Error de conexión';
+                });
+        });
+    }
+    function openMapPicker(mode) {
+        currentPickerMode = mode;
+        document.getElementById('mapPickerModal').style.display = 'flex';
+        // Inicializar si no se ha hecho
+        initMapPicker();
+        // Timeout para que el mapa se renderice correctamente después de hacer visible el modal
+        setTimeout(() => {
+            pickerMap.resize();
+            // Centrar el mapa si ya hay coordenadas
+            let lat = document.getElementById(mode === 'create' ? 'latitud' : 'edit-latitud').value;
+            let lng = document.getElementById(mode === 'create' ? 'longitud' : 'edit-longitud').value;
+            if (lat && lng) {
+                pickerMap.setCenter([lng, lat]);
+            }
+        }, 200);
+    }
+    function closeMapPicker() {
+        document.getElementById('mapPickerModal').style.display = 'none';
+    }
+    function confirmMapSelection() {
+        if (!currentLngLat) return;
+        const prefix = currentPickerMode === 'create' ? '' : 'edit-';
+        document.getElementById(prefix + 'latitud').value = currentLngLat.lat.toFixed(6);
+        document.getElementById(prefix + 'longitud').value = currentLngLat.lng.toFixed(6);
+        if (currentAddress) {
+            document.getElementById(prefix + 'ubicacion').value = currentAddress;
+        }
+        if (currentPickerMode === 'edit') {
+            checkEditChanges();
+        }
+        closeMapPicker();
+    }
+    let originalEditValues = {};
+    var errorModalToOpen = /*[[${modalToOpen}]]*/ null;
+    if (errorModalToOpen) {
+        document.getElementById(errorModalToOpen).style.display = 'flex';
+        if (errorModalToOpen === 'estacionEditModal') {
+            originalEditValues = {
+                codigo: document.getElementById('edit-codigo').value,
+                nombre: document.getElementById('edit-nombre').value,
+                ubicacion: document.getElementById('edit-ubicacion').value,
+                latitud: document.getElementById('edit-latitud').value,
+                longitud: document.getElementById('edit-longitud').value,
+                estado: document.getElementById('edit-estado').value
+            };
+            document.getElementById('btn-edit-submit').disabled = true;
+            document.getElementById('btn-edit-submit').style.opacity = '0.5';
+            document.getElementById('btn-edit-submit').style.cursor = 'not-allowed';
+        }
+    }
+    setTimeout(function() {
+        var globalAlert = document.getElementById('global-success-alert');
+        if (globalAlert) {
+            globalAlert.style.opacity = '0';
+            setTimeout(() => globalAlert.style.display = 'none', 500);
+        }
+        var editAlert = document.getElementById('edit-success-alert');
+        if (editAlert) {
+            editAlert.style.opacity = '0';
+            setTimeout(() => editAlert.style.display = 'none', 500);
+        }
+    }, 3500);
+    /*]]>*/
+    // --- Lógica del Modal de Telemetría ---
+    let currentTelemetryEstacionId = null;
+    // Nueva función que lee data-* attributes para evitar problemas con comillas en nombres
+    function openTelemetryModalFromBtn(btn) {
+        const d = btn.dataset;
+        openTelemetryModal(
+            d.id,
+            d.nombre   || '',
+            d.codigo   || '',
+            d.estado   || '',
+            d.temperatura !== undefined ? d.temperatura : 'null',
+            d.humedad     !== undefined ? d.humedad     : 'null',
+            d.viento      !== undefined ? d.viento      : 'null',
+            d.presion     !== undefined ? d.presion     : 'null',
+            d.dirviento   !== undefined ? d.dirviento   : 'null',
+            d.lluvia      !== undefined ? d.lluvia      : 'null',
+            d.hsuelo      !== undefined ? d.hsuelo      : 'null',
+            d.fecha       || 'null',
+            d.alarmas     || '[]'
+        );
+    }
+    function openTelemetryModal(id, nombre, codigo, estado, temp, hum, viento, pres, dirViento, lluvia, humSuelo, fecha, alarmasRaw) {
+        currentTelemetryEstacionId = parseInt(id) || null;
+        document.getElementById('tm-nombre').textContent = nombre;
+        document.getElementById('tm-codigo').textContent = codigo;
+        document.getElementById('tv-fecha').textContent = fecha && fecha !== 'null' ? fecha : '--';
+        const estadoDiv = document.getElementById('tm-estado');
+        if (estado === 'En línea') {
+            estadoDiv.className = 'pill pill-success';
+            estadoDiv.style.cssText = 'font-size: 12px; padding: 4px 8px; background: #D1FAE5; color: #059669; border: 1px solid #10B981;';
+            estadoDiv.innerHTML = '<div class="dot green"></div> <span>En línea</span>';
+        } else {
+            estadoDiv.className = 'pill pill-danger';
+            estadoDiv.style.cssText = 'font-size: 12px; padding: 4px 8px; background: #FEE2E2; color: #DC2626; border: 1px solid #EF4444;';
+            estadoDiv.innerHTML = '<div class="dot red"></div> <span>Sin señal</span>';
+        }
+        // Set values (empty string from data attribute = null → show --)
+        const fmt = (v) => (v !== undefined && v !== null && v !== '' && v !== 'null') ? v : '--';
+        document.getElementById('tv-temperatura').textContent = fmt(temp);
+        document.getElementById('tv-humedad').textContent    = fmt(hum);
+        document.getElementById('tv-viento').textContent     = fmt(viento);
+        document.getElementById('tv-presion').textContent    = fmt(pres);
+        document.getElementById('tv-dirviento').textContent  = fmt(dirViento);
+        document.getElementById('tv-lluvia').textContent     = fmt(lluvia);
+        document.getElementById('tv-hsuelo').textContent     = fmt(humSuelo);
+        // Reset & restart slide-up animation on every open so all cards are visible
+        const cards = document.querySelectorAll('.tm-card');
+        cards.forEach(card => {
+            card.classList.remove('tm-alarm');
+            // Force animation restart: remove, reflow, re-add
+            card.style.animation = 'none';
+            card.offsetHeight; // trigger reflow
+            card.style.animation = '';
+        });
+        // Highlight alarm cards
+        if (alarmasRaw && alarmasRaw !== '[]' && alarmasRaw !== 'null') {
+            const alarmas = alarmasRaw.toLowerCase();
+            if (alarmas.includes('temperatura')) document.getElementById('tc-temperatura').classList.add('tm-alarm');
+            if (alarmas.includes('humedad'))     document.getElementById('tc-humedad').classList.add('tm-alarm');
+            if (alarmas.includes('viento'))      document.getElementById('tc-viento').classList.add('tm-alarm');
+            if (alarmas.includes('lluvia'))      document.getElementById('tc-lluvia').classList.add('tm-alarm');
+        }
+        document.getElementById('telemetryModal').style.display = 'flex';
+    }
+    function closeTelemetryModal() {
+        currentTelemetryEstacionId = null;
+        document.getElementById('telemetryModal').style.display = 'none';
+    }
+    function openModal() {
+        document.getElementById('estacionModal').style.display = 'flex';
+    }
+    function closeModal() {
+        document.getElementById('estacionModal').style.display = 'none';
+    }
+    function openEditModal(id, codigo, nombre, ubicacion, latitud, longitud, estado) {
+        document.getElementById('edit-id').value = id;
+        document.getElementById('edit-codigo').value = codigo;
+        document.getElementById('edit-nombre').value = nombre;
+        document.getElementById('edit-ubicacion').value = ubicacion;
+        document.getElementById('edit-latitud').value = latitud;
+        document.getElementById('edit-longitud').value = longitud;
+        document.getElementById('edit-estado').value = estado;
+        originalEditValues = {
+            codigo: codigo,
+            nombre: nombre,
+            ubicacion: ubicacion,
+            latitud: latitud || '',
+            longitud: longitud || '',
+            estado: estado
+        };
+        document.getElementById('btn-edit-submit').disabled = true;
+        document.getElementById('btn-edit-submit').style.opacity = '0.5';
+        document.getElementById('btn-edit-submit').style.cursor = 'not-allowed';
+        document.getElementById('estacionEditModal').style.display = 'flex';
+    }
+    function checkEditChanges() {
+        const current = {
+            codigo: document.getElementById('edit-codigo').value,
+            nombre: document.getElementById('edit-nombre').value,
+            ubicacion: document.getElementById('edit-ubicacion').value,
+            latitud: document.getElementById('edit-latitud').value,
+            longitud: document.getElementById('edit-longitud').value,
+            estado: document.getElementById('edit-estado').value
+        };
+        let hasChanged = false;
+        for (let key in current) {
+            if (current[key] !== originalEditValues[key]) {
+                hasChanged = true;
+                break;
+            }
+        }
+        const btn = document.getElementById('btn-edit-submit');
+        if (hasChanged) {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+        } else {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+        }
+    }
+    function closeEditModal() {
+        document.getElementById('estacionEditModal').style.display = 'none';
+    }
+    function openDeleteModal(id, nombre) {
+        document.getElementById('delete-station-name').textContent = nombre;
+        document.getElementById('deleteForm').action = '/estaciones/eliminar/' + id;
+        document.getElementById('estacionDeleteModal').style.display = 'flex';
+    }
+    function closeDeleteModal() {
+        document.getElementById('estacionDeleteModal').style.display = 'none';
+    }
+    function filterTable(estado, btn) {
+        // Actualizar botón activo
+        var tabs = document.querySelectorAll('.table-tabs .tab');
+        tabs.forEach(function(t) { t.classList.remove('active'); });
+        if(btn) btn.classList.add('active');
+        // Filtrar filas tomando en cuenta tanto el tab como el buscador
+        const searchInput = document.getElementById('table-search-input');
+        const query = searchInput ? searchInput.value.toLowerCase() : '';
+        var rows = document.querySelectorAll('#estacionesTableBody .station-row');
+        rows.forEach(function(row) {
+            const rowText = row.textContent.toLowerCase();
+            const textMatch = rowText.includes(query);
+            if (estado === 'Todas') {
+                row.style.display = textMatch ? '' : 'none';
+            } else if (estado === 'Con alarmas') {
+                const hasAlarmas = row.getAttribute('data-alarmas') === 'true';
+                if (hasAlarmas) {
+                    row.style.display = textMatch ? '' : 'none';
+                } else {
+                    row.style.display = 'none';
+                }
+            } else {
+                var rowEstado = row.getAttribute('data-estado');
+                if (rowEstado === estado) {
+                    row.style.display = textMatch ? '' : 'none';
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+        });
+    }
+    // Escuchar el evento de tipeo en el buscador
+    const searchInput = document.getElementById('table-search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            // Re-aplicar el filtro actual de la pestaña
+            const activeTabBtn = document.querySelector('.table-tabs .tab.active');
+            // Obtener el estado basado en el texto del botón
+            let estado = 'Todas';
+            if (activeTabBtn) {
+                if (activeTabBtn.textContent.trim() === 'En línea') estado = 'En línea';
+                else if (activeTabBtn.textContent.trim() === 'Fuera de línea') estado = 'Sin señal';
+            }
+            filterTable(estado, activeTabBtn);
+        });
+    }
+    // ==========================================
+    // Integración WebSocket STOMP para Tiempo Real en la Tabla
+    // ==========================================
+    let stompClient = null;
+    function connectWebSocketTable() {
+        if (typeof SockJS === 'undefined' || typeof Stomp === 'undefined') {
+            console.warn('Librerías SockJS/STOMP no encontradas. Saltando conexión en tiempo real.');
+            return;
+        }
+        const socket = new SockJS('/ws');
+        stompClient = Stomp.over(socket);
+        stompClient.debug = null; 
+        stompClient.connect({}, function (frame) {
+            console.log('Conectado a WebSocket (Tabla): ' + frame);
+            stompClient.subscribe('/topic/lecturas', function (mensaje) {
+                const lectura = JSON.parse(mensaje.body);
+                actualizarFilaEnVivo(lectura);
+            });
+        }, function(error) {
+            console.error('WebSocket Error (Tabla):', error);
+            setTimeout(connectWebSocketTable, 5000); 
+        });
+    }
+    function actualizarFilaEnVivo(lectura) {
+        const id = lectura.estacionId;
+        const fila = document.getElementById('row-estacion-' + id);
+        if (fila) {
+            // Actualizar celda de Última Lectura
+            const celdaLectura = document.getElementById('lectura-cell-' + id);
+            if (celdaLectura) {
+                celdaLectura.textContent = 'Hace un momento';
+                celdaLectura.classList.remove('text-red');
+                celdaLectura.classList.add('text-muted');
+                // Efecto visual de actualización
+                celdaLectura.style.transition = 'background-color 0.5s ease';
+                celdaLectura.style.backgroundColor = '#D1FAE5';
+                setTimeout(() => {
+                    celdaLectura.style.backgroundColor = 'transparent';
+                }, 1000);
+            }
+            // Actualizar celda de Estado si antes estaba "Sin señal"
+            const celdaEstado = document.getElementById('estado-cell-' + id);
+            if (celdaEstado && fila.getAttribute('data-estado') !== 'En línea') {
+                fila.setAttribute('data-estado', 'En línea');
+                celdaEstado.innerHTML = `
+                    <div class="pill pill-success">
+                        <div class="dot green"></div>
+                        <span>En línea</span>
+                    </div>
+                `;
+            }
+            // Actualizar modal de telemetría si está abierto para esta estación
+            if (currentTelemetryEstacionId === id) {
+                actualizarModalTelemetriaEnVivo(lectura);
+            }
+        }
+    }
+    function actualizarModalTelemetriaEnVivo(lectura) {
+        const fmt = (v) => (v !== undefined && v !== null && v !== '') ? v : '--';
+        function updateCell(elId, val) {
+            const el = document.getElementById(elId);
+            if (el && el.textContent !== String(val)) {
+                el.textContent = val;
+                // Pequeño efecto visual para indicar actualización
+                el.style.transition = 'color 0.3s ease';
+                el.style.color = '#3B82F6';
+                setTimeout(() => { el.style.color = ''; }, 600);
+            }
+        }
+        updateCell('tv-temperatura', fmt(lectura.temperatura));
+        updateCell('tv-humedad', fmt(lectura.humedadAire));
+        updateCell('tv-viento', fmt(lectura.velocidadViento));
+        updateCell('tv-presion', fmt(lectura.presion));
+        updateCell('tv-dirviento', fmt(lectura.direccionViento));
+        updateCell('tv-lluvia', fmt(lectura.lluvia));
+        updateCell('tv-hsuelo', fmt(lectura.humedadSuelo));
+        if (lectura.fechaHora) {
+            updateCell('tv-fecha', window.Utils && window.Utils.formatDate ? window.Utils.formatDate(lectura.fechaHora) : lectura.fechaHora);
+        }
+        // Actualizar el estado a en línea
+        const estadoDiv = document.getElementById('tm-estado');
+        if (estadoDiv && estadoDiv.className.includes('danger')) {
+            estadoDiv.className = 'pill pill-success';
+            estadoDiv.style.cssText = 'font-size: 12px; padding: 4px 8px; background: #D1FAE5; color: #059669; border: 1px solid #10B981;';
+            estadoDiv.innerHTML = '<div class="dot green"></div> <span>En línea</span>';
+        }
+    }
+    // Iniciar conexión al cargar
+    connectWebSocketTable();
+</script>
+<script th:src="@{/js/notificaciones.js(v='1.2')}"></script>
+</body>
+</html>
