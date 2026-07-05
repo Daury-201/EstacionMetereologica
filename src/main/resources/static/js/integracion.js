@@ -82,7 +82,7 @@ function renderizarPaginacion(totalPages) {
         container.innerHTML = '';
         return;
     }
-    let html = `<div class="pagination-controls" style="display:flex; justify-content:center; align-items:center; gap:8px; margin-top:16px;">`;
+    let html = `<div class="pagination-controls">`;
     html += `<button onclick="cambiarPagina(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} class="btn-page">‹ Anterior</button>`;
     for (let i = 1; i <= totalPages; i++) {
         html += `<button onclick="cambiarPagina(${i})" class="btn-page ${i === currentPage ? 'active' : ''}">${i}</button>`;
@@ -166,7 +166,6 @@ function cargarEstadoPlataforma(plataforma) {
     fetch(`/api/integracion/estado/${plataforma}`)
         .then(res => res.json())
         .then(data => {
-            document.getElementById('apiKey').value = data.apiKey || '';
             document.getElementById('intervalo').value = data.intervaloMin || '10';
             const intervalChips = document.querySelectorAll('.interval-chip');
             intervalChips.forEach(chip => {
@@ -260,7 +259,19 @@ function actualizarBadgePlataforma(plataforma, activa) {
 function actualizarTopNavStatus(activa) {
     const indicator = document.getElementById('nav-api-status');
     const text = document.getElementById('nav-api-status-text');
-    if (indicator) indicator.style.background = activa ? '#10B981' : '#EF4444';
+    if (indicator) {
+        indicator.style.background = activa ? '#10B981' : '#EF4444';
+        const parentBadge = indicator.parentElement;
+        if (parentBadge) {
+            if (activa) {
+                parentBadge.classList.remove('badge-alarms');
+                parentBadge.classList.add('badge-status');
+            } else {
+                parentBadge.classList.remove('badge-status');
+                parentBadge.classList.add('badge-alarms');
+            }
+        }
+    }
     if (text) text.innerText = activa ? 'Conectado' : 'Desconectado';
 }
 function mostrarToast(mensaje, tipo) {
@@ -456,4 +467,53 @@ function selectInterval(chipElement) {
     chipElement.classList.add('active');
     const hiddenInput = document.getElementById('intervalo');
     hiddenInput.value = chipElement.getAttribute('data-value');
+}
+
+function enableEditMode() {
+    const editableArea = document.getElementById('config-editable-area');
+    if (editableArea) {
+        editableArea.style.pointerEvents = 'auto';
+        editableArea.style.opacity = '1';
+    }
+    const btnEdit = document.getElementById('btn-edit-config');
+    if (btnEdit) btnEdit.style.display = 'none';
+    const editActions = document.getElementById('edit-actions');
+    if (editActions) editActions.style.display = 'flex';
+    const btnTest = document.getElementById('btn-test-conn');
+    if (btnTest) btnTest.style.display = 'none';
+}
+
+function cancelEditMode() {
+    // Restaurar el formulario a sus valores por defecto (carga inicial)
+    const form = document.getElementById('integracionForm');
+    if (form) form.reset();
+    
+    // Restaurar UI de chips de intervalo basado en el input oculto restaurado
+    const hiddenIntervalo = document.getElementById('intervalo');
+    if (hiddenIntervalo) {
+        const chips = document.querySelectorAll('.interval-chip');
+        chips.forEach(chip => {
+            if (chip.getAttribute('data-value') === hiddenIntervalo.value) {
+                chip.classList.add('active');
+            } else {
+                chip.classList.remove('active');
+            }
+        });
+    }
+
+    // Restaurar UI de estaciones vinculadas
+    inicializarChips();
+
+    // Restaurar los botones y opacidad
+    const editableArea = document.getElementById('config-editable-area');
+    if (editableArea) {
+        editableArea.style.pointerEvents = 'none';
+        editableArea.style.opacity = '0.7';
+    }
+    const btnEdit = document.getElementById('btn-edit-config');
+    if (btnEdit) btnEdit.style.display = 'flex';
+    const editActions = document.getElementById('edit-actions');
+    if (editActions) editActions.style.display = 'none';
+    const btnTest = document.getElementById('btn-test-conn');
+    if (btnTest) btnTest.style.display = 'flex';
 }

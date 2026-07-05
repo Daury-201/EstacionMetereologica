@@ -15,9 +15,42 @@ public class DashboardController {
         this.lecturaService = lecturaService;
         this.estacionService = estacionService;
     }
-    @GetMapping("/")
-    public String login() {
+    @GetMapping("/login")
+    public String login(jakarta.servlet.http.HttpServletRequest request, Model model, @org.springframework.web.bind.annotation.RequestParam(value = "error", required = false) String error) {
+        jakarta.servlet.http.HttpSession session = request.getSession(false);
+        if (session != null) {
+            String lastUsername = (String) session.getAttribute("LAST_USERNAME");
+            if (lastUsername != null) {
+                model.addAttribute("lastUsername", lastUsername);
+                session.removeAttribute("LAST_USERNAME");
+            }
+        }
+        
+        if (error != null) {
+            String specificError = error.isEmpty() ? "true" : error;
+            if (session != null) {
+                Exception ex = (Exception) session.getAttribute(org.springframework.security.web.WebAttributes.AUTHENTICATION_EXCEPTION);
+                if (ex != null) {
+                    Throwable rootCause = ex;
+                    if (ex instanceof org.springframework.security.authentication.InternalAuthenticationServiceException && ex.getCause() != null) {
+                        rootCause = ex.getCause();
+                    }
+                    if (rootCause instanceof org.springframework.security.core.userdetails.UsernameNotFoundException) {
+                        specificError = "not_found";
+                    } else if (rootCause instanceof org.springframework.security.authentication.BadCredentialsException || ex instanceof org.springframework.security.authentication.BadCredentialsException) {
+                        specificError = "bad_credentials";
+                    }
+                }
+            }
+            model.addAttribute("loginError", specificError);
+        }
+        
         return "login";
+    }
+
+    @GetMapping("/")
+    public String root() {
+        return "redirect:/inicio";
     }
     @GetMapping("/inicio")
     public String index(Model model) {

@@ -11,6 +11,9 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
+
 @Service
 public class EstacionService {
     @Autowired
@@ -19,6 +22,10 @@ public class EstacionService {
     private LecturaSensoresRepository lecturaRepository;
     @Autowired
     private AlarmaRepository alarmaRepository;
+    @Autowired
+    private ConfiguracionService configuracionService;
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
     public List<EstacionDTO> obtenerTodasConUltimaLectura() {
         List<Estacion> estaciones = estacionRepository.findAll();
         List<EstacionDTO> resultado = new ArrayList<>();
@@ -66,5 +73,48 @@ public class EstacionService {
     }
     public Estacion obtenerPorCodigo(String codigo) {
         return estacionRepository.findByCodigo(codigo).orElse(null);
+    }
+
+    @Scheduled(fixedDelay = 10000)
+    public void monitorearEstadoEstaciones() {
+        int timeoutSenalMin = configuracionService.obtenerConfiguracionActual().getTimeoutSenalMin();
+        List<Estacion> estaciones = estacionRepository.findAll();
+        
+        for (Estacion est : estaciones) {
+            lecturaRepository.findTopByEstacionIdOrderByFechaHoraDesc(est.getId().intValue())
+                .ifPresentOrElse(lectura -> {
+                    long segundos = ChronoUnit.SECONDS.between(lectura.getFechaHora(), LocalDateTime.now());
+                    
+                    if (segundos >= (timeoutSenalMin * 60L)) {
+                        if (!"Sin señal".equals(est.getEstado())) {
+                            est.setEstado("Sin señal");
+                            estacionRepository.save(est);
+                            EstacionDTO dto = new EstacionDTO();
+                            dto.setId(est.getId());
+                            dto.setEstado("Sin señal");
+                            messagingTemplate.convertAndSend("/topic/estaciones-estado", dto);
+                        }
+                    } else {
+                        if (!"En línea".equals(est.getEstado())) {
+                            est.setEstado("En línea");
+                            estacionRepository.save(est);
+                            EstacionDTO dto = new EstacionDTO();
+                            dto.setId(est.getId());
+                            dto.setEstado("En línea");
+                            messagingTemplate.convertAndSend("/topic/estaciones-estado", dto);
+                        }
+                    }
+                }, () -> {
+                    
+                    if (!"Sin señal".equals(est.getEstado())) {
+                        est.setEstado("Sin señal");
+                        estacionRepository.save(est);
+                        EstacionDTO dto = new EstacionDTO();
+                        dto.setId(est.getId());
+                        dto.setEstado("Sin señal");
+                        messagingTemplate.convertAndSend("/topic/estaciones-estado", dto);
+                    }
+                });
+        }
     }
 }

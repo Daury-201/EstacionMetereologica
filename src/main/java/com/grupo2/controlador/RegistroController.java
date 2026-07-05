@@ -1,0 +1,99 @@
+package com.grupo2.controlador;
+
+import com.grupo2.entidad.Usuario;
+import com.grupo2.servicio.EmailService;
+import com.grupo2.servicio.UsuarioService;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.UUID;
+
+@Controller
+public class RegistroController {
+
+    private final UsuarioService usuarioService;
+    private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
+
+    public RegistroController(UsuarioService usuarioService, PasswordEncoder passwordEncoder, EmailService emailService) {
+        this.usuarioService = usuarioService;
+        this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
+    }
+
+    @GetMapping("/registro")
+    public String registro() {
+        return "registro";
+    }
+
+    @PostMapping("/registro")
+    public String procesarRegistro(
+            @RequestParam String nombre,
+            @RequestParam String username,
+            @RequestParam String email,
+            @RequestParam String password,
+            @RequestParam String confirmPassword,
+            RedirectAttributes redirectAttributes) {
+        
+        if (!password.equals(confirmPassword)) {
+            redirectAttributes.addFlashAttribute("error", "Las contraseñas no coinciden");
+            return "redirect:/registro";
+        }
+
+        if (usuarioService.obtenerPorUsername(username) != null) {
+            redirectAttributes.addFlashAttribute("error", "El nombre de usuario ya está en uso");
+            return "redirect:/registro";
+        }
+
+        if (usuarioService.obtenerPorEmail(email) != null) {
+            redirectAttributes.addFlashAttribute("error", "El correo electrónico ya está registrado");
+            return "redirect:/registro";
+        }
+
+        Usuario nuevoUsuario = new Usuario();
+        nuevoUsuario.setNombre(nombre);
+        nuevoUsuario.setUsername(username);
+        nuevoUsuario.setEmail(email);
+        nuevoUsuario.setPassword(passwordEncoder.encode(password));
+        nuevoUsuario.setRol("VISOR"); 
+
+        usuarioService.guardarUsuario(nuevoUsuario);
+
+        redirectAttributes.addFlashAttribute("exito", "Cuenta creada exitosamente. Ahora puedes iniciar sesión.");
+        return "redirect:/login";
+    }
+
+    @GetMapping("/olvido-password")
+    public String olvidoPassword() {
+        return "olvido-password";
+    }
+
+    @PostMapping("/olvido-password")
+    public String procesarOlvidoPassword(@RequestParam String email, RedirectAttributes redirectAttributes) {
+        Usuario usuario = usuarioService.obtenerPorEmail(email);
+        
+        if (usuario == null) {
+            
+            redirectAttributes.addFlashAttribute("error", "No se encontró una cuenta con ese correo electrónico");
+            return "redirect:/olvido-password";
+        }
+
+        
+        String nuevaClave = UUID.randomUUID().toString().substring(0, 8);
+        
+        
+        usuario.setPassword(passwordEncoder.encode(nuevaClave));
+        usuarioService.guardarUsuario(usuario);
+        
+        
+        emailService.enviarCorreoRecuperacion(usuario.getEmail(), nuevaClave);
+
+        redirectAttributes.addFlashAttribute("exito", "Te hemos enviado un correo con instrucciones para recuperar tu cuenta.");
+        return "redirect:/login";
+    }
+}

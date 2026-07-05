@@ -37,7 +37,24 @@ public class IntegracionService {
     private SimpMessagingTemplate messagingTemplate;
     @Value("${api.openweathermap.key}")
     private String openWeatherMapApiKey;
+
     private final RestTemplate restTemplate = new RestTemplate();
+    
+    public String obtenerPronosticoOWM(Long estacionId) {
+        return estacionRepository.findById(estacionId).map(est -> {
+            String url = String.format("https://api.openweathermap.org/data/2.5/forecast?lat=%s&lon=%s&appid=%s&units=metric",
+                    est.getLatitud(), est.getLongitud(), openWeatherMapApiKey);
+            try {
+                return restTemplate.getForObject(url, String.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return "{}";
+            }
+        }).orElse("{}");
+    }
+
+    private List<Map<String, Object>> cachedForecast = null;
+    private LocalDateTime lastForecastTime = null;
     @Scheduled(fixedDelay = 60000)
     @Transactional
     public void procesarSincronizaciones() {
@@ -137,6 +154,13 @@ public class IntegracionService {
                     }
                     lectura.setHumedadSuelo(null);
                     lecturaRepository.save(lectura);
+                    
+                    try {
+                        messagingTemplate.convertAndSend("/topic/lecturas", lectura);
+                    } catch (Exception e) {
+                        System.err.println("Error enviando WebSocket de lectura OWM: " + e.getMessage());
+                    }
+                    
                     try {
                         alarmaService.evaluarSensor(lectura.getEstacionId(), "temperatura", lectura.getTemperatura());
                         alarmaService.evaluarSensor(lectura.getEstacionId(), "humedad_aire", lectura.getHumedadAire());
@@ -202,5 +226,60 @@ public class IntegracionService {
     private String convertirGradosADireccion(double grados) {
         String[] direcciones = {"N", "NE", "E", "SE", "S", "SW", "W", "NW", "N"};
         return direcciones[(int) Math.round(((grados % 360) / 45))];
+    }
+    
+    public List<Map<String, Object>> obtenerPronosticoGeneral() {
+        if (cachedForecast != null && lastForecastTime != null && 
+            java.time.Duration.between(lastForecastTime, LocalDateTime.now()).toHours() < 2) {
+            return cachedForecast;
+        }
+        
+        try {
+            
+            String url = "https://api.open-meteo.com/v1/forecast?latitude=19.45&longitude=-70.697&daily=temperature_2m_max,precipitation_probability_max,weather_code&timezone=America%2FNew_York";
+            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> body = response.getBody();
+                Map<String, Object> daily = (Map<String, Object>) body.get("daily");
+                
+                List<String> time = (List<String>) daily.get("time");
+                List<Number> tempMax = (List<Number>) daily.get("temperature_2m_max");
+                List<Number> precipProb = (List<Number>) daily.get("precipitation_probability_max");
+                List<Number> weatherCode = (List<Number>) daily.get("weather_code");
+                
+                List<Map<String, Object>> pronostico7Dias = new java.util.ArrayList<>();
+                
+                for (int i = 0; i < time.size() && i < 7; i++) {
+                    Map<String, Object> dayForecast = new java.util.HashMap<>();
+                    
+                    dayForecast.put("temp", tempMax.get(i).doubleValue());
+                    
+                    int code = weatherCode.get(i).intValue();
+                    String condition = "Clear";
+                    if (code == 1 || code == 2 || code == 3) condition = "Clouds";
+                    else if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) condition = "Rain";
+                    else if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) condition = "Snow";
+                    else if (code >= 95 && code <= 99) condition = "Thunderstorm";
+                    
+                    dayForecast.put("condition", condition);
+                    
+                    dayForecast.put("pop", precipProb.get(i).doubleValue() / 100.0);
+                    
+                    String dateStr = time.get(i);
+                    java.time.LocalDate date = java.time.LocalDate.parse(dateStr);
+                    dayForecast.put("dt", date.atStartOfDay(java.time.ZoneOffset.UTC).toEpochSecond());
+                    
+                    pronostico7Dias.add(dayForecast);
+                }
+                
+                this.cachedForecast = pronostico7Dias;
+                this.lastForecastTime = LocalDateTime.now();
+                return pronostico7Dias;
+            }
+        } catch (Exception e) {
+            System.err.println("Error obteniendo pronostico de Open-Meteo: " + e.getMessage());
+        }
+        
+        return new java.util.ArrayList<>();
     }
 }

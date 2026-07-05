@@ -10,47 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <link rel="stylesheet" th:href="@{/css/components.css(v='1.0')}">
+    <link rel="stylesheet" th:href="@{/css/components.css(v='1.2')}">
     <script th:src="@{/js/utils.js(v='1.0')}" defer></script>
 </head>
 <body>
     <aside th:replace="~{fragments/components :: sidebar(activePage='graficos')}"></aside>
 <main class="main-content">
-    <header class="top-nav">
-        <div class="nav-left" style="display: flex; align-items: center; gap: 32px;">
-            <h1 class="page-title">Gráficos y Análisis</h1>
-        </div>
-        <div class="top-actions">
-            <div class="top-badge last-sync-badge">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
-                <span id="nav-last-sync" th:text="${ultimaSincronizacionGlobal != null ? 'Última sincronización: ' + #temporals.format(ultimaSincronizacionGlobal, 'dd/MM/yyyy HH:mm') : 'Sin sincronizaciones'}">Última sincronización: --</span>
-            </div>
-            <div class="top-badge badge-alarms" id="alarms-badge-btn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                <span>Alarmas</span>
-                <div class="notification-dot" id="globalAlarmBadge" th:text="${totalAlarmasActivas != null ? totalAlarmasActivas : 0}">0</div>
-                <div id="alarms-dropdown" class="summary-dropdown" style="width: 320px;">
-                    <div class="summary-dropdown-header" style="display: flex; justify-content: space-between; align-items: center;">
-                        <span>Alarmas Activas</span>
-                        <span class="badge badge-danger" style="font-size: 10px; padding: 2px 6px;" id="dropdownActiveCount" th:text="${totalAlarmasActivas != null ? totalAlarmasActivas : 0} + ' Activas'">0 Activas</span>
-                    </div>
-                    <div id="alarms-dropdown-items" style="max-height: 280px; overflow-y: auto;">
-                    </div>
-                    <div style="padding: 10px 16px; border-top: 1px solid #E5E7EB; background: #F9FAFB; border-radius: 0 0 12px 12px; text-align: center;">
-                        <a href="/alarmas" style="font-size: 12px; color: var(--primary); text-decoration: none; font-weight: 600; display: block;">Ver todo en la sección de alarmas</a>
-                    </div>
-                </div>
-            </div>
-            <div class="profile-dropdown">
-                <div class="avatar">G2</div>
-                <div class="profile-info">
-                    <span class="profile-name">Grupo 2</span>
-                    <span class="profile-role">Administrador</span>
-                </div>
-                <svg viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" width="16" height="16" style="margin-right: 4px;"><polyline points="6 9 12 15 18 9"/></svg>
-            </div>
-        </div>
-    </header>
+    <header th:replace="~{fragments/components :: topNav(pageTitle='Gráficos y Análisis')}"></header>
     <div class="content-area">
         <div class="station-selector-container" style="margin-bottom: 24px; display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; padding: 16px; border-radius: 12px;">
             <div>
@@ -83,45 +49,53 @@
                 </button>
             </div>
         </div>
-        <div id="summaryCards" style="display: none; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
-            <div class="summary-card">
-                <div class="summary-icon temp">🌡️</div>
-                <div class="summary-info">
-                    <span class="summary-label">Temperatura Máx / Mín</span>
-                    <strong class="summary-value" id="sumTemp">-- / -- °C</strong>
-                </div>
-            </div>
-            <div class="summary-card">
-                <div class="summary-icon wind">💨</div>
-                <div class="summary-info">
-                    <span class="summary-label">Viento Máx</span>
-                    <strong class="summary-value" id="sumViento">-- km/h</strong>
-                </div>
-            </div>
-            <div class="summary-card">
-                <div class="summary-icon rain">🌧️</div>
-                <div class="summary-info">
-                    <span class="summary-label">Lluvia (Últ. 2h)</span>
-                    <strong class="summary-value" id="sumLluvia">-- mm</strong>
-                </div>
-            </div>
-            <div class="summary-card">
-                <div class="summary-icon hum">💧</div>
-                <div class="summary-info">
-                    <span class="summary-label">Humedad Promedio</span>
-                    <strong class="summary-value" id="sumHum">-- %</strong>
-                </div>
-            </div>
-        </div>
+          <div id="summaryCards" style="display: none; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+              <div class="summary-card">
+                  <div class="summary-icon temp">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path></svg>
+                  </div>
+                  <div class="summary-info">
+                      <span class="summary-label">Temperatura Máx / Mín</span>
+                      <strong class="summary-value" id="sumTemp">-- / -- &deg;C</strong>
+                  </div>
+              </div>
+              <div class="summary-card">
+                  <div class="summary-icon wind">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"></path></svg>
+                  </div>
+                  <div class="summary-info">
+                      <span class="summary-label">Viento Máx</span>
+                      <strong class="summary-value" id="sumViento">-- km/h</strong>
+                  </div>
+              </div>
+              <div class="summary-card">
+                  <div class="summary-icon rain">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path><path d="M16 20l-2 2"></path><path d="M8 20l-2 2"></path><path d="M12 20l-2 2"></path></svg>
+                  </div>
+                  <div class="summary-info">
+                      <span class="summary-label">Lluvia (Últimas 24h)</span>
+                      <strong class="summary-value" id="sumLluvia">-- mm</strong>
+                  </div>
+              </div>
+              <div class="summary-card">
+                  <div class="summary-icon hum">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
+                  </div>
+                  <div class="summary-info">
+                      <span class="summary-label">Humedad Promedio</span>
+                      <strong class="summary-value" id="sumHum">-- %</strong>
+                  </div>
+              </div>
+          </div>
         <div id="loadingSpinner" style="display: none; text-align: center; padding: 40px 0;">
             <div class="spinner"></div>
             <p style="margin-top: 16px; color: #6B7280; font-weight: 500;">Cargando historial de datos...</p>
         </div>
         <div class="charts-grid" id="chartsGrid" style="display: none;">
-            <div class="chart-card">
-                <h3 class="chart-title">Temperatura (°)</h3>
-                <div id="chartTemperatura"></div>
-            </div>
+              <div class="chart-card">
+                  <h3 class="chart-title">Temperatura (°C)</h3>
+                  <div id="chartTemperatura"></div>
+              </div>
             <div class="chart-card">
                 <h3 class="chart-title">Humedad (%)</h3>
                 <div id="chartHumedad"></div>
@@ -130,26 +104,43 @@
                 <h3 class="chart-title">Velocidad del Viento (km/h)</h3>
                 <div id="chartViento"></div>
             </div>
-            <div class="chart-card">
-                <h3 class="chart-title">Presión Atmosférica (hPa)</h3>
-                <div id="chartPresion"></div>
-            </div>
+              <div class="chart-card">
+                  <h3 class="chart-title">Presión Atmosférica (hPa)</h3>
+                  <div id="chartPresion"></div>
+              </div>
             <div class="chart-card">
                 <h3 class="chart-title">Humedad del Suelo (%)</h3>
                 <div id="chartSuelo"></div>
             </div>
+              <div class="chart-card">
+                  <h3 class="chart-title">Precipitación (mm)</h3>
+                  <div id="chartLluvia"></div>
+              </div>
             <div class="chart-card">
-                <h3 class="chart-title">Precipitación (mm)</h3>
-                <div id="chartLluvia"></div>
+                <h3 class="chart-title">Rosa de los Vientos</h3>
+                <div id="chartWindRose"></div>
             </div>
+              <div class="chart-card" style="grid-column: 1 / -1;">
+                  <h3 class="chart-title">Análisis Predictivo: Realidad vs. OpenWeatherMap</h3>
+                  <div id="chartPredictivo"></div>
+              </div>
         </div>
-        <div id="noStationMessage" style="text-align: center; padding: 60px; color: #6B7280;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48" style="margin-bottom: 16px; opacity: 0.5;">
-                <line x1="18" y1="20" x2="18" y2="10"></line>
-                <line x1="12" y1="20" x2="12" y2="4"></line>
-                <line x1="6" y1="20" x2="6" y2="14"></line>
-            </svg>
-            <h3>Seleccione una estación para ver sus gráficos</h3>
+        <div id="globalAnalysis" style="display: block;">
+            <div id="noStationMessage" style="text-align: center; padding: 30px; color: #6B7280;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48" style="margin-bottom: 16px; opacity: 0.5;">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+                <h3 style="font-size: 18px; font-weight: 600; color: #374151;">Análisis Global de la Red</h3>
+                <p>Seleccione una estación arriba para ver sus gráficos detallados, o analice el estado global a continuación.</p>
+            </div>
+            <div class="charts-grid" style="display: grid;">
+                  <div class="chart-card" style="grid-column: 1 / -1;">
+                      <h3 class="chart-title">Extremos Térmicos (Últimos 7 días)</h3>
+                      <div id="chartExtremosTermicos"></div>
+                  </div>
+            </div>
         </div>
     </div>
 </main>

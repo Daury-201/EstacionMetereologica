@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Estación Meteorológica</title>
-    <link rel="stylesheet" th:href="@{/css/dashboard.css(v='2.19')}" href="../static/css/dashboard.css">
-    <link rel="stylesheet" th:href="@{/css/components.css(v='1.0')}">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css(v='2.21')}" href="../static/css/dashboard.css">
+    <link rel="stylesheet" th:href="@{/css/components.css(v='1.2')}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js'></script>
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
@@ -33,6 +33,9 @@
                 <div id="map-root"></div>
                 <button class="expand-map-btn" id="expandMapBtn" title="Maximizar mapa" onclick="toggleMapExpansion()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                </button>
+                <button class="expand-map-btn" id="resetMapBtn" title="Restaurar vista inicial" onclick="resetMapView()" style="top: 70px; right: 24px; background: #FFFFFF; color: #7C3AED; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
                 </button>
                 <div class="map-style-switcher">
                     <button class="style-btn active" data-style="mapbox://styles/mapbox/outdoors-v12">Relieve</button>

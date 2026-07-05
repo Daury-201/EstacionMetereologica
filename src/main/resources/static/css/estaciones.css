@@ -91,79 +91,8 @@ body {
     font-weight: 500;
 }
 .status-badge svg { color: var(--success); }
-.top-badge {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 18px;
-    background-color: #FFFFFF;
-    border-radius: 24px;
-    font-size: 13px;
-    font-weight: 600;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-    cursor: pointer;
-    transition: transform 0.2s;
-    white-space: nowrap;
-}
-.top-badge:hover { transform: translateY(-2px); }
-.last-sync-badge {
-    color: var(--text-muted);
-}
-.last-sync-badge svg { color: #10B981; }
-.badge-alarms {
-    color: var(--danger);
-    position: relative;
-    background-color: #FEF2F2;
-}
-.badge-alarms svg { color: var(--danger); }
-.notification-dot {
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    background-color: var(--danger, #EF4444);
-    color: white;
-    font-size: 11px;
-    font-weight: bold;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border: 2px solid #FEF2F2;
-    box-shadow: 0 2px 5px rgba(239,68,68,0.4);
-}
-.profile-dropdown {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 6px 14px 6px 6px;
-    border-radius: 24px;
-    background-color: var(--white);
-    border: 1px solid var(--border);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-.profile-dropdown:hover { transform: translateY(-2px); }
-.avatar {
-    width: 36px;
-    height: 36px;
-    background-color: var(--primary);
-    color: var(--white);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: 14px;
-}
-.profile-info {
-    display: flex;
-    flex-direction: column;
-}
-.profile-name { font-size: 13px; font-weight: 600; color: var(--text-main); }
-.profile-role { font-size: 12px; color: var(--text-muted); }
+
+
 .content-area {
     padding: 32px;
     max-width: 1400px;

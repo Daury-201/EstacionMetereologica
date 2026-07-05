@@ -4,6 +4,9 @@ let chartViento = null;
 let chartPresion = null;
 let chartSuelo = null;
 let chartLluvia = null;
+let chartWindRose = null;
+let chartPredictivo = null;
+let chartExtremos = null;
 let currentStationId = null;
 let stompClient = null;
 const MAX_RAW_POINTS = 2000;   
@@ -117,6 +120,7 @@ const getCommonOptions = () => ({
     }
 });
 document.addEventListener('DOMContentLoaded', () => {
+    cargarExtremosTermicosGlobales();
     const stationSelect = document.getElementById('stationSelect');
     const dateFilters = document.getElementById('dateFilters');
     const btnFiltrar = document.getElementById('btnFiltrarFechas');
@@ -169,14 +173,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (chartPresion) chartPresion.updateOptions(newOptions);
             if (chartSuelo) chartSuelo.updateOptions(newOptions);
             if (chartLluvia) chartLluvia.updateOptions(newOptions);
+            if (chartExtremos) chartExtremos.updateOptions(newOptions);
+            if (chartWindRose) chartWindRose.updateOptions(newOptions);
+            if (chartPredictivo) chartPredictivo.updateOptions(newOptions);
         });
     }
     if (stationSelect) {
         stationSelect.addEventListener('change', (e) => {
             const estId = e.target.value;
+            const globalAnalysis = document.getElementById('globalAnalysis');
             if (estId) {
                 currentStationId = estId;
-                document.getElementById('noStationMessage').style.display = 'none';
+                if (globalAnalysis) globalAnalysis.style.display = 'none';
                 const grid = document.getElementById('chartsGrid');
                 grid.style.display = 'grid';
                 dateFilters.style.display = 'flex';
@@ -185,9 +193,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 destroyCharts();
                 initCharts();
                 loadHistoricalData(estId);
+                loadWindRose(estId);
+                loadOWMPrediction(estId);
             } else {
                 currentStationId = null;
-                document.getElementById('noStationMessage').style.display = 'block';
+                if (globalAnalysis) globalAnalysis.style.display = 'block';
                 document.getElementById('chartsGrid').style.display = 'none';
                 dateFilters.style.display = 'none';
                 document.getElementById('summaryCards').style.display = 'none';
@@ -217,19 +227,22 @@ function destroyCharts() {
     if (chartPresion) { chartPresion.destroy(); chartPresion = null; }
     if (chartSuelo) { chartSuelo.destroy(); chartSuelo = null; }
     if (chartLluvia) { chartLluvia.destroy(); chartLluvia = null; }
+    if (chartWindRose) { chartWindRose.destroy(); chartWindRose = null; }
+    if (chartPredictivo) { chartPredictivo.destroy(); chartPredictivo = null; }
+    if (chartExtremos) { chartExtremos.destroy(); chartExtremos = null; }
 }
 function initCharts() {
     const baseOpts = getCommonOptions();
     const optionsTemp = {
         ...baseOpts,
         chart: { ...baseOpts.chart, type: 'area', height: 280, id: 'chartT' },
-        series: [{ name: 'Temperatura (°C)', data: [] }],
+        series: [{ name: 'Temperatura (\u00B0C)', data: [] }],
         colors: ['#F59E0B'],
         fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 90, 100] } },
         annotations: {
             yaxis: [
                 { y: 35, borderColor: '#EF4444', label: { borderColor: '#EF4444', style: { color: '#fff', background: '#EF4444' }, text: 'Peligro Calor' } },
-                { y: 15, borderColor: '#3B82F6', label: { borderColor: '#3B82F6', style: { color: '#fff', background: '#3B82F6' }, text: 'Frío Extremo' } }
+                { y: 15, borderColor: '#3B82F6', label: { borderColor: '#3B82F6', style: { color: '#fff', background: '#3B82F6' }, text: 'FrÃ­o Extremo' } }
             ]
         }
     };
@@ -261,7 +274,7 @@ function initCharts() {
     const optionsPresion = {
         ...baseOpts,
         chart: { ...baseOpts.chart, type: 'area', height: 280, id: 'chartP' },
-        series: [{ name: 'Presión (hPa)', data: [] }],
+        series: [{ name: 'PresiÃ³n (hPa)', data: [] }],
         colors: ['#6366F1'],
         fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 90, 100] } }
     };
@@ -279,7 +292,7 @@ function initCharts() {
     const optionsLluvia = {
         ...baseOpts,
         chart: { ...baseOpts.chart, type: 'bar', height: 280, id: 'chartL' },
-        series: [{ name: 'Precipitación (mm)', data: [] }],
+        series: [{ name: 'PrecipitaciÃ³n (mm)', data: [] }],
         colors: ['#0EA5E9'],
         plotOptions: { bar: { columnWidth: '40%', borderRadius: 4 } }
     };
@@ -333,12 +346,12 @@ function loadHistoricalData(estId) {
             });
             if (totalRecords > 0) {
                 const latestLluvia2h = calculateLast2hPrecipitation();
-                document.getElementById('sumTemp').innerText = `${maxTemp.toFixed(1)} / ${minTemp.toFixed(1)} °C`;
+                document.getElementById('sumTemp').innerText = `${maxTemp.toFixed(1)} / ${minTemp.toFixed(1)} \u00B0C`;
                 document.getElementById('sumViento').innerText = `${maxViento.toFixed(1)} km/h`;
                 document.getElementById('sumLluvia').innerText = `${latestLluvia2h.toFixed(1)} mm`;
                 document.getElementById('sumHum').innerText = `${(sumHumTotal / totalRecords).toFixed(1)} %`;
             } else {
-                document.getElementById('sumTemp').innerText = `-- / -- °C`;
+                document.getElementById('sumTemp').innerText = `-- / -- \u00B0C`;
                 document.getElementById('sumViento').innerText = `-- km/h`;
                 document.getElementById('sumLluvia').innerText = `-- mm`;
                 document.getElementById('sumHum').innerText = `-- %`;
@@ -360,12 +373,12 @@ function updateChartsFromRawData() {
     const sueloRes = aggregateDataSequential(rawData.suelo, 100);
     const lluviaRes = aggregateDataSequential(rawData.lluvia, 100);
     timeLabels = tempRes.labels || [];
-    if (chartTemp) chartTemp.updateSeries([{ name: 'Temperatura (°C)', data: tempRes.data || [] }]);
+    if (chartTemp) chartTemp.updateSeries([{ name: 'Temperatura (\u00B0C)', data: tempRes.data || [] }]);
     if (chartHum) chartHum.updateSeries([{ name: 'Humedad (%)', data: humRes.data || [] }]);
     if (chartViento) chartViento.updateSeries([{ name: 'Velocidad (km/h)', data: vientoRes.data || [] }]);
-    if (chartPresion) chartPresion.updateSeries([{ name: 'Presión (hPa)', data: presionRes.data || [] }]);
+    if (chartPresion) chartPresion.updateSeries([{ name: 'Presi\u00F3n (hPa)', data: presionRes.data || [] }]);
     if (chartSuelo) chartSuelo.updateSeries([{ name: 'Humedad Suelo (%)', data: sueloRes.data || [] }]);
-    if (chartLluvia) chartLluvia.updateSeries([{ name: 'Precipitación (mm)', data: lluviaRes.data || [] }]);
+    if (chartLluvia) chartLluvia.updateSeries([{ name: 'Precipitaci\u00F3n (mm)', data: lluviaRes.data || [] }]);
 }
 function connectWebSocket() {
     if (typeof SockJS === 'undefined' || typeof Stomp === 'undefined') return;
@@ -411,8 +424,117 @@ function updateSummaryFromRaw() {
         if (rawData.hum[i]) sumHum += rawData.hum[i].y;
     }
     const latestLluvia2h = calculateLast2hPrecipitation();
-    document.getElementById('sumTemp').innerText = `${maxTemp.toFixed(1)} / ${minTemp.toFixed(1)} °C`;
+    document.getElementById('sumTemp').innerText = `${maxTemp.toFixed(1)} / ${minTemp.toFixed(1)} \u00B0C`;
     document.getElementById('sumViento').innerText = `${maxViento.toFixed(1)} km/h`;
     document.getElementById('sumLluvia').innerText = `${latestLluvia2h.toFixed(1)} mm`;
     document.getElementById('sumHum').innerText = `${(sumHum / tempData.length).toFixed(1)} %`;
+}
+
+async function cargarExtremosTermicosGlobales() {
+    try {
+        const response = await fetch('/api/analisis/extremos-termicos');
+        const data = await response.json();
+        
+        const estaciones = data.map(d => d.estacion);
+        const maxTemps = data.map(d => d.maxTemp);
+        const minTemps = data.map(d => d.minTemp);
+
+        const options = {
+            ...getCommonOptions(),
+            chart: { type: 'bar', height: 350, id: 'chartExtremos' },
+            series: [
+                { name: 'Max Temp (\u00B0C)', data: maxTemps },
+                { name: 'Min Temp (\u00B0C)', data: minTemps }
+            ],
+            xaxis: { 
+                categories: estaciones,
+                labels: { style: { colors: isDarkMode ? '#9CA3AF' : '#6B7280' } }
+            },
+            colors: ['#EF4444', '#3B82F6'],
+            plotOptions: {
+                bar: {
+                    horizontal: false,
+                    columnWidth: '50%',
+                    endingShape: 'rounded'
+                },
+            },
+            dataLabels: { enabled: true, formatter: val => val.toFixed(1) + '°' },
+            stroke: { show: true, width: 2, colors: ['transparent'] }
+        };
+
+        if (chartExtremos) chartExtremos.destroy();
+        chartExtremos = new ApexCharts(document.querySelector("#chartExtremosTermicos"), options);
+        chartExtremos.render();
+    } catch (error) {
+        console.error("Error loading thermal extremes:", error);
+    }
+}
+
+async function loadWindRose(estacionId) {
+    try {
+        const response = await fetch('/api/analisis/estacion/' + estacionId + '/wind-rose');
+        const data = await response.json();
+        
+        const series = Object.values(data);
+        const labels = Object.keys(data);
+        
+        const options = {
+            ...getCommonOptions(),
+            chart: { type: 'polarArea', height: 350, id: 'chartWindRose' },
+            series: series,
+            labels: labels,
+            stroke: { colors: ['#fff'] },
+            fill: { opacity: 0.8 },
+            yaxis: { show: false },
+            legend: { position: 'bottom' }
+        };
+        
+        if (chartWindRose) chartWindRose.destroy();
+        chartWindRose = new ApexCharts(document.querySelector("#chartWindRose"), options);
+        chartWindRose.render();
+    } catch (error) {
+        console.error("Error loading wind rose:", error);
+    }
+}
+
+async function loadOWMPrediction(estacionId) {
+    try {
+        const response = await fetch('/api/analisis/estacion/' + estacionId + '/prediccion-owm');
+        const owmData = await response.json();
+        
+        if (!owmData || !owmData.list) return;
+
+        const owmTemps = owmData.list.slice(0, 10).map(item => ({
+            x: new Date(item.dt * 1000).getTime(),
+            y: item.main.temp
+        }));
+        
+        const pastTemps = rawData.temp.slice(-15).map(p => ({
+            x: new Date(p.x).getTime(),
+            y: p.y
+        }));
+
+        const options = {
+            ...getCommonOptions(),
+            chart: { type: 'line', height: 350, id: 'chartPredictivo' },
+            series: [
+                { name: 'Realidad (Arduino)', data: pastTemps },
+                { name: 'Predicción OWM', data: owmTemps }
+            ],
+            stroke: { curve: 'smooth', width: [3, 3], dashArray: [0, 5] },
+            colors: ['#10B981', '#3B82F6'],
+            xaxis: {
+                type: 'datetime',
+                labels: { style: { colors: isDarkMode ? '#9CA3AF' : '#6B7280' } }
+            },
+            dataLabels: { enabled: false }
+        };
+
+        if (chartPredictivo) chartPredictivo.destroy();
+        chartPredictivo = new ApexCharts(document.querySelector("#chartPredictivo"), options);
+        chartPredictivo.render();
+
+    } catch (error) {
+        console.error("Error loading OWM prediction:", error);
+    }
 }

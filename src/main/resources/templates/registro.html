@@ -8,38 +8,11 @@
     <script th:src="@{/js/login.js}" src="../static/js/login.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
-    <!-- Force early CSRF token generation to prevent session creation errors after response is committed -->
+    
     <meta th:if="${_csrf != null}" name="_csrf" th:content="${_csrf.token}"/>
     <meta th:if="${_csrf != null}" name="_csrf_header" th:content="${_csrf.headerName}"/>
 </head>
 <body>
-<div th:if="${loginError != null or param.error != null}" class="alert-box error-alert slide-in-down">
-    <div class="alert-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-    </div>
-    <div class="alert-content">
-        <span class="alert-title">Acceso denegado</span>
-        <span class="alert-msg" th:text="${(loginError == 'not_found' or (param.error != null and param.error[0] == 'not_found')) ? 'El usuario no existe' : ((loginError == 'bad_credentials' or (param.error != null and param.error[0] == 'bad_credentials')) ? 'Contraseña incorrecta' : 'Usuario o contraseña incorrectos')}">Mensaje de error</span>
-    </div>
-</div>
-<div th:if="${param.logout}" class="alert-box success-alert slide-in-down">
-    <div class="alert-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-    </div>
-    <div class="alert-content">
-        <span class="alert-title">¡Hasta pronto!</span>
-        <span class="alert-msg">Has cerrado sesión correctamente</span>
-    </div>
-</div>
-<div th:if="${exito}" class="alert-box success-alert slide-in-down">
-    <div class="alert-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-    </div>
-    <div class="alert-content">
-        <span class="alert-title">Éxito</span>
-        <span class="alert-msg" th:text="${exito}">Operación exitosa</span>
-    </div>
-</div>
 <div class="login-container">
     <div class="login-left">
             <div class="bg-shape blob-1"></div>
@@ -286,28 +259,32 @@
                     </svg>
                 </div>
                 </div>
-                <h1 class="login-title">Estación Meteorológica</h1>
-                <p class="login-subtitle">Ingresa tus credenciales para continuar</p>
-
-                <form class="login-form" th:action="@{/login}" method="POST" novalidate>
-                    <div class="input-wrapper" style="position: relative; width: 100%;">
-                        <input type="text" name="username" placeholder="Usuario" required="required" th:value="${lastUsername}" />
+                <h1 class="login-title">Crear Cuenta</h1>
+                <p class="login-subtitle">Únete a nuestra plataforma y accede a la red.</p>
+                <form class="login-form" th:action="@{/registro}" method="POST" novalidate>
+                    <div th:if="${error}" class="alert-box error-alert slide-in-down">
+                        <div class="alert-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                        </div>
+                        <div class="alert-content">
+                            <span class="alert-title">Error</span>
+                            <span class="alert-msg" th:text="${error}">Ha ocurrido un error</span>
+                        </div>
                     </div>
-                    <div class="password-wrapper">
-                        <input type="password" id="password" name="password" placeholder="Contraseña" required="required" />
-                        <button type="button" class="password-toggle" onclick="togglePasswordVisibility()" title="Mostrar u ocultar contraseña">
-                            <svg id="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
-                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                                <line x1="1" y1="1" x2="23" y2="23"></line>
-                            </svg>
-                        </button>
+                    <div style="display: flex; gap: 16px; width: 100%;">
+                        <input type="text" name="nombre" placeholder="Nombre completo" required="required" style="flex: 1;" />
+                        <input type="text" name="username" placeholder="Usuario" required="required" style="flex: 1;" />
                     </div>
-                    <button type="submit" class="login-btn">Ingresar</button>
+                    <input type="email" name="email" placeholder="Correo electrónico" required="required" />
+                    <div style="display: flex; gap: 16px; width: 100%;">
+                        <input type="password" name="password" placeholder="Contraseña" required="required" style="flex: 1;" />
+                        <input type="password" name="confirmPassword" placeholder="Confirmar Contraseña" required="required" style="flex: 1;" />
+                    </div>
+                    <button type="submit" class="login-btn" style="margin-top: 4px;">Registrarse</button>
                 </form>
-                <a th:href="@{/olvido-password}" class="forgot-pwd">¿Olvidaste tu contraseña?</a>
                 <div class="divider"></div>
                 <p class="create-account">
-                    ¿No tienes cuenta? <a th:href="@{/registro}">Crear cuenta</a>
+                    ¿Ya tienes cuenta? <a th:href="@{/login}">Iniciar Sesión</a>
                 </p>
             </div>
         </div>
@@ -329,20 +306,12 @@
         35%  { transform: translate(calc(var(--sx) * 0.4px), calc(var(--sy) * 0.4px)) scale(1); opacity: 1; }
         100% { transform: translate(calc(var(--sx) * 1px), calc(var(--sy) * 1px)) scale(0.2); opacity: 0; }
     }
-</style>
-<script>
-    function togglePasswordVisibility() {
-        const input = document.getElementById('password');
-        const icon = document.getElementById('eye-icon');
-        if (input.type === 'password') {
-            input.type = 'text';
-            icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
-        } else {
-            input.type = 'password';
-            icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
-        }
+    
+    /* Reducir padding de los inputs para que no crezca tanto la tarjeta respecto al login */
+    .login-form input {
+        padding: 11px 14px;
     }
-</script>
+</style>
 
 </body>
 </html>

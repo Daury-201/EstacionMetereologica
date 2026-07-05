@@ -12,10 +12,10 @@ const map = new mapboxgl.Map({
     container: 'map-root',
     style: 'mapbox://styles/mapbox/outdoors-v12',
     center: [-70.6667, 19.4500],
-    zoom: 14,
-    pitch: 60,
-    bearing: -17.6,
-    projection: 'globe'
+    zoom: 12.5,
+    pitch: 65,
+    bearing: -17.6
+    
 });
 window.map = map; 
 let currentStationId = null;
@@ -79,9 +79,57 @@ function apply3DEffects(mapInstance) {
 }
 map.on('style.load', () => {
     apply3DEffects(map);
+    
+    
+    
+    setTimeout(() => {
+        if (window.mapRotationActive) {
+            rotateCamera();
+        }
+    }, 1500);
 });
+
+window.mapRotationActive = true;
+
+function rotateCamera() {
+    if (!window.mapRotationActive) {
+        return;
+    }
+    
+    
+    
+    
+    
+    const currentBearing = map.getBearing();
+    map.easeTo({
+        bearing: currentBearing + 5,
+        duration: 3333, 
+        easing: t => t,
+        animate: true
+    });
+    
+    map.once('moveend', () => {
+        if (window.mapRotationActive) {
+            rotateCamera();
+        }
+    });
+}
+const stopSlideshowAndRotation = () => {
+    window.mapRotationActive = false;
+    map.off('moveend', window.onResetMoveEnd); 
+    if (window.slideshowInterval) {
+        clearInterval(window.slideshowInterval);
+        window.slideshowInterval = null;
+    }
+};
+map.on('mousedown', stopSlideshowAndRotation);
+map.on('touchstart', stopSlideshowAndRotation);
+map.on('wheel', stopSlideshowAndRotation);
+map.on('dragstart', stopSlideshowAndRotation);
+
 const estaciones = window.estacionesData || [];
 const stationMarkers = {};
+window.stationMarkers = stationMarkers;
 estaciones.forEach((est, index) => {
     if (est.latitud && est.longitud) {
         const hasAlarms = est.alarmasActivas && est.alarmasActivas.length > 0;
@@ -114,8 +162,10 @@ estaciones.forEach((est, index) => {
         const marker = new mapboxgl.Marker(el)
             .setLngLat([est.longitud, est.latitud])
             .addTo(map);
+
         el.addEventListener('click', (e) => {
             e.stopPropagation();
+            window.mapRotationActive = false; 
             if (window.slideshowInterval) {
                 clearInterval(window.slideshowInterval);
                 window.slideshowInterval = null;
@@ -126,7 +176,7 @@ estaciones.forEach((est, index) => {
     }
 });
 let activas = estaciones.filter(e => e.estado === 'En línea').length;
-document.querySelector('.badge-status span').textContent = `${activas}/${estaciones.length} Estaciones Activas`;
+
 const searchInput = document.getElementById('station-search');
 const searchDropdown = document.getElementById('search-dropdown');
 function renderSearchResults(results) {
@@ -181,45 +231,7 @@ document.addEventListener('click', (e) => {
         searchDropdown.style.display = 'none';
     }
 });
-const badgeBtn = document.getElementById('status-badge-btn');
-const summaryDropdown = document.getElementById('summary-dropdown');
-let summaryHTML = `<div class="summary-dropdown-header">Resumen de Red (${activas} activas de ${estaciones.length})</div>`;
-const estacionesOrdenadas = [...estaciones].sort((a, b) => {
-    if (a.estado === 'En línea' && b.estado !== 'En línea') return -1;
-    if (a.estado !== 'En línea' && b.estado === 'En línea') return 1;
-    return 0;
-});
-estacionesOrdenadas.forEach(est => {
-    const isOnline = est.estado === 'En línea';
-    const statusClass = isOnline ? 'status-online' : 'status-offline';
-    summaryHTML += `
-        <div class="summary-item">
-            <div class="summary-info">
-                <h4>${est.nombre}</h4>
-                <p>${est.codigo}</p>
-            </div>
-            <div class="summary-status ${statusClass}">
-                ${est.estado}
-            </div>
-        </div>
-    `;
-});
-summaryDropdown.innerHTML = summaryHTML;
-badgeBtn.addEventListener('click', (e) => {
-    e.stopPropagation(); 
-    const isVisible = summaryDropdown.style.display === 'flex';
-    summaryDropdown.style.display = isVisible ? 'none' : 'flex';
-    if (!isVisible) {
-        searchDropdown.style.display = 'none';
-    }
-    badgeBtn.style.transform = 'scale(0.97)';
-    setTimeout(() => badgeBtn.style.transform = 'scale(1)', 100);
-});
-document.addEventListener('click', (e) => {
-    if (!badgeBtn.contains(e.target)) {
-        summaryDropdown.style.display = 'none';
-    }
-});
+
 map.addControl(new mapboxgl.NavigationControl({
     visualizePitch: true
 }), 'bottom-right');
@@ -261,7 +273,17 @@ function connectWebSocket() {
             const lectura = JSON.parse(mensaje.body);
             actualizarMarcadorEnVivo(lectura);
             if (lectura.estacionId === currentStationId) {
-                actualizarClimaEnVivo(lectura);
+                const est = estaciones.find(e => e.id === currentStationId);
+                if (est) {
+                    actualizarTarjetaClima(est);
+                    const card = document.getElementById('weatherCard');
+                    if (card) {
+                        card.classList.remove('slide-fade-active');
+                        void card.offsetWidth;
+                        card.classList.add('slide-fade-active');
+                    }
+                    cargarHistorialGrafico(est.id);
+                }
             }
         });
         stompClient.subscribe('/topic/alarmas', function (mensaje) {
@@ -288,11 +310,20 @@ function actualizarMarcadorEnVivo(lectura) {
         est.humedadAire = lectura.humedadAire;
         est.velocidadViento = lectura.velocidadViento;
         est.lluvia = lectura.lluvia;
+        est.presion = lectura.presion;
+        est.humedadSuelo = lectura.humedadSuelo;
+        est.direccionViento = lectura.direccionViento;
+        if (lectura.fechaHora) {
+            est.fechaHoraLectura = formatFechaISO(lectura.fechaHora);
+        }
+        
+        est.estado = 'En línea';
     }
     const marker = stationMarkers[lectura.estacionId];
     if (marker) {
         const el = marker.getElement();
         const hasAlarms = est && est.alarmasActivas && est.alarmasActivas.length > 0;
+        
         const colorHex = hasAlarms ? '#F59E0B' : '#34D399'; 
         el.style.border = `2px solid ${colorHex}`;
         el.style.color = colorHex;
@@ -326,7 +357,7 @@ function actualizarAlarmaEnVivo(alarma) {
     const marker = stationMarkers[est.id];
     if (marker) {
         const el = marker.getElement();
-        const hasAlarms = est.alarmasActivas.length > 0;
+        const hasAlarms = est.alarmasActivas && est.alarmasActivas.length > 0;
         const colorHex = hasAlarms ? '#F59E0B' : '#34D399'; 
         el.style.border = `2px solid ${colorHex}`;
         el.style.color = colorHex;
@@ -339,14 +370,54 @@ function actualizarAlarmaEnVivo(alarma) {
     }
 }
 connectWebSocket();
+window.resetMapView = function() {
+    window.mapRotationActive = false;
+    currentStationId = null;
+    
+    if (window.slideshowInterval) {
+        clearInterval(window.slideshowInterval);
+        window.slideshowInterval = null;
+    }
+
+    map.off('moveend', window.onResetMoveEnd);
+    
+    map.stop();
+
+    
+    map.once('moveend', window.onResetMoveEnd);
+
+    map.flyTo({
+        center: [-70.6667, 19.4500],
+        zoom: 12.5,
+        pitch: 65,
+        bearing: -17.6,
+        speed: 1.2,
+        curve: 1.42,
+        essential: true
+    });
+};
+
+window.onResetMoveEnd = function() {
+    
+    const center = map.getCenter();
+    if (Math.abs(center.lng - (-70.6667)) < 0.05 && Math.abs(center.lat - 19.4500) < 0.05) {
+        window.mapRotationActive = true;
+        rotateCamera();
+    }
+};
+
 window.seleccionarEstacion = function(est, skipFly) {
     if (!est) return;
+    if (!skipFly) window.mapRotationActive = false; 
     currentStationId = est.id;
     if (!skipFly) {
         map.flyTo({
             center: [est.longitud, est.latitud],
-            zoom: 13,
-            pitch: 45,
+            zoom: 16,
+            pitch: 60,
+            bearing: 45,
+            speed: 1.2,
+            curve: 1.42,
             essential: true
         });
     }
@@ -354,11 +425,17 @@ window.seleccionarEstacion = function(est, skipFly) {
     cargarHistorialGrafico(est.id);
 };
 function cargarHistorialGrafico(estacionId) {
-    fetch(`/api/lecturas/historial/${estacionId}?limite=12`)
+    const end = new Date();
+    const start = new Date(end.getTime() - 24 * 60 * 60 * 1000);
+    const fechaFin = end.toISOString().substring(0, 19);
+    const fechaInicio = start.toISOString().substring(0, 19);
+    
+    fetch(`/api/lecturas/historial/${estacionId}?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}&limite=288`)
         .then(res => res.json())
         .then(readings => {
+            window.lastChartReadings = readings;
             readings.reverse();
-            const labels = readings.map(r => formatTime(r.fechaHora));
+            const labels = readings.map(r => new Date(r.fechaHora).getTime());
             const temps = readings.map(r => r.temperatura);
             const hums = readings.map(r => r.humedadAire);
             const chartMode = document.body.classList.contains('theme-light') ? 'light' : 'dark';
@@ -372,11 +449,11 @@ function cargarHistorialGrafico(estacionId) {
                     type: 'gradient',
                     gradient: { shadeIntensity: 1, opacityFrom: 0.45, opacityTo: 0.05, stops: [0, 90, 100] }
                 },
-                xaxis: { categories: labels, labels: { style: { colors: textColor, fontFamily: 'Inter, sans-serif', fontSize: '10px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+                xaxis: { type: 'datetime', tickAmount: 6, categories: labels, labels: { datetimeUTC: false, format: 'HH:mm', style: { colors: textColor, fontFamily: 'Inter, sans-serif', fontSize: '10px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
                 yaxis: { labels: { style: { colors: textColor, fontSize: '11px' }, formatter: v => v !== null && v !== undefined ? v.toFixed(1) + '°' : '--' } },
                 grid: { borderColor: 'rgba(107, 114, 128, 0.1)', strokeDashArray: 4, padding: { left: 8, right: 8 } },
                 theme: { mode: chartMode },
-                tooltip: { theme: chartMode, y: { formatter: v => v !== null ? v.toFixed(1) + ` °${window.currentTempUnit || 'C'}` : '--' } },
+                tooltip: { x: { format: 'dd MMM HH:mm' }, theme: chartMode, y: { formatter: v => v !== null ? v.toFixed(1) + ` °${window.currentTempUnit || 'C'}` : '--' } },
                 dataLabels: { enabled: false }
             };
             if (window.tempChart) {
@@ -399,11 +476,11 @@ function cargarHistorialGrafico(estacionId) {
                     type: 'gradient',
                     gradient: { shadeIntensity: 1, opacityFrom: 0.45, opacityTo: 0.05, stops: [0, 90, 100] }
                 },
-                xaxis: { categories: labels, labels: { style: { colors: textColor, fontFamily: 'Inter, sans-serif', fontSize: '10px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+                xaxis: { type: 'datetime', tickAmount: 6, categories: labels, labels: { datetimeUTC: false, format: 'HH:mm', style: { colors: textColor, fontFamily: 'Inter, sans-serif', fontSize: '10px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
                 yaxis: { labels: { style: { colors: textColor, fontSize: '11px' }, formatter: v => v !== null && v !== undefined ? v.toFixed(0) + '%' : '--' }, min: 0, max: 100 },
                 grid: { borderColor: 'rgba(107, 114, 128, 0.1)', strokeDashArray: 4, padding: { left: 8, right: 8 } },
                 theme: { mode: chartMode },
-                tooltip: { theme: chartMode, y: { formatter: v => v !== null ? v.toFixed(1) + ' %' : '--' } },
+                tooltip: { x: { format: 'dd MMM HH:mm' }, theme: chartMode, y: { formatter: v => v !== null ? v.toFixed(1) + ' %' : '--' } },
                 dataLabels: { enabled: false }
             };
             if (window.humChart) {
@@ -427,7 +504,7 @@ function formatTime(isoString) {
     const min = String(date.getMinutes()).padStart(2, '0');
     return `${hh}:${min}`;
 }
-function actualizarTarjetaClima(est) {
+function actualizarTarjetaClima(est, isUnitToggle = false) {
     if (!est) return;
     const safeFixed = (val, decimals) => (val !== null && val !== undefined) ? Number(val).toFixed(decimals) : null;
     document.getElementById('activeStationName').textContent = est.nombre || '--';
@@ -438,7 +515,7 @@ function actualizarTarjetaClima(est) {
     unitEls.forEach(el => el.textContent = `°${window.currentTempUnit}`);
     document.getElementById('activeFeels').textContent = 'Sensación: ' + (safeFixed(convertedTemp, 1) ? (convertedTemp + (window.currentTempUnit === 'F' ? 0.9 : 0.5)).toFixed(1) + `°${window.currentTempUnit}` : '--');
     document.getElementById('activeStatusText').textContent = est.estado || '--';
-    document.getElementById('activeTime').textContent = est.fechaHoraLectura ? est.fechaHoraLectura.split(' ')[1] : '--:--';
+    document.getElementById('activeTime').textContent = est.fechaHoraLectura ? est.fechaHoraLectura.split(' ')[1].substring(0, 5) : '--:--';
     const statusText = document.getElementById('activeStatusText');
     if (est.estado === 'En línea') {
         statusText.style.color = '#34D399';
@@ -456,7 +533,7 @@ function actualizarTarjetaClima(est) {
         photoHeader.style.backgroundImage = obtenerImagenClimatica(est);
     }
     const card = document.getElementById('weatherCard');
-    if (card) {
+    if (card && !isUnitToggle) {
         const values = card.querySelectorAll('.weather-temp, .metric-value');
         values.forEach(v => {
             v.classList.remove('data-update-pulse');
@@ -524,32 +601,7 @@ function obtenerImagenClimatica(est) {
     }
     return 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
 }
-function actualizarClimaEnVivo(lectura) {
-    if (!lectura) return;
-    document.getElementById('activeTemp').textContent = lectura.temperatura !== null ? lectura.temperatura.toFixed(1) : '--';
-    document.getElementById('activeFeels').textContent = 'Sensación: ' + (lectura.temperatura !== null ? (lectura.temperatura + 0.5).toFixed(1) + '°C' : '--');
-    document.getElementById('activeWind').textContent = lectura.velocidadViento !== null ? lectura.velocidadViento.toFixed(1) + ' km/h' : '--';
-    document.getElementById('activeHum').textContent = lectura.humedadAire !== null ? lectura.humedadAire.toFixed(0) + '%' : '--';
-    document.getElementById('activeSoil').textContent = lectura.humedadSuelo !== null ? lectura.humedadSuelo.toFixed(0) + '%' : '--';
-    document.getElementById('activePressure').textContent = lectura.presion !== null ? lectura.presion.toFixed(0) + ' hPa' : '--';
-    document.getElementById('activeRain').textContent = lectura.lluvia !== null ? lectura.lluvia.toFixed(1) + ' mm' : '--';
-    document.getElementById('activeWindDir').textContent = lectura.direccionViento || '--';
-    const photoHeader = document.getElementById('weatherPhotoHeader');
-    if (photoHeader) {
-        const estacionAsociada = typeof estaciones !== 'undefined' ? estaciones.find(e => e.id === lectura.estacionId) : lectura;
-        photoHeader.style.backgroundImage = obtenerImagenClimatica(estacionAsociada || lectura);
-    }
-    if (lectura.fechaHora) {
-        document.getElementById('activeTime').textContent = formatTime(lectura.fechaHora);
-    }
-    const card = document.getElementById('weatherCard');
-    if (card) {
-        card.classList.remove('slide-fade-active');
-        void card.offsetWidth;
-        card.classList.add('slide-fade-active');
-    }
-    cargarHistorialGrafico(lectura.estacionId);
-}
+
 window.startSlideshow = function() {
     if (window.slideshowInterval) clearInterval(window.slideshowInterval);
     window.slideshowInterval = setInterval(() => {
@@ -579,35 +631,123 @@ window.navigateStation = function(direction, event, isAuto = false) {
 };
 if (estaciones.length > 0) {
     setTimeout(() => {
-        seleccionarEstacion(estaciones[0]);
+        seleccionarEstacion(estaciones[0], true);
         window.startSlideshow();
     }, 500);
 }
-function initForecastBar() {
+async function initForecastBar() {
     const container = document.getElementById('forecastDaysContainer');
     if (!container) return;
     const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-    const icons = ['☀️', '☁️', '🌤️', '🌧️', '🌩️'];
-    const today = new Date();
-    if (!window.forecastBaseTemps) {
-        window.forecastBaseTemps = [];
-        for (let i = 0; i < 7; i++) {
-            window.forecastBaseTemps.push(Math.floor(Math.random() * (32 - 24 + 1)) + 24);
-        }
+    
+    const getIcon = (condition) => {
+        condition = (condition || '').toLowerCase();
+        const base = 'https://www.amcharts.com/wp-content/themes/amcharts4/css/img/icons/weather/animated/';
+        if (condition.includes('clear')) return `<img src="${base}day.svg" width="48" height="48" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));">`;
+        if (condition.includes('cloud')) return `<img src="${base}cloudy.svg" width="48" height="48" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));">`;
+        if (condition.includes('rain') || condition.includes('drizzle')) return `<img src="${base}rainy-3.svg" width="48" height="48" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));">`;
+        if (condition.includes('thunderstorm')) return `<img src="${base}thunder.svg" width="48" height="48" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));">`;
+        if (condition.includes('snow')) return `<img src="${base}snowy-3.svg" width="48" height="48" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));">`;
+        return `<img src="${base}cloudy-day-1.svg" width="48" height="48" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));">`;
+    };
+
+    const getConditionDesc = (condition) => {
+        condition = (condition || '').toLowerCase();
+        if (condition.includes('clear')) return 'Despejado';
+        if (condition.includes('cloud')) return 'Nublado';
+        if (condition.includes('rain') || condition.includes('drizzle')) return 'Lluvia';
+        if (condition.includes('thunderstorm')) return 'Tormenta';
+        if (condition.includes('snow')) return 'Nieve';
+        return 'Parcial';
+    };
+
+    let forecastData = window.forecastDataCache;
+    
+    if (!forecastData && !window.hasAttemptedForecastFetch) {
+        window.hasAttemptedForecastFetch = true;
+        fetch('/api/pronostico')
+            .then(response => {
+                if (response.ok) return response.json();
+                throw new Error('API request failed');
+            })
+            .then(data => {
+                window.forecastDataCache = data;
+                initForecastBar(); 
+            })
+            .catch(error => {
+                console.error("Error fetching forecast:", error);
+            });
     }
+
+    if (!window.fullForecastDataCache || (forecastData && forecastData.length > 0 && !window.fullForecastDataCache.fromApi)) {
+        let fullData = [];
+        let sourceData = window.forecastDataCache || [];
+        let isFromApi = sourceData.length > 0;
+        
+        let lastTempMax = 28;
+        let lastPop = 0;
+        let lastCondition = 'Clear';
+
+        for (let i = 0; i < 7; i++) {
+            if (i < sourceData.length) {
+                let item = sourceData[i];
+                lastTempMax = item.temp_max || item.temp;
+                lastCondition = item.condition;
+                lastPop = item.pop;
+                
+                fullData.push({
+                    temp: lastTempMax,
+                    cond: lastCondition,
+                    pop: Math.round(lastPop * 100)
+                });
+            } else if (sourceData.length === 0) {
+                
+                let temp = Math.floor(Math.random() * (32 - 24 + 1)) + 24;
+                let cond = ['Clear', 'Clouds', 'Rain', 'Thunderstorm', 'Clouds'][Math.floor(Math.random() * 5)];
+                let pop = Math.floor(Math.random() * 40) + (i % 2 === 0 ? 0 : 20);
+                fullData.push({ temp, cond, pop });
+            } else {
+                
+                lastTempMax += (Math.random() * 2) - 1;
+                lastPop = Math.max(0, Math.min(1, lastPop + (Math.random() * 0.4) - 0.2));
+                let simCond = 'Clear';
+                if (lastPop > 0.6) simCond = 'Rain';
+                else if (lastPop > 0.2) simCond = 'Clouds';
+                
+                fullData.push({
+                    temp: lastTempMax,
+                    cond: simCond,
+                    pop: Math.round(lastPop * 100)
+                });
+            }
+        }
+        window.fullForecastDataCache = fullData;
+        window.fullForecastDataCache.fromApi = isFromApi;
+    }
+
+    const today = new Date();
     let html = '';
+    
     for (let i = 0; i < 7; i++) {
         const d = new Date(today);
         d.setDate(today.getDate() + i);
         let dayName = i === 0 ? 'Hoy' : days[d.getDay()];
-        let baseTemp = window.forecastBaseTemps[i];
-        let displayTemp = window.convertTempObj(baseTemp).toFixed(0);
-        let icon = icons[Math.floor(Math.random() * icons.length)]; 
         let activeClass = i === 0 ? 'active' : '';
+        let delay = i * 0.08;
+        
+        let item = window.fullForecastDataCache[i];
+        let displayMax = window.convertTempObj(item.temp).toFixed(0);
+        let icon = getIcon(item.cond);
+        let desc = getConditionDesc(item.cond);
+        let rainProb = item.pop;
+        
         html += `
-            <div class="forecast-day ${activeClass}">
+            <div class="forecast-day ${activeClass}" style="animation-delay: ${delay}s">
                 <span class="day-name">${dayName}</span>
-                <span class="day-temp">${displayTemp}° ${icon}</span>
+                <span class="day-icon">${icon}</span>
+                <span class="day-desc">${desc}</span>
+                <span class="day-temp">${displayMax}°</span>
+                <span class="day-rain"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg> ${rainProb}%</span>
             </div>
         `;
     }
@@ -615,22 +755,32 @@ function initForecastBar() {
 }
 initForecastBar();
 function initTempToggle() {
-    const toggleBtns = document.querySelectorAll('.temp-toggle .toggle-btn');
-    toggleBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const selectedUnit = e.target.textContent.replace('°', '');
-            if (window.currentTempUnit === selectedUnit) return;
-            window.currentTempUnit = selectedUnit;
-            toggleBtns.forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            initForecastBar();
-            if (currentStationId) {
-                const est = estaciones.find(e => e.id === currentStationId);
-                if (est) {
-                    actualizarTarjetaClima(est);
-                    cargarHistorialGrafico(est.id);
-                }
-            }
+      const toggleBtns = document.querySelectorAll('.temp-toggle .toggle-btn');
+      toggleBtns.forEach(btn => {
+          btn.addEventListener('click', (e) => {
+              const selectedUnit = e.target.textContent.replace('°', '');
+              if (window.currentTempUnit === selectedUnit) return;
+              window.currentTempUnit = selectedUnit;
+              toggleBtns.forEach(b => b.classList.remove('active'));
+              e.target.classList.add('active');
+              initForecastBar();
+              if (currentStationId) {
+                  const est = estaciones.find(e => e.id === currentStationId);
+                  if (est) {
+                      actualizarTarjetaClima(est, true);
+                      
+                      
+                      if (window.lastChartReadings && window.tempChart) {
+                          const temps = window.lastChartReadings.map(r => r.temperatura);
+                          window.tempChart.updateSeries([{ 
+                              name: `Temperatura (°${window.currentTempUnit || 'C'})`, 
+                              data: temps.map(t => window.convertTempObj ? window.convertTempObj(t) : t) 
+                          }]);
+                      } else {
+                          cargarHistorialGrafico(est.id);
+                      }
+                  }
+              }
         });
     });
 }

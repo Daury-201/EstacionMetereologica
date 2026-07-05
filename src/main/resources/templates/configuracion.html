@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/components :: headLinks('Configuraci&oacute;n - MeteoStation')}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/configuracion.css}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <script th:src="@{/js/configuracion.js}" defer></script>
+</head>
+<body class="theme-light">
+
+<div class="dashboard-container">
+    <aside th:replace="~{fragments/components :: sidebar(activePage='configuracion')}"></aside>
+
+    <main class="main-area">
+        <header th:replace="~{fragments/components :: topNav(pageTitle='Configuraci&oacute;n')}"></header>
+
+        <div class="content config-content">
+            
+            <div th:if="${param.success != null}" class="alert-success">
+                <i class="ti ti-check"></i>
+                <span th:text="${param.success[0] == 'perfil' ? 'Perfil actualizado correctamente' : (param.success[0] == 'sistema' ? 'Configuraci&oacute;n del sistema guardada' : 'Cambios guardados')}"></span>
+            </div>
+
+            <div class="config-layout">
+                
+                <div class="left-col">
+                    <div class="section-nav">
+                        <div class="section-nav-header"><p>Secciones</p></div>
+                        <div class="nav-section-item active" data-target="perfil"><i class="ti ti-user"></i> Perfil</div>
+                        <div class="nav-section-item" data-target="notificaciones"><i class="ti ti-bell"></i> Notificaciones</div>
+                        <div class="nav-section-item" data-target="seguridad"><i class="ti ti-lock"></i> Seguridad</div>
+                        <div th:if="${usuarioGlobal != null and usuarioGlobal.rol == 'ADMIN'}" class="nav-section-item" data-target="usuarios"><i class="ti ti-users"></i> Usuarios</div>
+                        <div class="nav-section-item" data-target="sistema"><i class="ti ti-server"></i> Sistema</div>
+                    </div>
+                </div>
+
+                
+                <div class="right-col">
+
+                    
+                    <div class="card tab-pane active" id="tab-perfil">
+                        <div class="card-header">
+                            <h3>Perfil de usuario</h3>
+                            <p>Informaci&oacute;n personal y credenciales de acceso</p>
+                        </div>
+                        <div class="avatar-section">
+                            <img th:if="${usuarioActual != null and usuarioActual.fotoUrl != null}"
+                                 th:src="${usuarioActual.fotoUrl}" class="avatar-big" alt="Avatar" style="object-fit: cover; width: 64px; height: 64px; border-radius: 50%; background-color: transparent;">
+                            <div th:unless="${usuarioActual != null and usuarioActual.fotoUrl != null}"
+                                 class="avatar-big" style="text-transform: uppercase; display: flex; align-items: center; justify-content: center; color: white;"
+                                 th:styleappend="${usuarioActual != null ? 'background-color: ' + usuarioActual.getAvatarColor() + ';' : 'background-color: #8B5CF6;'}"
+                                 th:text="${usuarioActual != null ? usuarioActual.getAvatarInitials() : 'U'}">U</div>
+                            <div class="avatar-info">
+                                <p th:text="${usuarioActual != null ? usuarioActual.nombre : 'Usuario'}">Nombre</p>
+                                <span th:text="${usuarioActual != null ? usuarioActual.username : 'admin'}">admin</span>
+                                <div><div class="badge-role" th:text="${usuarioActual != null ? usuarioActual.rol : 'USER'}">Rol</div></div>
+                            </div>
+                            <button id="btn-cambiar-foto" type="button" class="btn-outline" style="margin-left:auto;margin-top:0; display:none;" onclick="document.getElementById('modal-avatar').style.display='flex'">Cambiar foto</button>
+                        </div>
+
+                        <div id="profile-view" style="padding-top: 10px;">
+                            <div class="section-label" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E5E7EB; padding-bottom: 12px; margin-bottom: 24px;">
+                                <span>Informaci&oacute;n general</span>
+                                <button type="button" class="btn-primary" onclick="document.getElementById('profile-view').style.display='none'; document.getElementById('profile-edit').style.display='block'; document.getElementById('btn-cambiar-foto').style.display='block';" style="padding: 8px 24px; min-width: 170px; justify-content: center; font-size: 13px; border-radius: 6px; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(139, 92, 246, 0.2);">
+                                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                    Modificar usuario
+                                </button>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 12px 16px; background: #F9FAFB; border-radius: 12px; border: 1px solid #F3F4F6;">
+                                <div>
+                                    <label style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; color: #9CA3AF; display: block; margin-bottom: 6px;">Nombre completo</label>
+                                    <div style="font-size: 15px; color: #1A1A2E; font-weight: 600;" th:text="${usuarioActual != null ? usuarioActual.nombre : 'No definido'}">Nombre</div>
+                                </div>
+                                <div>
+                                    <label style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; color: #9CA3AF; display: block; margin-bottom: 6px;">Rol de sistema</label>
+                                    <div style="font-size: 15px; color: #1A1A2E; font-weight: 600;" th:text="${usuarioActual != null ? usuarioActual.rol : 'No definido'}">Rol</div>
+                                </div>
+                                <div style="grid-column: span 2; padding-top: 12px; border-top: 1px solid #E5E7EB;">
+                                    <label style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; color: #9CA3AF; display: block; margin-bottom: 6px;">Nombre de usuario</label>
+                                    <div style="font-size: 15px; color: #1A1A2E; font-weight: 600;" th:text="${usuarioActual != null ? usuarioActual.username : 'No definido'}">Usuario</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form id="profile-edit" th:action="@{/configuracion/perfil}" method="POST" style="display: none; padding-top: 10px;">
+                            <div class="section-label" style="border-bottom: 1px solid #E5E7EB; padding-bottom: 12px; margin-bottom: 24px;">Modificar informaci&oacute;n general</div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Nombre</label>
+                                    <input class="form-input" type="text" name="nombre" th:value="${usuarioActual != null ? usuarioActual.nombre : ''}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Rol</label>
+                                    <input class="form-input" type="text" th:value="${usuarioActual != null ? usuarioActual.rol : ''}" readonly style="background:#F3F4F6; cursor: not-allowed; color: #9CA3AF;">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Usuario</label>
+                                <input class="form-input" type="text" th:value="${usuarioActual != null ? usuarioActual.username : ''}" readonly style="background:#F3F4F6; cursor: not-allowed; color: #9CA3AF;">
+                            </div>
+                            <div class="footer-btns">
+                                <button type="button" class="btn-cancel" onclick="document.getElementById('profile-edit').style.display='none'; document.getElementById('profile-view').style.display='block'; document.getElementById('btn-cambiar-foto').style.display='none';">Cancelar</button>
+                                <button type="submit" class="btn-primary">Guardar cambios</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    
+                    <div class="card tab-pane" id="tab-notificaciones">
+                        <div class="card-header">
+                            <h3>Notificaciones</h3>
+                            <p>Configura cu&aacute;ndo y c&oacute;mo recibir alertas del sistema</p>
+                        </div>
+                        <form th:action="@{/configuracion/notificaciones}" method="POST">
+                            <input type="hidden" name="notificarAlarmas" id="val-notificarAlarmas" th:value="${usuarioActual != null ? usuarioActual.notificarAlarmas : true}">
+                            <input type="hidden" name="notificarDesconexion" id="val-notificarDesconexion" th:value="${usuarioActual != null ? usuarioActual.notificarDesconexion : true}">
+                            <input type="hidden" name="notificarSyncFallida" id="val-notificarSyncFallida" th:value="${usuarioActual != null ? usuarioActual.notificarSyncFallida : false}">
+                            <input type="hidden" name="reportesDiarios" id="val-reportesDiarios" th:value="${usuarioActual != null ? usuarioActual.reportesDiarios : false}">
+
+                            <div class="toggle-row">
+                                <div class="toggle-info">
+                                    <p>Alarmas activas</p>
+                                    <span>Notificar cuando una lectura supere el umbral</span>
+                                </div>
+                                <div class="toggle" th:classappend="${usuarioActual == null or usuarioActual.notificarAlarmas} ? 'active' : 'off'"
+                                     onclick="this.classList.toggle('active'); this.classList.toggle('off'); document.getElementById('val-notificarAlarmas').value = this.classList.contains('active');"></div>
+                            </div>
+                            <div class="toggle-row">
+                                <div class="toggle-info">
+                                    <p>Estaci&oacute;n sin se&ntilde;al</p>
+                                    <span>Notificar cuando una estaci&oacute;n deje de comunicar</span>
+                                </div>
+                                <div class="toggle" th:classappend="${usuarioActual == null or usuarioActual.notificarDesconexion} ? 'active' : 'off'"
+                                     onclick="this.classList.toggle('active'); this.classList.toggle('off'); document.getElementById('val-notificarDesconexion').value = this.classList.contains('active');"></div>
+                            </div>
+                            <div class="toggle-row">
+                                <div class="toggle-info">
+                                    <p>Sincronizaci&oacute;n fallida</p>
+                                    <span>Notificar cuando falle la integraci&oacute;n con plataformas</span>
+                                </div>
+                                <div class="toggle" th:classappend="${usuarioActual != null and usuarioActual.notificarSyncFallida} ? 'active' : 'off'"
+                                     onclick="this.classList.toggle('active'); this.classList.toggle('off'); document.getElementById('val-notificarSyncFallida').value = this.classList.contains('active');"></div>
+                            </div>
+                            <div class="toggle-row">
+                                <div class="toggle-info">
+                                    <p>Reportes autom&aacute;ticos</p>
+                                    <span>Enviar reporte diario por correo</span>
+                                </div>
+                                <div class="toggle" th:classappend="${usuarioActual != null and usuarioActual.reportesDiarios} ? 'active' : 'off'"
+                                     onclick="this.classList.toggle('active'); this.classList.toggle('off'); document.getElementById('val-reportesDiarios').value = this.classList.contains('active');"></div>
+                            </div>
+                            <div class="footer-btns" style="margin-top: 20px;">
+                                <button type="submit" class="btn-primary">Actualizar preferencias</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    
+                    <div class="card tab-pane" id="tab-seguridad">
+                        <div class="card-header">
+                            <h3>Seguridad</h3>
+                            <p>Contrase&ntilde;a y configuraci&oacute;n de acceso</p>
+                        </div>
+                        <div id="password-view" th:style="${param.error_pwd != null or param.success_pwd != null ? 'display: none;' : 'display: block; padding-top: 10px;'}">
+                            <div class="section-label" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E5E7EB; padding-bottom: 12px; margin-bottom: 24px;">
+                                <span>Cambiar contrase&ntilde;a</span>
+                                <button type="button" class="btn-primary" onclick="document.getElementById('password-view').style.display='none'; document.getElementById('password-form').style.display='block';" style="padding: 8px 24px; min-width: 170px; justify-content: center; font-size: 13px; border-radius: 6px; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(139, 92, 246, 0.2);">
+                                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
+                                    Modificar contrase&ntilde;a
+                                </button>
+                            </div>
+                            <div style="padding: 16px; background: #F9FAFB; border-radius: 12px; border: 1px solid #F3F4F6; display: flex; align-items: center; gap: 16px;">
+                                <div style="background: #E5E7EB; border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #4B5563; flex-shrink: 0;">
+                                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0110 0v4"></path></svg>
+                                </div>
+                                <div>
+                                    <div style="font-size: 14px; font-weight: 600; color: #111827;">Cuenta protegida</div>
+                                    <div style="font-size: 12px; color: #6B7280; margin-top: 2px;">Tu contrase&ntilde;a est&aacute; encriptada y segura. Si necesitas actualizarla, haz clic en el bot&oacute;n modificar.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form id="password-form" th:action="@{/configuracion/seguridad/password}" method="POST" novalidate th:style="${param.error_pwd != null or param.success_pwd != null ? 'display: block; padding-top: 10px;' : 'display: none; padding-top: 10px;'}">
+
+                            <div id="client-error-alert" class="alert-box error-alert slide-in-down" style="display: none; margin-bottom: 20px; align-items: center; gap: 12px; padding: 12px 16px; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 12px; color: #991B1B; transition: opacity 0.3s ease;">
+                                <div class="alert-icon" style="background: #EF4444; color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                </div>
+                                <div class="alert-content" style="display: flex; flex-direction: column;">
+                                    <span class="alert-title" style="font-weight: 700; font-size: 14px; margin-bottom: 2px;">Atenci&oacute;n</span>
+                                    <span id="client-error-msg" class="alert-msg" style="font-size: 13px; color: #7F1D1D;">Error</span>
+                                </div>
+                            </div>
+
+                            <div th:if="${param.error_pwd}" id="error-pwd-alert" class="alert-box error-alert slide-in-down" style="margin-bottom: 20px; display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 12px; color: #991B1B; transition: opacity 0.3s ease;">
+                                <div class="alert-icon" style="background: #EF4444; color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                </div>
+                                <div class="alert-content" style="display: flex; flex-direction: column;">
+                                    <span class="alert-title" style="font-weight: 700; font-size: 14px; margin-bottom: 2px;">Error</span>
+                                    <span class="alert-msg" style="font-size: 13px; color: #7F1D1D;" th:text="${param.error_pwd[0]}">Error</span>
+                                </div>
+                            </div>
+                            <script th:if="${param.error_pwd}">
+                                setTimeout(() => {
+                                    const alertEl = document.getElementById('error-pwd-alert');
+                                    if (alertEl) {
+                                        alertEl.style.opacity = '0';
+                                        setTimeout(() => alertEl.style.display = 'none', 300);
+                                    }
+                                }, 2000);
+                            </script>
+                            <div th:if="${param.success_pwd}" id="pwd-success-alert" style="margin-bottom: 20px; display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 12px; color: #065F46; animation: slideInDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                                <div style="background: #10B981; color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                </div>
+                                <div style="display: flex; flex-direction: column;">
+                                    <span style="font-weight: 700; font-size: 14px; margin-bottom: 2px;">&iexcl;&Eacute;xito!</span>
+                                    <span style="font-size: 13px; color: #047857;">Contrase&ntilde;a actualizada correctamente</span>
+                                </div>
+                            </div>
+
+                            <div class="section-label" style="border-bottom: 1px solid #E5E7EB; padding-bottom: 12px; margin-bottom: 24px;">Modificar contrase&ntilde;a</div>
+                            <div class="form-group">
+                                <label>Contrase&ntilde;a actual</label>
+                                <input class="form-input" type="password" name="currentPassword" placeholder="Ingresa tu contraseña actual para autorizar" required>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Nueva contrase&ntilde;a</label>
+                                    <input class="form-input" type="password" name="newPassword" placeholder="M&iacute;nimo 8 caracteres" required minlength="8">
+                                </div>
+                                <div class="form-group">
+                                    <label>Confirmar contrase&ntilde;a</label>
+                                    <input class="form-input" type="password" name="confirmPassword" placeholder="Repite la contrase&ntilde;a" required minlength="8">
+                                </div>
+                            </div>
+                            <div class="footer-btns" style="margin-top: 20px;">
+                                <button type="button" class="btn-cancel" onclick="document.getElementById('password-form').style.display='none'; document.getElementById('password-view').style.display='block';">Cancelar</button>
+                                <button type="submit" class="btn-primary">Actualizar contrase&ntilde;a</button>
+                            </div>
+                        </form>
+                        <script>
+                            document.addEventListener('DOMContentLoaded', () => {
+                                const pwdForm = document.getElementById('password-form');
+                                const clientAlert = document.getElementById('client-error-alert');
+                                const clientErrorMsg = document.getElementById('client-error-msg');
+                                let hideTimeout;
+
+                                if (pwdForm) {
+                                    pwdForm.addEventListener('submit', (e) => {
+                                        const current = pwdForm.querySelector('[name="currentPassword"]').value;
+                                        const newPwd = pwdForm.querySelector('[name="newPassword"]').value;
+                                        const confirmPwd = pwdForm.querySelector('[name="confirmPassword"]').value;
+
+                                        let error = null;
+                                        if (!current || !newPwd || !confirmPwd) {
+                                            error = 'Todos los campos son obligatorios';
+                                        } else if (newPwd.length < 8) {
+                                            error = 'La nueva contrase\u00f1a debe tener al menos 8 caracteres';
+                                        } else if (newPwd !== confirmPwd) {
+                                            error = 'Las nuevas contrase\u00f1as no coinciden';
+                                        }
+
+                                        if (error) {
+                                            e.preventDefault();
+                                            clientErrorMsg.textContent = error;
+                                            clientAlert.style.display = 'flex';
+                                            clientAlert.style.opacity = '1';
+
+                                            clearTimeout(hideTimeout);
+                                            hideTimeout = setTimeout(() => {
+                                                clientAlert.style.opacity = '0';
+                                                setTimeout(() => clientAlert.style.display = 'none', 300);
+                                            }, 2000);
+                                        }
+                                    });
+                                }
+                            });
+                        </script>
+                    </div>
+
+                    
+                    <div th:if="${usuarioGlobal != null and usuarioGlobal.rol == 'ADMIN'}" class="card tab-pane" id="tab-usuarios">
+                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h3>Usuarios del Sistema</h3>
+                                <p>Gesti&oacute;n de accesos y roles de la plataforma</p>
+                            </div>
+                            <button class="btn-primary" style="margin: 0;" onclick="openModalNuevoUsuario()">+ Nuevo Usuario</button>
+                        </div>
+
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 0 20px 20px;">
+                            
+                            <div style="border: 1px solid #E5E7EB; border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 16px;">
+                                <div style="background: #F3E8FF; color: #9333EA; padding: 12px; border-radius: 12px;">
+                                    <i class="ti ti-users" style="font-size: 24px;"></i>
+                                </div>
+                                <div>
+                                    <h3 style="margin: 0; font-size: 24px; font-weight: 700; color: #111827;" th:text="${totalUsuarios}">6</h3>
+                                    <p style="margin: 0; font-size: 13px; color: #6B7280;">Total usuarios</p>
+                                </div>
+                            </div>
+                            
+                            <div style="border: 1px solid #DBEAFE; border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 16px;">
+                                <div style="background: #EFF6FF; color: #3B82F6; padding: 12px; border-radius: 12px;">
+                                    <i class="ti ti-shield-check" style="font-size: 24px;"></i>
+                                </div>
+                                <div>
+                                    <h3 style="margin: 0; font-size: 24px; font-weight: 700; color: #111827;" th:text="${totalAdmins}">1</h3>
+                                    <p style="margin: 0; font-size: 13px; color: #6B7280;">Administradores</p>
+                                </div>
+                            </div>
+                            
+                            <div style="border: 1px solid #D1FAE5; border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 16px;">
+                                <div style="background: #ECFDF5; color: #10B981; padding: 12px; border-radius: 12px;">
+                                    <i class="ti ti-user-check" style="font-size: 24px;"></i>
+                                </div>
+                                <div>
+                                    <h3 style="margin: 0; font-size: 24px; font-weight: 700; color: #111827;" th:text="${totalTecnicos}">3</h3>
+                                    <p style="margin: 0; font-size: 13px; color: #6B7280;">T&eacute;cnicos</p>
+                                </div>
+                            </div>
+                            
+                            <div style="border: 1px solid #FEE2E2; border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 16px;">
+                                <div style="background: #FEF2F2; color: #EF4444; padding: 12px; border-radius: 12px;">
+                                    <i class="ti ti-user-scan" style="font-size: 24px;"></i>
+                                </div>
+                                <div>
+                                    <h3 style="margin: 0; font-size: 24px; font-weight: 700; color: #111827;" th:text="${totalVisores}">2</h3>
+                                    <p style="margin: 0; font-size: 13px; color: #6B7280;">Visores</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div th:if="${param.error_usuario}" class="alert-box error-alert slide-in-down" style="margin: 16px 20px;">
+                            <div class="alert-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            </div>
+                            <div class="alert-content">
+                                <span class="alert-title">Error al guardar usuario</span>
+                                <span class="alert-msg" th:text="${param.error_usuario[0]}">Error</span>
+                            </div>
+                        </div>
+
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                                <thead>
+                                <tr style="border-bottom: 1px solid #E5E7EB;">
+                                    <th style="text-align: left; padding: 12px; font-size: 12px; color: #6B7280; font-weight: 600;">NOMBRE</th>
+                                    <th style="text-align: left; padding: 12px; font-size: 12px; color: #6B7280; font-weight: 600;">USUARIO</th>
+                                    <th style="text-align: left; padding: 12px; font-size: 12px; color: #6B7280; font-weight: 600;">EMAIL</th>
+                                    <th style="text-align: left; padding: 12px; font-size: 12px; color: #6B7280; font-weight: 600;">ROL</th>
+                                    <th style="text-align: right; padding: 12px; font-size: 12px; color: #6B7280; font-weight: 600;">ACCIONES</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="u : ${usuarios}" style="border-bottom: 1px solid #F3F4F6;">
+                                    <td style="padding: 12px; font-size: 13px; font-weight: 500; color: #1A1A2E;">
+                                        <div style="display: flex; align-items: center; gap: 12px;">
+                                            
+                                            <img th:if="${u.fotoUrl != null and !u.fotoUrl.isEmpty()}"
+                                                 th:src="${u.fotoUrl}"
+                                                 alt="Avatar"
+                                                 style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid #F3F4F6; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+
+                                            
+                                            <div th:unless="${u.fotoUrl != null and !u.fotoUrl.isEmpty()}"
+                                                 th:style="'width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: white; border: 2px solid #FFFFFF; box-shadow: 0 2px 4px rgba(0,0,0,0.05); background-color: ' + ${u.avatarColor}"
+                                                 th:text="${u.avatarInitials}">
+                                            </div>
+
+                                            <span th:text="${u.nombre}">Nombre</span>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 12px; font-size: 13px; color: #6B7280;" th:text="${u.username}">admin</td>
+                                    <td style="padding: 12px; font-size: 13px; color: #6B7280;" th:text="${u.email}">admin@ejemplo.com</td>
+                                    <td style="padding: 12px;">
+                                        <span class="badge-role" th:text="${u.rol}">ADMIN</span>
+                                    </td>
+                                    <td style="padding: 12px; text-align: right; display: flex; justify-content: flex-end; gap: 8px;">
+                                        <button class="btn-outline" style="padding: 6px 10px; font-size: 11px; margin: 0;" th:data-id="${u.id}" th:data-nombre="${u.nombre}" th:data-username="${u.username}" th:data-email="${u.email}" th:data-rol="${u.rol}" onclick="openModalEditarUsuario(this.getAttribute('data-id'), this.getAttribute('data-nombre'), this.getAttribute('data-username'), this.getAttribute('data-email'), this.getAttribute('data-rol'))">Editar</button>
+                                        <button type="button" class="btn-cancel" style="padding: 6px 10px; font-size: 11px; margin: 0; color: #EF4444; background: #FEF2F2;" th:data-id="${u.id}" th:data-nombre="${u.nombre}" onclick="openModalEliminarUsuario(this.getAttribute('data-id'), this.getAttribute('data-nombre'))">Eliminar</button>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    
+                    <div class="card tab-pane" id="tab-sistema">
+                        <div class="card-header">
+                            <h3>Sistema</h3>
+                            <p>Par&aacute;metros generales de la plataforma</p>
+                        </div>
+                        <div id="sistema-view" style="padding-top: 10px;">
+                            <div class="section-label" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E5E7EB; padding-bottom: 12px; margin-bottom: 24px;">
+                                <span>Par&aacute;metros generales</span>
+                                <button type="button" class="btn-primary" onclick="document.getElementById('sistema-view').style.display='none'; document.getElementById('sistema-form').style.display='block';" style="padding: 8px 24px; min-width: 170px; justify-content: center; font-size: 13px; border-radius: 6px; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(139, 92, 246, 0.2);">
+                                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                    Modificar sistema
+                                </button>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 12px 16px; background: #F9FAFB; border-radius: 12px; border: 1px solid #F3F4F6;">
+                                <div>
+                                    <label style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; color: #9CA3AF; display: block; margin-bottom: 6px;">Zona horaria</label>
+                                    <div style="font-size: 15px; color: #1A1A2E; font-weight: 600;" th:text="${configSistema != null ? configSistema.zonaHoraria : 'No definido'}">America/Santo_Domingo</div>
+                                </div>
+                                <div>
+                                    <label style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; color: #9CA3AF; display: block; margin-bottom: 6px;">Formato de fecha</label>
+                                    <div style="font-size: 15px; color: #1A1A2E; font-weight: 600;" th:text="${configSistema != null ? configSistema.formatoFecha : 'No definido'}">dd/MM/yyyy HH:mm:ss</div>
+                                </div>
+                                <div style="padding-top: 12px; border-top: 1px solid #E5E7EB;">
+                                    <label style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; color: #9CA3AF; display: block; margin-bottom: 6px;">Formato num&eacute;rico y regional</label>
+                                    <div style="font-size: 15px; color: #1A1A2E; font-weight: 600;" th:text="${configSistema != null ? configSistema.formatoNumerico : 'No definido'}">en-US</div>
+                                </div>
+                                <div style="padding-top: 12px; border-top: 1px solid #E5E7EB;">
+                                    <label style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; color: #9CA3AF; display: block; margin-bottom: 6px;">Timeout sin se&ntilde;al global</label>
+                                    <div style="font-size: 15px; color: #1A1A2E; font-weight: 600;" th:text="${configSistema != null ? configSistema.timeoutSenalMin + ' min' : 'No definido'}">61 min</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form id="sistema-form" th:action="@{/configuracion/sistema}" method="POST" style="display: none; padding-top: 10px;">
+                            <div class="section-label" style="border-bottom: 1px solid #E5E7EB; padding-bottom: 12px; margin-bottom: 24px;">Modificar par&aacute;metros del sistema</div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Zona horaria</label>
+                                    <select class="form-input" name="zonaHoraria">
+                                        <option value="America/Santo_Domingo" th:selected="${configSistema != null && configSistema.zonaHoraria == 'America/Santo_Domingo'}">América/Santo Domingo</option>
+                                        <option value="America/New_York" th:selected="${configSistema != null && configSistema.zonaHoraria == 'America/New_York'}">América/New York</option>
+                                        <option value="Europe/Madrid" th:selected="${configSistema != null && configSistema.zonaHoraria == 'Europe/Madrid'}">Europa/Madrid</option>
+                                        <option value="UTC" th:selected="${configSistema != null && configSistema.zonaHoraria == 'UTC'}">UTC (Universal)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Formato de fecha</label>
+                                    <select class="form-input" name="formatoFecha">
+                                        <option value="dd/MM/yyyy HH:mm:ss" th:selected="${configSistema != null && configSistema.formatoFecha == 'dd/MM/yyyy HH:mm:ss'}">24/06/2026 14:30:00 (DD/MM/YYYY)</option>
+                                        <option value="MM/dd/yyyy HH:mm:ss" th:selected="${configSistema != null && configSistema.formatoFecha == 'MM/dd/yyyy HH:mm:ss'}">06/24/2026 14:30:00 (MM/DD/YYYY)</option>
+                                        <option value="yyyy-MM-dd HH:mm:ss" th:selected="${configSistema != null && configSistema.formatoFecha == 'yyyy-MM-dd HH:mm:ss'}">2026-06-24 14:30:00 (YYYY-MM-DD)</option>
+                                        <option value="dd MMM yyyy, HH:mm" th:selected="${configSistema != null && configSistema.formatoFecha == 'dd MMM yyyy, HH:mm'}">24 jun 2026, 14:30</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Formato numérico y regional</label>
+                                    <select class="form-input" name="formatoNumerico">
+                                        <option value="es-DO" th:selected="${configSistema != null && configSistema.formatoNumerico == 'es-DO'}">Rep. Dominicana / España (1.200,50)</option>
+                                        <option value="en-US" th:selected="${configSistema != null && configSistema.formatoNumerico == 'en-US'}">Estados Unidos (1,200.50)</option>
+                                        <option value="fr-FR" th:selected="${configSistema != null && configSistema.formatoNumerico == 'fr-FR'}">Francia (1 200,50)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" th:if="${usuarioGlobal != null and usuarioGlobal.rol != 'VISOR'}">
+                                    <label>Timeout sin se&ntilde;al global (min)</label>
+                                    <input class="form-input" type="number" name="timeoutSenalMin" th:value="${configSistema != null ? configSistema.timeoutSenalMin : 10}" required>
+                                </div>
+                            </div>
+
+                            <div class="footer-btns" style="margin-top: 20px;">
+                                <button type="button" class="btn-cancel" onclick="document.getElementById('sistema-form').style.display='none'; document.getElementById('sistema-view').style.display='block';">Cancelar</button>
+                                <button type="submit" class="btn-primary">Guardar Configuraci&oacute;n</button>
+                            </div>
+                        </form>
+
+                        <div class="divider" style="margin-top: 24px;"></div>
+                        <div class="section-label">Zona de peligro</div>
+                        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;background:#FEF2F2;border:1px solid #FECACA;border-radius:10px; margin-top: 12px;">
+                            <div>
+                                <p style="font-size:14px;font-weight:600;color:#991B1B;">Restablecer sistema</p>
+                                <p style="font-size:12px;color:#EF4444;margin-top:2px;">Elimina todas las configuraciones y devuelve el sistema a estado de f&aacute;brica</p>
+                            </div>
+                            <form th:action="@{/configuracion/sistema/reset}" method="POST" style="margin: 0;">
+                                <button type="submit" class="btn-danger" onclick="return confirm('¿Estás seguro de que deseas restablecer toda la configuración del sistema a sus valores por defecto? Esta acción no se puede deshacer.');">Restablecer</button>
+                            </form>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+
+
+<div id="modal-avatar" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(4px);">
+    <div style="background: #FFF; border-radius: 16px; width: 400px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0; font-size: 18px; font-weight: 600; color: #111827;">Cambiar foto de perfil</h3>
+            <button type="button" onclick="document.getElementById('modal-avatar').style.display='none'" style="background: none; border: none; cursor: pointer; color: #6B7280;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+
+        <form th:action="@{/configuracion/perfil/foto}" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="accion" id="avatar-accion" value="subir">
+
+            <div style="text-align: center; margin-bottom: 24px;">
+                <div id="avatar-preview" style="width: 100px; height: 100px; border-radius: 50%; background: #F3F4F6; margin: 0 auto 16px auto; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px dashed #D1D5DB;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.5" width="40" height="40"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                </div>
+
+                <input type="file" id="foto-input" name="foto" accept="image/png, image/jpeg" style="display: none;" onchange="previewAvatar(this)">
+                <button type="button" class="btn-outline" onclick="document.getElementById('foto-input').click()" style="width: 100%; justify-content: center; margin-bottom: 12px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="margin-right: 8px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    Seleccionar imagen
+                </button>
+
+                <button type="submit" onclick="document.getElementById('avatar-accion').value='eliminar'" style="background: none; border: none; color: #EF4444; font-size: 13px; font-weight: 500; cursor: pointer; text-decoration: underline;" th:if="${usuarioActual != null and usuarioActual.fotoUrl != null}">
+                    Eliminar foto actual (usar iniciales)
+                </button>
+            </div>
+
+            <div style="display: flex; gap: 12px;">
+                <button type="button" class="btn-cancel" style="flex: 1; text-align: center;" onclick="document.getElementById('modal-avatar').style.display='none'">Cancelar</button>
+                <button type="submit" class="btn-primary" style="flex: 1; text-align: center;">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function previewAvatar(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var preview = document.getElementById('avatar-preview');
+                preview.innerHTML = '<img src="' + e.target.result + '" style="width: 100%; height: 100%; object-fit: cover;">';
+                preview.style.border = 'none';
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>
+
+<script th:src="@{/js/notificaciones.js(v='1.2')}"></script>
+
+<div id="modal-usuario" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(4px);">
+    <div style="background: #FFF; border-radius: 16px; width: 450px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 id="modal-usuario-title" style="margin: 0; font-size: 18px; font-weight: 600; color: #111827;">Nuevo Usuario</h3>
+            <button type="button" onclick="document.getElementById('modal-usuario').style.display='none'" style="background: none; border: none; cursor: pointer; color: #6B7280;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+
+        <form th:action="@{/configuracion/usuarios/guardar}" method="POST" id="form-usuario">
+            <input type="hidden" name="id" id="usuario-id">
+
+            <div class="form-group">
+                <label>Nombre Completo</label>
+                <input class="form-input" type="text" name="nombre" id="usuario-nombre" required>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nombre de Usuario</label>
+                    <input class="form-input" type="text" name="username" id="usuario-username" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input class="form-input" type="email" name="email" id="usuario-email" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group" style="flex:1;">
+                    <label>Rol del Sistema</label>
+                    <select class="form-input" name="rol" id="usuario-rol" required>
+                        <option value="ADMIN">Administrador (ADMIN)</option>
+                        <option value="TECNICO">Ingeniero / T&eacute;cnico (TECNICO)</option>
+                        <option value="VISOR">Lector / Operador (VISOR)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Contrase&ntilde;a <span id="password-hint" style="font-weight:normal; font-size:11px; color:#6B7280;"></span></label>
+                <input class="form-input" type="password" name="passwordRaw" id="usuario-password">
+            </div>
+
+            <div class="footer-btns" style="margin-top: 24px;">
+                <button type="button" class="btn-cancel" onclick="document.getElementById('modal-usuario').style.display='none'">Cancelar</button>
+                <button type="submit" class="btn-primary">Guardar Usuario</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<div id="modal-eliminar-usuario" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(4px);">
+    <div style="background: #FFF; border-radius: 16px; width: 400px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); text-align: center;">
+        <div style="width: 48px; height: 48px; border-radius: 50%; background: #FEF2F2; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" width="24" height="24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        </div>
+        <h3 style="margin: 0 0 8px; font-size: 18px; font-weight: 600; color: #111827;">Eliminar Usuario</h3>
+        <p style="margin: 0 0 24px; font-size: 14px; color: #6B7280;">
+            &iquest;Est&aacute;s seguro de que deseas eliminar al usuario <strong id="delete-user-name" style="color:#111827;"></strong>? Esta acci&oacute;n no se puede deshacer.
+        </p>
+        <form method="POST" id="form-eliminar-usuario" style="margin: 0;">
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button type="button" class="btn-cancel" onclick="document.getElementById('modal-eliminar-usuario').style.display='none'" style="flex: 1;">Cancelar</button>
+                <button type="submit" class="btn-primary" style="flex: 1; background: #EF4444; border-color: #EF4444; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);">S&iacute;, Eliminar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openModalNuevoUsuario() {
+        document.getElementById('modal-usuario-title').innerText = 'Nuevo Usuario';
+        document.getElementById('usuario-id').value = '';
+        document.getElementById('usuario-nombre').value = '';
+        document.getElementById('usuario-username').value = '';
+        document.getElementById('usuario-email').value = '';
+        document.getElementById('usuario-rol').value = 'VISOR';
+        document.getElementById('usuario-password').required = true;
+        document.getElementById('password-hint').innerText = '(Obligatorio)';
+        document.getElementById('modal-usuario').style.display = 'flex';
+    }
+
+    function openModalEditarUsuario(id, nombre, username, email, rol) {
+        document.getElementById('modal-usuario-title').innerText = 'Editar Usuario';
+        document.getElementById('usuario-id').value = id;
+        document.getElementById('usuario-nombre').value = nombre;
+        document.getElementById('usuario-username').value = username;
+        document.getElementById('usuario-email').value = email;
+        document.getElementById('usuario-rol').value = rol;
+        document.getElementById('usuario-password').required = false;
+        document.getElementById('password-hint').innerText = '(Dejar en blanco para mantener actual)';
+        document.getElementById('modal-usuario').style.display = 'flex';
+    }
+
+    function openModalEliminarUsuario(id, nombre) {
+        document.getElementById('delete-user-name').innerText = nombre;
+        document.getElementById('form-eliminar-usuario').action = '/configuracion/usuarios/eliminar/' + id;
+        document.getElementById('modal-eliminar-usuario').style.display = 'flex';
+    }
+</script>
+</body>
+</html>
+
+

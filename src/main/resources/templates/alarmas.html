@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
-    <link rel="stylesheet" th:href="@{/css/components.css(v='1.0')}">
+    <link rel="stylesheet" th:href="@{/css/components.css(v='1.2')}">
     <script th:src="@{/js/utils.js(v='1.0')}" defer></script>
 </head>
 <body>
@@ -22,31 +22,139 @@
         <div class="top-actions">
             <div class="top-badge last-sync-badge">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
-                <span id="nav-last-sync" th:text="${ultimaSincronizacionGlobal != null ? 'Última sincronización: ' + #temporals.format(ultimaSincronizacionGlobal, 'dd/MM/yyyy HH:mm') : 'Sin sincronizaciones'}">Última sincronización: --</span>
+                <span id="nav-last-sync" th:text="${ultimaSincronizacionGlobal != null ? 'Última sincronización: ' + formatter.formatDate(ultimaSincronizacionGlobal) : 'Sin sincronizaciones'}">Última sincronización: --</span>
             </div>
-            <div class="top-badge badge-alarms" id="alarms-badge-btn">
+            <div class="top-badge badge-alarms" id="alarms-badge-btn-alm" style="position: relative; cursor: pointer; transition: transform 0.2s;" onclick="toggleAlarmsMenuAlm(event)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                 <span>Alarmas</span>
                 <div class="notification-dot" id="globalAlarmBadge" th:text="${totalAlarmasActivas != null ? totalAlarmasActivas : 0}">0</div>
-                <div id="alarms-dropdown" class="summary-dropdown" style="width: 320px;">
-                    <div class="summary-dropdown-header" style="display: flex; justify-content: space-between; align-items: center;">
-                        <span>Alarmas Activas</span>
-                        <span class="badge badge-danger" style="font-size: 10px; padding: 2px 6px;" id="dropdownActiveCount" th:text="${totalAlarmasActivas != null ? totalAlarmasActivas : 0} + ' Activas'">0 Activas</span>
+                <div id="alarms-dropdown-alm" style="display: none; position: absolute; right: 0; top: calc(100% + 10px); background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 320px; z-index: 1000; opacity: 0; transform: translateY(-10px); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: default;" onclick="event.stopPropagation()">
+                    <div class="summary-dropdown-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #E5E7EB;">
+                        <span style="font-size: 13px; font-weight: 600; color: #1F2937;">Alarmas Activas</span>
+                        <span class="badge badge-danger" style="font-size: 10px; padding: 2px 6px; background-color: #FEF2F2; color: #EF4444; border-radius: 10px; font-weight: 600;" id="dropdownActiveCount" th:text="${totalAlarmasActivas != null ? totalAlarmasActivas : 0} + ' Activas'">0 Activas</span>
                     </div>
                     <div id="alarms-dropdown-items" style="max-height: 280px; overflow-y: auto;">
+                        <div style="padding: 16px; text-align: center; color: #6B7280; font-size: 13px;">No hay alarmas activas en este momento</div>
                     </div>
                     <div style="padding: 10px 16px; border-top: 1px solid #E5E7EB; background: #F9FAFB; border-radius: 0 0 12px 12px; text-align: center;">
                         <a href="/alarmas" style="font-size: 12px; color: var(--primary); text-decoration: none; font-weight: 600; display: block;">Ver todo en la sección de alarmas</a>
                     </div>
                 </div>
             </div>
-            <div class="profile-dropdown">
-                <div class="avatar">G2</div>
-                <div class="profile-info">
-                    <span class="profile-name">Grupo 2</span>
-                    <span class="profile-role">Administrador</span>
+            <div class="profile-dropdown-container" th:if="${usuarioGlobal != null}" style="position: relative;">
+                <div class="profile-dropdown" id="profile-dropdown-trigger-alm" style="cursor: pointer; transition: background-color 0.2s;" onclick="toggleProfileMenuAlm(event)">
+                    <img th:if="${usuarioGlobal != null and usuarioGlobal.fotoUrl != null}" 
+                         th:src="${usuarioGlobal.fotoUrl}" class="avatar" alt="Avatar" style="object-fit: cover; background-color: transparent;">
+                    <div th:unless="${usuarioGlobal != null and usuarioGlobal.fotoUrl != null}" 
+                         class="avatar" style="text-transform: uppercase; display: flex; align-items: center; justify-content: center; color: white;" 
+                         th:styleappend="${usuarioGlobal != null ? 'background-color: ' + usuarioGlobal.getAvatarColor() + ';' : 'background-color: #8B5CF6;'}"
+                         th:text="${usuarioGlobal != null ? usuarioGlobal.getAvatarInitials() : 'U'}">U</div>
+                    <div class="profile-info">
+                        <span class="profile-name" th:text="${usuarioGlobal != null ? usuarioGlobal.nombre : 'Usuario'}">Usuario</span>
+                        <span class="profile-role" th:text="${usuarioGlobal != null ? #strings.capitalize(#strings.toLowerCase(usuarioGlobal.rol)) : 'Rol'}">Rol</span>
+                    </div>
+                    <svg id="profile-menu-chevron-alm" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" width="16" height="16" style="margin-right: 4px; transition: transform 0.3s;"><polyline points="6 9 12 15 18 9"/></svg>
                 </div>
-                <svg viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" width="16" height="16" style="margin-right: 4px;"><polyline points="6 9 12 15 18 9"/></svg>
+                
+                <div id="profile-menu-alm" style="display: none; position: absolute; right: 0; top: calc(100% + 10px); background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); min-width: 200px; z-index: 1000; padding: 8px; opacity: 0; transform: translateY(-10px); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);">
+                    <a href="/configuracion" onmouseover="this.style.background='#F3F4F6'" onmouseout="this.style.background='transparent'" style="display: flex; align-items: center; gap: 8px; padding: 10px 12px; color: #4B5563; text-decoration: none; font-size: 13px; font-weight: 500; border-radius: 8px; transition: background 0.2s;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
+                        Configuración
+                    </a>
+                    <div style="height: 1px; background: #F3F4F6; margin: 4px 0;"></div>
+                    <form th:action="@{/logout}" method="post" style="margin: 0; padding: 0;">
+                        <button type="submit" class="logout-btn" style="width: 100%; background: transparent; border: none; cursor: pointer; text-align: left; padding: 10px 12px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+                            </svg>
+                            Cerrar sesión
+                        </button>
+                    </form>
+                </div>
+                
+                <script>
+                    function toggleAlarmsMenuAlm(event) {
+                        event.stopPropagation();
+                        const menu = document.getElementById('alarms-dropdown-alm');
+                        const isHidden = menu.style.display === 'none' || menu.style.opacity === '0';
+                        
+                        const profileMenu = document.getElementById('profile-menu-alm');
+                        if (profileMenu && profileMenu.style.display !== 'none') {
+                            profileMenu.style.opacity = '0';
+                            profileMenu.style.transform = 'translateY(-10px)';
+                            document.getElementById('profile-menu-chevron-alm').style.transform = 'rotate(0deg)';
+                            setTimeout(() => profileMenu.style.display = 'none', 200);
+                        }
+                        
+                        if (isHidden) {
+                            menu.style.display = 'block';
+                            menu.offsetHeight; // reflow
+                            menu.style.opacity = '1';
+                            menu.style.transform = 'translateY(0)';
+                        } else {
+                            menu.style.opacity = '0';
+                            menu.style.transform = 'translateY(-10px)';
+                            setTimeout(() => {
+                                if (menu.style.opacity === '0') menu.style.display = 'none';
+                            }, 200);
+                        }
+                    }
+
+                    function toggleProfileMenuAlm(event) {
+                        event.stopPropagation();
+                        const menu = document.getElementById('profile-menu-alm');
+                        const chevron = document.getElementById('profile-menu-chevron-alm');
+                        const isHidden = menu.style.display === 'none' || menu.style.opacity === '0';
+                        
+                        const alarmsMenu = document.getElementById('alarms-dropdown-alm');
+                        if (alarmsMenu && alarmsMenu.style.display !== 'none') {
+                            alarmsMenu.style.opacity = '0';
+                            alarmsMenu.style.transform = 'translateY(-10px)';
+                            setTimeout(() => alarmsMenu.style.display = 'none', 200);
+                        }
+                        
+                        if (isHidden) {
+                            menu.style.display = 'block';
+                            menu.offsetHeight; // trigger reflow
+                            menu.style.opacity = '1';
+                            menu.style.transform = 'translateY(0)';
+                            chevron.style.transform = 'rotate(180deg)';
+                        } else {
+                            menu.style.opacity = '0';
+                            menu.style.transform = 'translateY(-10px)';
+                            chevron.style.transform = 'rotate(0deg)';
+                            setTimeout(() => {
+                                if (menu.style.opacity === '0') menu.style.display = 'none';
+                            }, 200);
+                        }
+                    }
+                    
+                    document.addEventListener('click', function(event) {
+                        const profileMenu = document.getElementById('profile-menu-alm');
+                        const profileTrigger = document.getElementById('profile-dropdown-trigger-alm');
+                        const profileChevron = document.getElementById('profile-menu-chevron-alm');
+                        
+                        if (profileMenu && profileTrigger && !profileMenu.contains(event.target) && !profileTrigger.contains(event.target)) {
+                            profileMenu.style.opacity = '0';
+                            profileMenu.style.transform = 'translateY(-10px)';
+                            if (profileChevron) profileChevron.style.transform = 'rotate(0deg)';
+                            setTimeout(() => {
+                                if (profileMenu.style.opacity === '0') profileMenu.style.display = 'none';
+                            }, 200);
+                        }
+                        
+                        const alarmsMenu = document.getElementById('alarms-dropdown-alm');
+                        const alarmsTrigger = document.getElementById('alarms-badge-btn-alm');
+                        
+                        if (alarmsMenu && alarmsTrigger && !alarmsMenu.contains(event.target) && !alarmsTrigger.contains(event.target)) {
+                            alarmsMenu.style.opacity = '0';
+                            alarmsMenu.style.transform = 'translateY(-10px)';
+                            setTimeout(() => {
+                                if (alarmsMenu.style.opacity === '0') alarmsMenu.style.display = 'none';
+                            }, 200);
+                        }
+                    });
+                </script>
             </div>
         </div>
     </header>
@@ -95,10 +203,10 @@
                 <div id="batchToolbar" class="batch-toolbar hidden">
                     <span class="batch-toolbar-info"><span id="selectedCount">0</span> alarmas seleccionadas</span>
                     <div class="batch-toolbar-actions">
-                        <button class="btn btn-batch-ack" id="btnBatchAck">
+                        <button th:if="${usuarioGlobal != null and (usuarioGlobal.rol == 'ADMIN' or usuarioGlobal.rol == 'TECNICO')}" class="btn btn-batch-ack" id="btnBatchAck">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" style="margin-right: 6px; vertical-align: text-bottom;"><path d="M18 11V6a2 2 0 0 0-4 0v4"/><path d="M14 10V4a2 2 0 0 0-4 0v6"/><path d="M10 10.5V3a2 2 0 0 0-4 0v9"/><path d="M6 12v-1a2 2 0 0 0-4 0v5a11 11 0 0 0 11 11h2.5a8.5 8.5 0 0 0 8.5-8.5V14a2 2 0 0 0-4 0"/></svg> Reconocer
                         </button>
-                        <button class="btn btn-batch-resolve" id="btnBatchResolve">
+                        <button th:if="${usuarioGlobal != null and (usuarioGlobal.rol == 'ADMIN' or usuarioGlobal.rol == 'TECNICO')}" class="btn btn-batch-resolve" id="btnBatchResolve">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" style="margin-right: 6px; vertical-align: text-bottom;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Resolver
                         </button>
                     </div>
@@ -149,7 +257,7 @@
                                 <td class="time-cell" style="color: #64748B;">
                                     <div style="display: flex; align-items: center; gap: 4px;">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                        <span th:text="${#temporals.format(alarma.fechaHora, 'HH:mm:ss')}">16:50:43</span>
+                                        <span th:text="${formatter.formatDate(alarma.fechaHora)}">16:50:43</span>
                                     </div>
                                 </td>
                                 <td>
@@ -157,13 +265,13 @@
                                 </td>
                                 <td>
                                     <div class="action-buttons-group">
-                                        <button class="action-btn ack-btn" th:data-id="${alarma.id}" title="Reconocer Alarma" th:disabled="${alarma.reconocida}">
+                                        <button th:if="${usuarioGlobal != null and (usuarioGlobal.rol == 'ADMIN' or usuarioGlobal.rol == 'TECNICO')}" class="action-btn ack-btn" th:data-id="${alarma.id}" title="Reconocer Alarma" th:disabled="${alarma.reconocida}">
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M18 11V6a2 2 0 0 0-4 0v4"/><path d="M14 10V4a2 2 0 0 0-4 0v6"/><path d="M10 10.5V3a2 2 0 0 0-4 0v9"/><path d="M6 12v-1a2 2 0 0 0-4 0v5a11 11 0 0 0 11 11h2.5a8.5 8.5 0 0 0 8.5-8.5V14a2 2 0 0 0-4 0"/></svg>
                                         </button>
                                         <button class="action-btn view-btn" th:data-id="${alarma.id}" title="Ver Detalles">
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                                         </button>
-                                        <button class="action-btn resolve-btn" th:data-id="${alarma.id}" title="Resolver Alarma">
+                                        <button th:if="${usuarioGlobal != null and (usuarioGlobal.rol == 'ADMIN' or usuarioGlobal.rol == 'TECNICO')}" class="action-btn resolve-btn" th:data-id="${alarma.id}" title="Resolver Alarma">
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                                         </button>
                                     </div>
@@ -201,7 +309,7 @@
                             <option value="">Global </option>
                             <option th:each="est : ${estaciones}" th:value="${est.id}" th:text="${est.nombre}"></option>
                         </select>
-                        <button type="button" id="btnOpenConfigModal" class="btn-primary rebound-effect" style="padding: 8px 16px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(124, 58, 237, 0.2); border-radius: 8px;">
+                        <button th:if="${usuarioGlobal != null and (usuarioGlobal.rol == 'ADMIN' or usuarioGlobal.rol == 'TECNICO')}" type="button" id="btnOpenConfigModal" class="btn-primary rebound-effect" style="padding: 8px 16px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(124, 58, 237, 0.2); border-radius: 8px;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
                                 <circle cx="12" cy="12" r="3"></circle>
                                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -296,7 +404,7 @@
                                 </div>
                             </td>
                             <td class="time-cell" style="color: #64748B;">
-                                <span th:text="${#temporals.format(alarma.fechaHoraResolucion, 'dd/MM/yyyy HH:mm')}">--</span>
+                                <span th:text="${formatter.formatDate(alarma.fechaHoraResolucion)}">--</span>
                             </td>
                             <td>
                                 <span class="badge badge-success">Resuelta</span>

@@ -6,8 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${title}">Estación Meteorológica</title>
     <link rel="stylesheet" th:href="@{/css/dashboard.css(v='2.19')}">
-    <link rel="stylesheet" th:href="@{/css/components.css(v='1.0')}">
+    <link rel="stylesheet" th:href="@{/css/components.css(v='1.2')}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script th:inline="javascript">
+        window.APP_CONFIG = {
+            zonaHoraria: /*[[${configuracionGlobal != null ? configuracionGlobal.zonaHoraria : 'America/Santo_Domingo'}]]*/ 'America/Santo_Domingo',
+            formatoFecha: /*[[${configuracionGlobal != null ? configuracionGlobal.formatoFecha : 'dd/MM/yyyy HH:mm:ss'}]]*/ 'dd/MM/yyyy HH:mm:ss',
+            formatoNumerico: /*[[${configuracionGlobal != null ? configuracionGlobal.formatoNumerico : 'es-DO'}]]*/ 'es-DO'
+        };
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
     <script th:src="@{/js/utils.js(v='1.0')}" defer></script>
@@ -90,7 +97,7 @@
                 Reportes
             </a>
         </li>
-        <li>
+        <li th:if="${usuarioGlobal != null and (usuarioGlobal.rol == 'ADMIN' or usuarioGlobal.rol == 'TECNICO')}">
             <a href="/integracion" class="nav-item" th:classappend="${activePage == 'integracion' ? 'active' : ''}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <g transform="rotate(45 12 12)">
@@ -103,8 +110,8 @@
                 Integración
             </a>
         </li>
-        <li>
-            <a href="#" class="nav-item" th:classappend="${activePage == 'configuracion' ? 'active' : ''}">
+        <li th:if="${usuarioGlobal != null}">
+            <a href="/configuracion" class="nav-item" th:classappend="${activePage == 'configuracion' ? 'active' : ''}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="3" />
                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
@@ -114,56 +121,329 @@
         </li>
     </ul>
     <div class="sidebar-footer">
-        <a href="/" class="logout-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-            Cerrar sesión
-        </a>
+        <form th:action="@{/logout}" method="post" style="width: 100%; margin: 0; padding: 0;">
+            <button type="submit" class="logout-btn" style="width: 100%; background: transparent; border: none; cursor: pointer; text-align: left;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                Cerrar sesión
+            </button>
+        </form>
     </div>
 </aside>
 <header class="top-nav" th:fragment="topNav(pageTitle)">
     <div class="nav-left">
         <h1 th:text="${pageTitle}">Título</h1>
     </div>
-    <div class="nav-center">
+    <div class="nav-center" th:if="${pageTitle != 'Configuración' and pageTitle != 'Gráficos y Análisis'}">
         <div class="search-container" style="position: relative;">
             <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input type="text" id="station-search" class="search-input" placeholder="Buscar por nombre o código..." autocomplete="off">
             <div id="search-dropdown" class="search-dropdown"></div>
         </div>
     </div>
-    <div class="nav-right">
-        <div class="top-badge badge-status" id="status-badge-btn" style="position: relative; cursor: pointer; transition: transform 0.1s;">
+    <div class="nav-right" style="gap: 16px; align-items: center;">
+        <div class="top-badge badge-status" id="status-badge-btn" style="position: relative; cursor: pointer; transition: transform 0.2s;" onclick="toggleStatusMenu(event)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
-            <span>0/0 Estaciones Activas</span>
-            <div id="summary-dropdown" class="summary-dropdown"></div>
+            <span id="global-activas-text" th:text="${activasEstacionesGlobal != null ? activasEstacionesGlobal + '/' + totalEstacionesGlobal + ' Estaciones Activas' : '0/0 Estaciones Activas'}">0/0 Estaciones Activas</span>
+            
+            <div id="summary-dropdown" class="summary-dropdown" style="display: none; position: absolute; top: calc(100% + 10px); left: 50%; transform: translateX(-50%); background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 280px; z-index: 1000; flex-direction: column; cursor: default;" onclick="event.stopPropagation()">
+                <div class="summary-dropdown-header" id="global-activas-header" th:text="'Resumen de Red (' + ${activasEstacionesGlobal != null ? activasEstacionesGlobal : 0} + ' activas de ' + ${totalEstacionesGlobal != null ? totalEstacionesGlobal : 0} + ')'" style="padding: 12px 16px; border-bottom: 1px solid #E5E7EB; font-weight: 600; color: #111827; font-size: 13px;">Resumen de Red</div>
+                <div id="global-estaciones-list" style="max-height: 300px; overflow-y: auto;">
+                    
+                </div>
+            </div>
         </div>
-        <div class="top-badge badge-alarms" id="alarms-badge-btn" style="position: relative; cursor: pointer;">
+        <div class="top-badge badge-alarms" id="alarms-badge-btn" style="position: relative; cursor: pointer; transition: transform 0.2s;" onclick="toggleAlarmsMenuGlobal(event)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
             <span>Alarmas</span>
             <div class="notification-dot" id="globalAlarmBadge" th:text="${totalAlarmasActivas != null ? totalAlarmasActivas : 0}">0</div>
-            <div id="alarms-dropdown" class="summary-dropdown" style="width: 320px;">
-                <div class="summary-dropdown-header" style="display: flex; justify-content: space-between; align-items: center;">
-                    <span>Alarmas Activas</span>
-                    <span class="badge badge-danger" style="font-size: 10px; padding: 2px 6px;" id="dropdownActiveCount" th:text="${totalAlarmasActivas != null ? totalAlarmasActivas : 0} + ' Activas'">0 Activas</span>
+            <div id="alarms-dropdown-global" style="display: none; position: absolute; right: 0; top: calc(100% + 10px); background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 320px; z-index: 1000; opacity: 0; transform: translateY(-10px); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: default;" onclick="event.stopPropagation()">
+                <div class="summary-dropdown-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #E5E7EB;">
+                    <span style="font-size: 13px; font-weight: 600; color: #1F2937;">Alarmas Activas</span>
+                    <span class="badge badge-danger" style="font-size: 10px; padding: 2px 6px; background-color: #FEF2F2; color: #EF4444; border-radius: 10px; font-weight: 600;" id="dropdownActiveCount" th:text="${totalAlarmasActivas != null ? totalAlarmasActivas : 0} + ' Activas'">0 Activas</span>
                 </div>
                 <div id="alarms-dropdown-items" style="max-height: 280px; overflow-y: auto;">
+                    <div style="padding: 16px; text-align: center; color: #6B7280; font-size: 13px;">No hay alarmas activas en este momento</div>
                 </div>
                 <div style="padding: 10px 16px; border-top: 1px solid #E5E7EB; background: #F9FAFB; border-radius: 0 0 12px 12px; text-align: center;">
                     <a href="/alarmas" style="font-size: 12px; color: var(--primary); text-decoration: none; font-weight: 600; display: block;">Ver todo en la sección de alarmas</a>
                 </div>
             </div>
         </div>
-        <div class="profile-dropdown">
-            <div class="avatar">G2</div>
-            <div class="profile-info">
-                <span class="profile-name">Grupo 2</span>
-                <span class="profile-role">Administrador</span>
+        <div class="profile-dropdown-container" th:if="${usuarioGlobal != null}" style="position: relative;">
+            <div class="profile-dropdown" id="profile-dropdown-trigger" style="cursor: pointer; transition: background-color 0.2s;" onclick="toggleProfileMenu(event)">
+                <img th:if="${usuarioGlobal != null and usuarioGlobal.fotoUrl != null}" 
+                     th:src="${usuarioGlobal.fotoUrl}" class="avatar" alt="Avatar" style="object-fit: cover; background-color: transparent;">
+                <div th:unless="${usuarioGlobal != null and usuarioGlobal.fotoUrl != null}" 
+                     class="avatar" style="text-transform: uppercase; display: flex; align-items: center; justify-content: center; color: white;" 
+                     th:styleappend="${usuarioGlobal != null ? 'background-color: ' + usuarioGlobal.getAvatarColor() + ';' : 'background-color: #8B5CF6;'}"
+                     th:text="${usuarioGlobal != null ? usuarioGlobal.getAvatarInitials() : 'U'}">U</div>
+                <div class="profile-info">
+                    <span class="profile-name" th:text="${usuarioGlobal != null ? usuarioGlobal.nombre : 'Usuario'}">Usuario</span>
+                    <span class="profile-role" th:text="${usuarioGlobal != null ? #strings.capitalize(#strings.toLowerCase(usuarioGlobal.rol)) : 'Rol'}">Rol</span>
+                </div>
+                <svg id="profile-menu-chevron" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" width="16" height="16" style="margin-right: 4px; transition: transform 0.3s;"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
-            <svg viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" width="16" height="16" style="margin-right: 4px;"><polyline points="6 9 12 15 18 9"/></svg>
+            
+            <div id="profile-menu" style="display: none; position: absolute; right: 0; top: calc(100% + 10px); background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); min-width: 200px; z-index: 1000; padding: 8px; opacity: 0; transform: translateY(-10px); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);">
+                <a href="/configuracion" onmouseover="this.style.background='#F3F4F6'" onmouseout="this.style.background='transparent'" style="display: flex; align-items: center; gap: 8px; padding: 10px 12px; color: #4B5563; text-decoration: none; font-size: 13px; font-weight: 500; border-radius: 8px; transition: background 0.2s;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
+                    Configuración
+                </a>
+                <div style="height: 1px; background: #F3F4F6; margin: 4px 0;"></div>
+                <form th:action="@{/logout}" method="post" style="margin: 0; padding: 0;">
+                    <button type="submit" class="logout-btn" style="width: 100%; background: transparent; border: none; cursor: pointer; text-align: left; padding: 10px 12px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                        Cerrar sesión
+                    </button>
+                </form>
+            </div>
+            
+            <script>
+                function toggleAlarmsMenuGlobal(event) {
+                    event.stopPropagation();
+                    const menu = document.getElementById('alarms-dropdown-global');
+                    const isHidden = menu.style.display === 'none' || menu.style.opacity === '0';
+                    
+                    // Hide profile menu if open
+                    const profileMenu = document.getElementById('profile-menu');
+                    if (profileMenu && profileMenu.style.display !== 'none') {
+                        profileMenu.style.opacity = '0';
+                        profileMenu.style.transform = 'translateY(-10px)';
+                        document.getElementById('profile-menu-chevron').style.transform = 'rotate(0deg)';
+                        setTimeout(() => profileMenu.style.display = 'none', 200);
+                    }
+                    
+                    // Hide status menu if open
+                    const statusMenu = document.getElementById('summary-dropdown');
+                    if (statusMenu && statusMenu.style.display !== 'none') {
+                        statusMenu.style.display = 'none';
+                    }
+                    
+                    if (isHidden) {
+                        menu.style.display = 'block';
+                        menu.offsetHeight; // trigger reflow
+                        menu.style.opacity = '1';
+                        menu.style.transform = 'translateY(0)';
+                    } else {
+                        menu.style.opacity = '0';
+                        menu.style.transform = 'translateY(-10px)';
+                        setTimeout(() => {
+                            if (menu.style.opacity === '0') menu.style.display = 'none';
+                        }, 200);
+                    }
+                }
+
+                function toggleProfileMenu(event) {
+                    event.stopPropagation();
+                    const menu = document.getElementById('profile-menu');
+                    const chevron = document.getElementById('profile-menu-chevron');
+                    const isHidden = menu.style.display === 'none' || menu.style.opacity === '0';
+                    
+                    // Hide alarms menu if open
+                    const alarmsMenu = document.getElementById('alarms-dropdown-global');
+                    if (alarmsMenu && alarmsMenu.style.display !== 'none') {
+                        alarmsMenu.style.opacity = '0';
+                        alarmsMenu.style.transform = 'translateY(-10px)';
+                        setTimeout(() => alarmsMenu.style.display = 'none', 200);
+                    }
+                    
+                    // Hide status menu if open
+                    const statusMenu = document.getElementById('summary-dropdown');
+                    if (statusMenu && statusMenu.style.display !== 'none') {
+                        statusMenu.style.display = 'none';
+                    }
+                    
+                    if (isHidden) {
+                        menu.style.display = 'block';
+                        // trigger reflow
+                        menu.offsetHeight;
+                        menu.style.opacity = '1';
+                        menu.style.transform = 'translateY(0)';
+                        chevron.style.transform = 'rotate(180deg)';
+                    } else {
+                        menu.style.opacity = '0';
+                        menu.style.transform = 'translateY(-10px)';
+                        chevron.style.transform = 'rotate(0deg)';
+                        setTimeout(() => {
+                            if (menu.style.opacity === '0') menu.style.display = 'none';
+                        }, 200);
+                    }
+                }
+                
+                document.addEventListener('click', function(event) {
+                    const profileMenu = document.getElementById('profile-menu');
+                    const profileTrigger = document.getElementById('profile-dropdown-trigger');
+                    const profileChevron = document.getElementById('profile-menu-chevron');
+                    
+                    if (profileMenu && profileTrigger && !profileMenu.contains(event.target) && !profileTrigger.contains(event.target)) {
+                        profileMenu.style.opacity = '0';
+                        profileMenu.style.transform = 'translateY(-10px)';
+                        profileChevron.style.transform = 'rotate(0deg)';
+                        setTimeout(() => {
+                            if (profileMenu.style.opacity === '0') profileMenu.style.display = 'none';
+                        }, 200);
+                    }
+                    
+                    const alarmsMenu = document.getElementById('alarms-dropdown-global');
+                    const alarmsTrigger = document.getElementById('alarms-badge-btn');
+                    
+                    if (alarmsMenu && alarmsTrigger && !alarmsMenu.contains(event.target) && !alarmsTrigger.contains(event.target)) {
+                        alarmsMenu.style.opacity = '0';
+                        alarmsMenu.style.transform = 'translateY(-10px)';
+                        setTimeout(() => {
+                            if (alarmsMenu.style.opacity === '0') alarmsMenu.style.display = 'none';
+                        }, 200);
+                    }
+                });
+            </script>
         </div>
     </div>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        // Inicializar dropdown de estaciones si los datos globales existen
+        var estacionesGlobal = /*[[${estacionesGlobal}]]*/ [];
+        
+        function renderSummaryDropdown() {
+            if (!estacionesGlobal || estacionesGlobal.length === 0) return;
+            var activas = estacionesGlobal.filter(function(e) { return e.estado === 'En línea'; }).length;
+            var total = estacionesGlobal.length;
+            document.getElementById('global-activas-text').innerText = activas + '/' + total + ' Estaciones Activas';
+            var header = document.getElementById('global-activas-header');
+            if(header) header.innerText = 'Resumen de Red (' + activas + ' activas de ' + total + ')';
+            
+            var list = document.getElementById('global-estaciones-list');
+            if (list) {
+                var html = '';
+                var sorted = [].concat(estacionesGlobal).sort(function(a, b) {
+                    if (a.estado === 'En línea' && b.estado !== 'En línea') return -1;
+                    if (a.estado !== 'En línea' && b.estado === 'En línea') return 1;
+                    return 0;
+                });
+                for (var i = 0; i < sorted.length; i++) {
+                    var est = sorted[i];
+                    var isOnline = est.estado === 'En línea';
+                    var statusClass = isOnline ? 'status-online' : 'status-offline';
+                    var color = isOnline ? '#10B981' : '#EF4444';
+                    var bg = isOnline ? '#D1FAE5' : '#FEF2F2';
+                    html += '<div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid #F3F4F6;">' +
+                            '    <div><h4 style="margin:0; font-size: 13px; font-weight: 500; color: #111827;">' + est.nombre + '</h4><p style="margin:0; font-size: 11px; color: #6B7280;">' + est.codigo + '</p></div>' +
+                            '    <div style="font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 12px; color: ' + color + '; background: ' + bg + ';">' + est.estado + '</div>' +
+                            '</div>';
+                }
+                list.innerHTML = html;
+            }
+        }
+        
+        // Ejecutar en carga
+        if(document.readyState !== 'loading') {
+            renderSummaryDropdown();
+        } else {
+            document.addEventListener('DOMContentLoaded', renderSummaryDropdown);
+        }
+
+        function toggleStatusMenu(event) {
+            event.stopPropagation();
+            
+            // Hide alarms menu if open
+            var alarmsMenu = document.getElementById('alarms-dropdown-global');
+            if (alarmsMenu && alarmsMenu.style.display !== 'none') {
+                alarmsMenu.style.opacity = '0';
+                alarmsMenu.style.transform = 'translateY(-10px)';
+                setTimeout(() => alarmsMenu.style.display = 'none', 200);
+            }
+            
+            // Hide profile menu if open
+            var profileMenu = document.getElementById('profile-menu');
+            if (profileMenu && profileMenu.style.display !== 'none') {
+                profileMenu.style.opacity = '0';
+                profileMenu.style.transform = 'translateY(-10px)';
+                var chevron = document.getElementById('profile-menu-chevron');
+                if (chevron) {
+                    chevron.style.transform = 'rotate(0deg)';
+                }
+                setTimeout(() => profileMenu.style.display = 'none', 200);
+            }
+
+            var dropdown = document.getElementById('summary-dropdown');
+            if (dropdown) {
+                var isVisible = dropdown.style.display === 'flex';
+                dropdown.style.display = isVisible ? 'none' : 'flex';
+            }
+        }
+        document.addEventListener('click', function(e) {
+            var badgeBtn = document.getElementById('status-badge-btn');
+            var dropdown = document.getElementById('summary-dropdown');
+            if (badgeBtn && dropdown && !badgeBtn.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+        
+        // Conexión global WebSocket para actualización en vivo de estado de estaciones
+        function connectGlobalEstacionesStatus() {
+            if (typeof SockJS === 'undefined' || typeof Stomp === 'undefined') {
+                return;
+            }
+            var socket = new SockJS('/ws');
+            var globalStomp = Stomp.over(socket);
+            globalStomp.debug = null;
+            globalStomp.connect({}, function (frame) {
+                globalStomp.subscribe('/topic/estaciones-estado', function (mensaje) {
+                    var update = JSON.parse(mensaje.body);
+                    if (estacionesGlobal) {
+                        for (var i = 0; i < estacionesGlobal.length; i++) {
+                            if (estacionesGlobal[i].id === update.id) {
+                                estacionesGlobal[i].estado = update.estado;
+                                break;
+                            }
+                        }
+                        renderSummaryDropdown();
+                    }
+                    // Si estamos en la página del Dashboard, actualizamos marcador
+                    if (typeof window.estacionesData !== 'undefined' && typeof window.stationMarkers !== 'undefined') {
+                        var mapEst = window.estacionesData.find(e => e.id === update.id);
+                        if (mapEst) {
+                            mapEst.estado = update.estado;
+                            var marker = window.stationMarkers[mapEst.id];
+                            if (marker) {
+                                var el = marker.getElement();
+                                var hasAlarms = mapEst.alarmasActivas && mapEst.alarmasActivas.length > 0;
+                                var colorHex = hasAlarms ? '#F59E0B' : (update.estado === 'Sin señal' ? '#DC2626' : '#34D399');
+                                el.style.border = '2px solid ' + colorHex;
+                                el.style.color = colorHex;
+                                el.style.boxShadow = '0 0 10px ' + colorHex;
+                            }
+                        }
+                    }
+                    // Si estamos en la página de Estaciones (Tabla), actualizamos fila
+                    var row = document.getElementById('estacion-row-' + update.id);
+                    if (row) {
+                        var statusTd = row.querySelector('.status-td');
+                        if (statusTd) {
+                            var statusHtml = '';
+                            if (update.estado === 'En línea') {
+                                statusHtml = '<span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: #ECFDF5; color: #10B981; border-radius: 20px; font-size: 12px; font-weight: 500;">' +
+                                             '<span style="width: 6px; height: 6px; background: #10B981; border-radius: 50%; display: inline-block;"></span> En línea</span>';
+                            } else {
+                                statusHtml = '<span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: #FEF2F2; color: #EF4444; border-radius: 20px; font-size: 12px; font-weight: 500;">' +
+                                             '<span style="width: 6px; height: 6px; background: #EF4444; border-radius: 50%; display: inline-block;"></span> Sin señal</span>';
+                            }
+                            statusTd.innerHTML = statusHtml;
+                        }
+                    }
+                });
+            }, function(error) {
+                setTimeout(connectGlobalEstacionesStatus, 5000); 
+            });
+        }
+        // Solo conectar si no está ya conectado en otra parte (ej. dashboard.js conectará, pero podemos dejar dos SockJS)
+        // Pero para ser eficientes, mejor solo conectamos.
+        connectGlobalEstacionesStatus();
+        /*]]>*/
+    </script>
 </header>
 </body>
 </html>

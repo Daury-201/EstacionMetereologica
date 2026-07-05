@@ -194,11 +194,11 @@
             </td>
             <td class="stat-hum">
                 <span class="stat-label">Humedad Promedio</span>
-                <span class="stat-value" th:text="${#numbers.formatDecimal(humedadPromedio, 1, 0)} + ' %'"></span>
+                <span class="stat-value" th:text="${formatter.formatNumber(humedadPromedio, 1)} + ' %'"></span>
             </td>
             <td class="stat-pres">
                 <span class="stat-label">Presión Promedio</span>
-                <span class="stat-value" th:text="${#numbers.formatDecimal(presionPromedio, 1, 0)} + ' hPa'"></span>
+                <span class="stat-value" th:text="${formatter.formatNumber(presionPromedio, 1)} + ' hPa'"></span>
             </td>
             <td class="stat-lluv">
                 <span class="stat-label">Lluvia Acumulada</span>
@@ -301,14 +301,14 @@
             </thead>
             <tbody>
                 <tr th:each="l : ${lecturas}">
-                    <td th:text="${#temporals.format(l.fechaHora, 'dd/MM/yyyy HH:mm:ss')}"></td>
-                    <td th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'temp'}" th:text="${l.temperatura}"></td>
-                    <td th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'hum'}" th:text="${l.humedadAire}"></td>
-                    <td th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'pres'}" th:text="${l.presion}"></td>
-                    <td th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'viento'}" th:text="${l.velocidadViento}"></td>
+                    <td th:text="${formatter.formatDate(l.fechaHora)}"></td>
+                    <td th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'temp'}" th:text="${formatter.formatNumber(l.temperatura)}"></td>
+                    <td th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'hum'}" th:text="${formatter.formatNumber(l.humedadAire)}"></td>
+                    <td th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'pres'}" th:text="${formatter.formatNumber(l.presion)}"></td>
+                    <td th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'viento'}" th:text="${formatter.formatNumber(l.velocidadViento)}"></td>
                     <td th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'viento'}" th:text="${l.direccionViento}"></td>
-                    <td th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'lluvia'}" th:text="${l.lluvia}"></td>
-                    <td th:if="${variableFiltro == null or variableFiltro == 'all'}" th:text="${l.humedadSuelo}"></td>
+                    <td th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'lluvia'}" th:text="${formatter.formatNumber(l.lluvia)}"></td>
+                    <td th:if="${variableFiltro == null or variableFiltro == 'all'}" th:text="${formatter.formatNumber(l.humedadSuelo)}"></td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(lecturas)}" class="empty-row">
                     <td colspan="8">No se encontraron registros para el período seleccionado.</td>
