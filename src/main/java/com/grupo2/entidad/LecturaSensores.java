@@ -12,6 +12,8 @@ public class LecturaSensores {
     @Column(name = "fecha_hora")
     private LocalDateTime fechaHora;
     private Double temperatura;
+    @Column(name = "sensacion_termica")
+    private Double sensacionTermica;
     @Column(name = "humedad_aire")
     private Double humedadAire;
     private Double presion;
@@ -47,6 +49,12 @@ public class LecturaSensores {
     }
     public void setTemperatura(Double temperatura) {
         this.temperatura = temperatura;
+    }
+    public Double getSensacionTermica() {
+        return sensacionTermica;
+    }
+    public void setSensacionTermica(Double sensacionTermica) {
+        this.sensacionTermica = sensacionTermica;
     }
     public Double getHumedadAire() {
         return humedadAire;

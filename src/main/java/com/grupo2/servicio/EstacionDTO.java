@@ -8,6 +8,7 @@ public class EstacionDTO {
     private Double latitud;
     private Double longitud;
     private Double temperatura;
+    private Double sensacionTermica;
     private Double humedadAire;
     private Double velocidadViento;
     private String ultimaLectura;
@@ -27,6 +28,8 @@ public class EstacionDTO {
     public void setLongitud(Double longitud) { this.longitud = longitud; }
     public Double getTemperatura() { return temperatura; }
     public void setTemperatura(Double temperatura) { this.temperatura = temperatura; }
+    public Double getSensacionTermica() { return sensacionTermica; }
+    public void setSensacionTermica(Double sensacionTermica) { this.sensacionTermica = sensacionTermica; }
     public Double getHumedadAire() { return humedadAire; }
     public void setHumedadAire(Double humedadAire) { this.humedadAire = humedadAire; }
     public Double getVelocidadViento() { return velocidadViento; }

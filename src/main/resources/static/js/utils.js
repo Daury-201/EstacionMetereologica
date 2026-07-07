@@ -46,17 +46,39 @@ const Utils = {
         
         let tz = 'America/Santo_Domingo';
         let locale = 'es-DO';
+        let fmtString = 'dd/MM/yyyy HH:mm:ss';
+        
         if (window.APP_CONFIG) {
             tz = window.APP_CONFIG.zonaHoraria || tz;
             locale = window.APP_CONFIG.formatoNumerico || locale;
+            fmtString = window.APP_CONFIG.formatoFecha || fmtString;
         }
 
         try {
-            return new Intl.DateTimeFormat(locale, { 
+            // Extraer las partes exactas en la zona horaria correcta
+            const parts = new Intl.DateTimeFormat('en-US', { 
                 day: '2-digit', month: '2-digit', year: 'numeric',
                 hour: '2-digit', minute: '2-digit', second: '2-digit',
+                hour12: false,
                 timeZone: tz
-            }).format(d);
+            }).formatToParts(d);
+            
+            const map = {};
+            parts.forEach(p => map[p.type] = p.value);
+            
+            // Si el formato requiere mes corto (ej. jun, abr)
+            if (fmtString.includes('MMM')) {
+                const shortMonth = new Intl.DateTimeFormat(locale, { month: 'short', timeZone: tz }).format(d);
+                fmtString = fmtString.replace('MMM', shortMonth);
+            }
+            
+            // Reemplazar en el formato especificado
+            return fmtString.replace('dd', map.day || '00')
+                            .replace('MM', map.month || '00')
+                            .replace('yyyy', map.year || '0000')
+                            .replace('HH', map.hour && map.hour === '24' ? '00' : (map.hour || '00'))
+                            .replace('mm', map.minute || '00')
+                            .replace('ss', map.second || '00');
         } catch (e) {
             return d.toLocaleString();
         }

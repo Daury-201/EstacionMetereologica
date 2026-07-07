@@ -11,10 +11,10 @@ window.convertTempObj = function(val) {
 const map = new mapboxgl.Map({
     container: 'map-root',
     style: 'mapbox://styles/mapbox/outdoors-v12',
-    center: [-70.6667, 19.4500],
-    zoom: 12.5,
-    pitch: 65,
-    bearing: -17.6
+    center: [-70.4, 18.9],
+    zoom: 6.5,
+    pitch: 50,
+    bearing: 0
     
 });
 window.map = map; 
@@ -127,7 +127,104 @@ map.on('touchstart', stopSlideshowAndRotation);
 map.on('wheel', stopSlideshowAndRotation);
 map.on('dragstart', stopSlideshowAndRotation);
 
+window.getPremiumBiomeFallback = function(lat, lon) {
+    if (lon > -69.5) {
+        return 'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&w=1200&q=80';
+    } else if (lat > 18.6 && lat < 19.3 && lon < -70.4 && lon > -71.5) {
+        return 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1200&q=80';
+    } else if (lat >= 19.3) {
+        return 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80';
+    } else {
+        return 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80';
+    }
+};
+
+window.getDynamicImage = function(est, callback) {
+    if (window.stationImagesCache && window.stationImagesCache[est.id]) {
+        return callback(window.stationImagesCache[est.id]);
+    }
+    
+    // Nivel 4: Mapbox Satellite Fallback Absoluto
+    const fallbackSat = `https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/${est.longitud},${est.latitud},13,0,45/800x400?access_token=${window.mapboxApiKey}`;
+    if (!est.latitud || !est.longitud) return callback(fallbackSat);
+    
+    const resolveFinal = (img) => {
+        if (window.stationImagesCache) window.stationImagesCache[est.id] = img;
+        callback(img);
+    };
+
+    const geoUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${est.longitud},${est.latitud}.json?types=place,locality&access_token=${window.mapboxApiKey}`;
+    fetch(geoUrl).then(r => r.json()).then(geoData => {
+        let exactName = est.nombre;
+        if (geoData.features && geoData.features.length > 0) {
+            exactName = geoData.features[0].text;
+        }
+        
+        // Nivel 1: Wikipedia Article GeoSearch (Radio ESTRICTO de 2km para precisión milimétrica)
+        const geoSearchUrl = `https://es.wikipedia.org/w/api.php?action=query&generator=geosearch&ggsprimary=all&ggsnamespace=0&ggsradius=2000&ggscoord=${est.latitud}|${est.longitud}&ggslimit=10&prop=pageimages&pithumbsize=1000&format=json&origin=*`;
+        fetch(geoSearchUrl).then(r => r.json()).then(wData => {
+            let bestImage = null;
+            if (wData?.query?.pages) {
+                // Priorizar si el título del artículo coincide con el nombre de la estación para máxima precisión
+                const pages = Object.values(wData.query.pages);
+                
+                // Intento 1: Buscar coincidencia exacta de nombre
+                const searchStr = (est.nombre || "").toLowerCase();
+                for (const p of pages) {
+                    if (p.title && p.title.toLowerCase().includes(searchStr) && p.pageimage && p.thumbnail && p.thumbnail.source) {
+                        const imgName = p.pageimage.toLowerCase();
+                        if (imgName.includes('.svg') || imgName.includes('.png') || imgName.includes('map') || imgName.includes('flag') || imgName.includes('logo') || imgName.includes('earth') || imgName.includes('globe')) continue;
+                        bestImage = p.thumbnail.source;
+                        break;
+                    }
+                }
+                
+                // Intento 2: Si no hay coincidencia exacta de nombre, tomar la primera foto válida del radio de 2km
+                if (!bestImage) {
+                    for (const p of pages) {
+                        if (p.pageimage && p.thumbnail && p.thumbnail.source) {
+                            const imgName = p.pageimage.toLowerCase();
+                            if (imgName.includes('.svg') || imgName.includes('.png') || imgName.includes('map') || imgName.includes('flag') || imgName.includes('logo') || imgName.includes('earth') || imgName.includes('globe')) continue;
+                            bestImage = p.thumbnail.source;
+                            break; 
+                        }
+                    }
+                }
+            }
+            if (bestImage) return resolveFinal(bestImage);
+
+            const query = encodeURIComponent(exactName + " Republica Dominicana");
+            const wikiArtUrl = `https://es.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${query}&gsrlimit=5&prop=pageimages&pithumbsize=1000&format=json&origin=*`;
+            fetch(wikiArtUrl).then(r => r.json()).then(artData => {
+                let artImage = null;
+                if (artData?.query?.pages) {
+                    const pages = Object.values(artData.query.pages);
+                    for (const p of pages) {
+                        if (p.pageimage && p.thumbnail && p.thumbnail.source) {
+                            const imgName = p.pageimage.toLowerCase();
+                            if (imgName.includes('.svg') || imgName.includes('.png') || imgName.includes('map') || imgName.includes('flag') || imgName.includes('logo') || imgName.includes('earth') || imgName.includes('globe')) continue;
+                            artImage = p.thumbnail.source;
+                            break;
+                        }
+                    }
+                }
+                if (artImage) return resolveFinal(artImage);
+                // Nivel 3: Bioma Premium por ubicación/altitud
+                resolveFinal(window.getPremiumBiomeFallback(est.latitud, est.longitud));
+            }).catch(() => resolveFinal(window.getPremiumBiomeFallback(est.latitud, est.longitud)));
+        }).catch(() => resolveFinal(window.getPremiumBiomeFallback(est.latitud, est.longitud)));
+    }).catch(() => resolveFinal(fallbackSat));
+};
+
 const estaciones = window.estacionesData || [];
+window.stationImagesCache = {};
+estaciones.forEach(est => {
+    if (est.nombre && (est.nombre.toLowerCase().includes('homs') || est.nombre.toLowerCase().includes('pucmm') || est.nombre.toLowerCase().includes('utesa'))) return;
+    window.getDynamicImage(est, (imgUrl) => {
+        const img = new Image();
+        img.src = imgUrl; // Pre-descarga
+    });
+});
 const stationMarkers = {};
 window.stationMarkers = stationMarkers;
 estaciones.forEach((est, index) => {
@@ -163,6 +260,24 @@ estaciones.forEach((est, index) => {
             .setLngLat([est.longitud, est.latitud])
             .addTo(map);
 
+        el.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            window.mapRotationActive = true; 
+            map.flyTo({
+                center: [-70.4, 18.9],
+                zoom: 6.5,
+                pitch: 50,
+                bearing: 0,
+                speed: 1.2,
+                curve: 1.42,
+                essential: true
+            });
+            if (window._stationPopup) {
+                window._stationPopup.remove();
+                window._stationPopup = null;
+            }
+        });
+
         el.addEventListener('click', (e) => {
             e.stopPropagation();
             window.mapRotationActive = false; 
@@ -170,7 +285,101 @@ estaciones.forEach((est, index) => {
                 clearInterval(window.slideshowInterval);
                 window.slideshowInterval = null;
             }
-            window.seleccionarEstacion(est);
+            
+            // Update the dashboard cards and trigger the zoom animation
+            if (typeof window.seleccionarEstacion === 'function') {
+                window.seleccionarEstacion(est, false);
+            }
+
+            // Close any existing popup
+            if (window._stationPopup) {
+                window._stationPopup.remove();
+                window._stationPopup = null;
+            }
+            
+            // Only show the popup if the map is expanded
+            if (!document.body.classList.contains('map-fullscreen')) {
+                return;
+            }
+
+            // Build popup HTML
+            const isOnline = est.estado === 'En l\u00ednea';
+            const statusClass = isOnline ? 'online' : 'offline';
+            const statusIcon = isOnline
+                ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>'
+                : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+            const sf = (val, d) => (val !== null && val !== undefined) ? Number(val).toFixed(d) : '--';
+            const tempVal = sf(est.temperatura, 1);
+            const humVal = sf(est.humedadAire, 0);
+            const windVal = sf(est.velocidadViento, 1);
+            const rainVal = sf(est.lluvia, 1);
+            const pressVal = sf(est.presion, 0);
+            const soilVal = sf(est.humedadSuelo, 0);
+            const lastTime = est.fechaHoraLectura ? est.fechaHoraLectura.split(' ')[1].substring(0,5) : '--:--';
+            const popupId = 'popup-details-' + est.id;
+            const popupHTML = `
+                <div class="station-popup-header">
+                    <div class="station-popup-header-icon ${statusClass}">${statusIcon}</div>
+                    <div class="station-popup-header-info">
+                        <h4>${est.nombre}</h4>
+                        <span>${est.codigo} \u2022 ${est.ubicacion || ''}</span>
+                    </div>
+                </div>
+                <div class="station-popup-body">
+                    <div class="popup-metric">
+                        <div class="popup-metric-icon temp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path></svg></div>
+                        <div class="popup-metric-data"><div class="popup-val">${tempVal}\u00b0C</div><div class="popup-label">Temp.</div></div>
+                    </div>
+                    <div class="popup-metric">
+                        <div class="popup-metric-icon hum"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg></div>
+                        <div class="popup-metric-data"><div class="popup-val">${humVal}%</div><div class="popup-label">Humedad</div></div>
+                    </div>
+                    <div class="popup-metric">
+                        <div class="popup-metric-icon wind"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"></path></svg></div>
+                        <div class="popup-metric-data"><div class="popup-val">${windVal}</div><div class="popup-label">km/h</div></div>
+                    </div>
+                    <div class="popup-metric">
+                        <div class="popup-metric-icon rain"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"></path><line x1="8" y1="16" x2="8.01" y2="21"></line><line x1="12" y1="13" x2="12.01" y2="18"></line><line x1="16" y1="16" x2="16.01" y2="21"></line></svg></div>
+                        <div class="popup-metric-data"><div class="popup-val">${rainVal}</div><div class="popup-label">mm lluvia</div></div>
+                    </div>
+                    <div class="popup-metric">
+                        <div class="popup-metric-icon pressure"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
+                        <div class="popup-metric-data"><div class="popup-val">${pressVal}</div><div class="popup-label">hPa</div></div>
+                    </div>
+                    <div class="popup-metric">
+                        <div class="popup-metric-icon soil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 22h20"></path><path d="M12 2a10 10 0 0 0-6.88 17.23l3.06-7.28A4 4 0 0 1 12 9a4 4 0 0 1 3.82 2.95l3.06 7.28A10 10 0 0 0 12 2z"></path></svg></div>
+                        <div class="popup-metric-data"><div class="popup-val">${soilVal}%</div><div class="popup-label">Suelo</div></div>
+                    </div>
+                </div>
+                <div class="station-popup-details" id="${popupId}">
+                    <div class="station-popup-details-inner">
+                        <div class="popup-detail-row"><span class="detail-label">Dir. Viento</span><span class="detail-value">${est.direccionViento || '--'}</span></div>
+                        <div class="popup-detail-row"><span class="detail-label">Estado</span><span class="detail-value" style="color:${isOnline ? '#34D399' : '#F87171'}">${est.estado || '--'}</span></div>
+                        <div class="popup-detail-row"><span class="detail-label">Ubicaci\u00f3n</span><span class="detail-value">${est.ubicacion || '--'}</span></div>
+                        <div class="popup-detail-row"><span class="detail-label">Coordenadas</span><span class="detail-value">${Number(est.latitud).toFixed(4)}, ${Number(est.longitud).toFixed(4)}</span></div>
+                    </div>
+                </div>
+                <div class="station-popup-footer">
+                    <div class="popup-last-update">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        ${lastTime}
+                    </div>
+                    <button class="popup-detail-btn" id="btn-${popupId}" onclick="(function(){ var d=document.getElementById('${popupId}'); var b=document.getElementById('btn-${popupId}'); if(d.classList.contains('expanded')){d.classList.remove('expanded');b.classList.remove('expanded');b.innerHTML='Ver m\\u00e1s <svg class=\\'chevron-icon\\' viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'2\\'><polyline points=\\'9 18 15 12 9 6\\'></polyline></svg>';}else{d.classList.add('expanded');b.classList.add('expanded');b.innerHTML='Ver menos <svg class=\\'chevron-icon\\' viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'2\\'><polyline points=\\'9 18 15 12 9 6\\'></polyline></svg>';}})()">
+                        Ver m\u00e1s
+                        <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                </div>
+            `;
+            window._stationPopup = new mapboxgl.Popup({
+                anchor: 'left',
+                offset: [40, 0],
+                closeOnClick: true,
+                focusAfterOpen: false,
+                maxWidth: '300px'
+            })
+                .setLngLat([est.longitud, est.latitud])
+                .setHTML(popupHTML)
+                .addTo(map);
         });
         stationMarkers[est.id] = marker;
     }
@@ -243,12 +452,12 @@ styleButtons.forEach(btn => {
         const newStyle = e.target.getAttribute('data-style');
         map.setStyle(newStyle);
         const mapEl = document.getElementById('map-root');
-        if (newStyle.includes('outdoors') || newStyle.includes('light')) {
-            mapEl.classList.remove('map-is-dark');
-            mapEl.classList.add('map-is-light');
-        } else {
+        if (newStyle.includes('light')) {
             mapEl.classList.remove('map-is-light');
             mapEl.classList.add('map-is-dark');
+        } else {
+            mapEl.classList.remove('map-is-dark');
+            mapEl.classList.add('map-is-light');
         }
     });
 });
@@ -300,7 +509,7 @@ function formatVal(val, suffix) {
 }
 function formatFechaISO(isoString) {
     if (!isoString) return 'Sin registro';
-    return isoString.replace('T', ' ').substring(0, 19);
+    return window.Utils && window.Utils.formatDate ? window.Utils.formatDate(isoString) : isoString.replace('T', ' ').substring(0, 19);
 }
 function actualizarMarcadorEnVivo(lectura) {
     if (!lectura || !lectura.estacionId) return;
@@ -374,6 +583,11 @@ window.resetMapView = function() {
     window.mapRotationActive = false;
     currentStationId = null;
     
+    if (window._stationPopup) {
+        window._stationPopup.remove();
+        window._stationPopup = null;
+    }
+    
     if (window.slideshowInterval) {
         clearInterval(window.slideshowInterval);
         window.slideshowInterval = null;
@@ -387,10 +601,10 @@ window.resetMapView = function() {
     map.once('moveend', window.onResetMoveEnd);
 
     map.flyTo({
-        center: [-70.6667, 19.4500],
-        zoom: 12.5,
-        pitch: 65,
-        bearing: -17.6,
+        center: [-70.4, 18.9],
+        zoom: 6.5,
+        pitch: 50,
+        bearing: 0,
         speed: 1.2,
         curve: 1.42,
         essential: true
@@ -400,7 +614,7 @@ window.resetMapView = function() {
 window.onResetMoveEnd = function() {
     
     const center = map.getCenter();
-    if (Math.abs(center.lng - (-70.6667)) < 0.05 && Math.abs(center.lat - 19.4500) < 0.05) {
+    if (Math.abs(center.lng - (-70.4)) < 0.1 && Math.abs(center.lat - 18.9) < 0.1) {
         window.mapRotationActive = true;
         rotateCamera();
     }
@@ -513,7 +727,16 @@ function actualizarTarjetaClima(est, isUnitToggle = false) {
     document.getElementById('activeTemp').textContent = safeFixed(convertedTemp, 1) || '--';
     const unitEls = document.querySelectorAll('.weather-unit');
     unitEls.forEach(el => el.textContent = `°${window.currentTempUnit}`);
-    document.getElementById('activeFeels').textContent = 'Sensación: ' + (safeFixed(convertedTemp, 1) ? (convertedTemp + (window.currentTempUnit === 'F' ? 0.9 : 0.5)).toFixed(1) + `°${window.currentTempUnit}` : '--');
+    
+    // Calculate feels like: prefer backend sensacionTermica, fallback to approx
+    let convertedFeels;
+    if (est.sensacionTermica !== null && est.sensacionTermica !== undefined) {
+        convertedFeels = window.convertTempObj(est.sensacionTermica);
+    } else {
+        convertedFeels = convertedTemp !== null ? convertedTemp + (window.currentTempUnit === 'F' ? 0.9 : 0.5) : null;
+    }
+    document.getElementById('activeFeels').textContent = 'Sensación: ' + (safeFixed(convertedFeels, 1) ? safeFixed(convertedFeels, 1) + `°${window.currentTempUnit}` : '--');
+    
     document.getElementById('activeStatusText').textContent = est.estado || '--';
     document.getElementById('activeTime').textContent = est.fechaHoraLectura ? est.fechaHoraLectura.split(' ')[1].substring(0, 5) : '--:--';
     const statusText = document.getElementById('activeStatusText');
@@ -530,7 +753,7 @@ function actualizarTarjetaClima(est, isUnitToggle = false) {
     document.getElementById('activeWindDir').textContent = est.direccionViento || '--';
     const photoHeader = document.getElementById('weatherPhotoHeader');
     if (photoHeader) {
-        photoHeader.style.backgroundImage = obtenerImagenClimatica(est);
+        aplicarImagenClimatica(est, photoHeader);
     }
     const card = document.getElementById('weatherCard');
     if (card && !isUnitToggle) {
@@ -550,39 +773,162 @@ function actualizarWidgetLifestyle(est) {
     const lsDesc = document.getElementById('lsDesc');
     const lsIconWrapper = document.getElementById('lsIconWrapper');
     if (!lsIcon || !lsTitle || !lsDesc || !lsIconWrapper) return;
+    
+    // Extract variables with fallbacks
     const lluvia = est.lluvia || 0;
     const viento = est.velocidadViento || 0;
     const temp = est.temperatura !== null ? est.temperatura : 25;
+    const humedad = est.humedadAire || 0;
+    const suelo = est.humedadSuelo || 0;
+    const presion = est.presion || 1013;
+    const sensacion = (est.sensacionTermica !== null && est.sensacionTermica !== undefined) ? est.sensacionTermica : temp;
+    
+    // Calculate Day/Night state and Hour
+    let isNight = false;
+    let currentHour = new Date().getHours();
+    if (est.fechaHoraLectura) {
+        const timePart = est.fechaHoraLectura.split(' ')[1];
+        if (timePart) {
+            const hour = parseInt(timePart.split(':')[0], 10);
+            if (!isNaN(hour)) {
+                currentHour = hour;
+            }
+        }
+    }
+    isNight = (currentHour < 6 || currentHour >= 19);
+
+    // Reset base classes
     lsIconWrapper.className = 'ls-icon-wrapper';
-    if (lluvia > 3) {
-        lsIcon.textContent = '☔';
-        lsTitle.textContent = 'Lleva Paraguas';
-        lsDesc.textContent = lluvia >= 5 ? 'Lluvias fuertes en la zona. Maneja con precaución.' : 'Se registran lluvias ligeras. Un paraguas será útil hoy.';
-        lsIconWrapper.style.background = 'linear-gradient(135deg, #93C5FD 0%, #3B82F6 100%)';
-        lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(59, 130, 246, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.5)';
+    
+    // Evaluation Logic - Priority Order
+    if (lluvia >= 15) { // 1. Inundación Repentina
+        lsIcon.textContent = '🌊';
+        lsTitle.textContent = 'Alerta de Inundación';
+        lsDesc.textContent = 'Lluvias torrenciales extremas. Alto riesgo de inundaciones repentinas. Busca terreno elevado.';
+        lsIconWrapper.style.background = 'linear-gradient(135deg, #111827 0%, #1E3A8A 100%)';
+        lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(17, 24, 39, 0.7), inset 0 2px 4px rgba(255, 255, 255, 0.2)';
         lsIconWrapper.classList.add('ls-anim-rain');
-    } else if (viento > 20) {
-        lsIcon.textContent = '🪁';
-        lsTitle.textContent = 'Mucho Viento';
-        lsDesc.textContent = 'Las ráfagas están intensas. Ten cuidado con objetos sueltos o ramas caídas.';
-        lsIconWrapper.style.background = 'linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%)';
-        lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(124, 58, 237, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.5)';
+    } else if (lluvia >= 10) { // 2. Tormenta Severa
+        lsIcon.textContent = '⛈️';
+        lsTitle.textContent = 'Tormenta Severa';
+        lsDesc.textContent = 'Precipitaciones extremas. Evita zonas inundables y maneja con extrema precaución.';
+        lsIconWrapper.style.background = 'linear-gradient(135deg, #1E3A8A 0%, #312E81 100%)';
+        lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(30, 58, 138, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.3)';
+        lsIconWrapper.classList.add('ls-anim-rain');
+    } else if (presion < 1005 && viento > 25) { // 3. Alerta Ciclónica
+        lsIcon.textContent = '🌀';
+        lsTitle.textContent = 'Alerta Ciclónica';
+        lsDesc.textContent = 'Presión atmosférica críticamente baja y ráfagas. Posible formación de tormenta o depresión.';
+        lsIconWrapper.style.background = 'linear-gradient(135deg, #3730A3 0%, #312E81 100%)';
+        lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(49, 46, 129, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.2)';
         lsIconWrapper.classList.add('ls-anim-wind');
-    } else if (temp > 32) {
-        lsIcon.textContent = '😎';
+    } else if (temp > 30 && humedad < 40 && viento > 25) { // 4. Riesgo de Incendio
+        lsIcon.textContent = '🔥';
+        lsTitle.textContent = 'Riesgo de Incendio';
+        lsDesc.textContent = 'Condiciones calurosas, secas y ventosas. ALTO RIESGO de incendios forestales. Evita encender fuego.';
+        lsIconWrapper.style.background = 'linear-gradient(135deg, #EA580C 0%, #9A3412 100%)';
+        lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(154, 52, 18, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.3)';
+        lsIconWrapper.classList.add('ls-anim-sun');
+    } else if (viento > 35) { // 5. Vientos Peligrosos
+        lsIcon.textContent = '🌪️';
+        lsTitle.textContent = 'Vientos Peligrosos';
+        lsDesc.textContent = 'Ráfagas muy intensas. Aléjate de estructuras inestables o árboles viejos.';
+        lsIconWrapper.style.background = 'linear-gradient(135deg, #4C1D95 0%, #7C3AED 100%)';
+        lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(124, 58, 237, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.3)';
+        lsIconWrapper.classList.add('ls-anim-wind');
+    } else if (lluvia >= 2) { // 6. Lluvia Fuerte
+        lsIcon.textContent = '☔';
+        lsTitle.textContent = 'Lluvia Fuerte';
+        lsDesc.textContent = 'Lluvia sostenida en la zona. No salgas sin paraguas ni equipo de lluvia.';
+        lsIconWrapper.style.background = 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)';
+        lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(59, 130, 246, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.3)';
+        lsIconWrapper.classList.add('ls-anim-rain');
+    } else if (humedad >= 95 && viento < 5 && temp < 22) { // 7. Niebla
+        lsIcon.textContent = '🌫️';
+        lsTitle.textContent = 'Riesgo de Niebla';
+        lsDesc.textContent = 'Humedad saturada y sin viento. Probabilidad de neblina espesa. Enciende las luces antiniebla.';
+        lsIconWrapper.style.background = 'linear-gradient(135deg, #9CA3AF 0%, #6B7280 100%)';
+        lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(107, 114, 128, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.3)';
+    } else if (temp >= 37) { // 8. Calor Extremo
+        lsIcon.textContent = '🌡️';
         lsTitle.textContent = 'Calor Extremo';
-        lsDesc.textContent = 'Las temperaturas están muy altas. Mantente hidratado y usa protector solar si sales.';
+        lsDesc.textContent = 'Temperaturas sumamente altas (' + temp + '°C). Usa protector solar y evita el sol directo.';
         lsIconWrapper.style.background = 'linear-gradient(135deg, #FCA5A5 0%, #EF4444 100%)';
         lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(239, 68, 68, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.5)';
         lsIconWrapper.classList.add('ls-anim-sun');
-    } else if (temp < 18) {
-        lsIcon.textContent = '🧥';
-        lsTitle.textContent = 'Ambiente Fresco';
-        lsDesc.textContent = 'Se siente fresco afuera. Te recomendamos llevar un abrigo ligero contigo.';
-        lsIconWrapper.style.background = 'linear-gradient(135deg, #6EE7B7 0%, #10B981 100%)';
-        lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(16, 185, 129, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.5)';
+    } else if (sensacion >= temp + 3 && temp > 28) { // 9. Calor Pegajoso / Sofocante
+        lsIcon.textContent = '🥵';
+        lsTitle.textContent = 'Calor Sofocante';
+        lsDesc.textContent = 'La altísima humedad hace que se sienta mucho más calor del que marca el termómetro. Riesgo de fatiga.';
+        lsIconWrapper.style.background = 'linear-gradient(135deg, #DC2626 0%, #991B1B 100%)';
+        lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(220, 38, 38, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.3)';
+        lsIconWrapper.classList.add('ls-anim-sun');
+    } else if (sensacion <= temp - 3 && temp < 20) { // 10. Viento Helado
+        lsIcon.textContent = '🧊';
+        lsTitle.textContent = 'Viento Helado';
+        lsDesc.textContent = 'El viento corta la piel. Se siente mucho más frío de lo que marca el termómetro.';
+        lsIconWrapper.style.background = 'linear-gradient(135deg, #38BDF8 0%, #0284C7 100%)';
+        lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(2, 132, 199, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.3)';
         lsIconWrapper.classList.add('ls-anim-cold');
-    } else {
+    } else if (temp < 15) { // 11. Frío Congelante
+        lsIcon.textContent = '🥶';
+        lsTitle.textContent = 'Frío Intenso';
+        lsDesc.textContent = 'Temperaturas muy bajas para la zona. Abrígate bien y mantente en lugares cálidos.';
+        lsIconWrapper.style.background = 'linear-gradient(135deg, #6EE7B7 0%, #059669 100%)';
+        lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(16, 185, 129, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.3)';
+        lsIconWrapper.classList.add('ls-anim-cold');
+    } else if (lluvia > 0) { // 12. Llovizna Ligera
+        lsIcon.textContent = '🌦️';
+        lsTitle.textContent = 'Llovizna Ligera';
+        lsDesc.textContent = 'Ligeras lloviznas. Una chaqueta impermeable o sombrilla será suficiente.';
+        lsIconWrapper.style.background = 'linear-gradient(135deg, #93C5FD 0%, #3B82F6 100%)';
+        lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(147, 197, 253, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.5)';
+        lsIconWrapper.classList.add('ls-anim-rain');
+    } else if (currentHour >= 6 && currentHour < 12 && temp >= 20 && temp <= 27 && viento < 20) { // 13. Mañana Agradable
+        lsIcon.textContent = '🌅';
+        lsTitle.textContent = 'Mañana Agradable';
+        lsDesc.textContent = 'Mañana fresca y muy agradable. Excelente momento para hacer ejercicio o empezar el día.';
+        lsIconWrapper.style.background = 'linear-gradient(135deg, #FDE68A 0%, #F59E0B 100%)';
+        lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(245, 158, 11, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.5)';
+        lsIconWrapper.classList.add('ls-anim-sun');
+    } else if (viento > 10 && viento <= 20 && temp >= 20 && temp <= 28) { // 14. Viento Agradable
+        lsIcon.textContent = '🪁';
+        lsTitle.textContent = 'Viento Agradable';
+        lsDesc.textContent = 'Brisa refrescante y clima templado. Excelente día para volar una chichigua.';
+        lsIconWrapper.style.background = 'linear-gradient(135deg, #C4B5FD 0%, #8B5CF6 100%)';
+        lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(139, 92, 246, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.5)';
+        lsIconWrapper.classList.add('ls-anim-wind');
+    } else if (isNight && temp < 22) { // 15. Noche Fresca
+        lsIcon.textContent = '🌌';
+        lsTitle.textContent = 'Noche Fresca';
+        lsDesc.textContent = 'Noche estrellada con un clima algo frío. Duerme con una cobija extra.';
+        lsIconWrapper.style.background = 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)';
+        lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(15, 23, 42, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.2)';
+    } else if (isNight && humedad < 85 && presion >= 1010) { // 16. Noche Despejada
+        lsIcon.textContent = '🌙';
+        lsTitle.textContent = 'Noche Despejada';
+        lsDesc.textContent = 'Cielo despejado, condiciones ideales para dar un paseo nocturno o ver las estrellas.';
+        lsIconWrapper.style.background = 'linear-gradient(135deg, #334155 0%, #1E293B 100%)';
+        lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(30, 41, 59, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.2)';
+    } else if (isNight) { // 17. Noche Nublada
+        lsIcon.textContent = '☁️';
+        lsTitle.textContent = 'Noche Nublada';
+        lsDesc.textContent = 'Noche mayormente nublada. Condiciones tranquilas para descansar.';
+        lsIconWrapper.style.background = 'linear-gradient(135deg, #475569 0%, #334155 100%)';
+        lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(51, 65, 85, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.2)';
+    } else if (suelo > 85) { // 16. Suelo Saturado
+        lsIcon.textContent = '🌱';
+        lsTitle.textContent = 'Suelo Saturado';
+        lsDesc.textContent = 'La tierra está en su máxima capacidad hídrica. Riesgo de lodo o encharcamiento en cultivos.';
+        lsIconWrapper.style.background = 'linear-gradient(135deg, #A3E635 0%, #65A30D 100%)';
+        lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(101, 163, 13, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.5)';
+    } else if (suelo < 30 && temp > 25) { // 17. Suelo Seco
+        lsIcon.textContent = '🏜️';
+        lsTitle.textContent = 'Suelo Seco';
+        lsDesc.textContent = 'La tierra está perdiendo humedad rápidamente. Ideal para programar riego preventivo.';
+        lsIconWrapper.style.background = 'linear-gradient(135deg, #FCD34D 0%, #D97706 100%)';
+        lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(217, 119, 6, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.5)';
+    } else { // 18. Día Agradable
         lsIcon.textContent = '☀️';
         lsTitle.textContent = 'Día Agradable';
         lsDesc.textContent = 'Las condiciones son perfectas para actividades al aire libre. ¡Disfruta el día!';
@@ -591,15 +937,43 @@ function actualizarWidgetLifestyle(est) {
         lsIconWrapper.classList.add('ls-anim-sun');
     }
 }
-function obtenerImagenClimatica(est) {
-    if (!est) return 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+function aplicarImagenClimatica(est, photoHeaderElement) {
+    if (!photoHeaderElement) return;
+    
+    // Default gradient
+    photoHeaderElement.style.backgroundImage = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+    if (!est) return;
+
     if (est.nombre) {
         const nombreStr = est.nombre.toLowerCase();
-        if (nombreStr.includes('homs')) return 'url("/img/homs.png")';
-        if (nombreStr.includes('pucmm')) return 'url("/img/pucmm.png")';
-        if (nombreStr.includes('utesa')) return 'url("/img/utesa.png")';
+        if (nombreStr.includes('homs')) {
+            photoHeaderElement.style.backgroundImage = 'url("/img/homs.png")';
+            return;
+        }
+        if (nombreStr.includes('pucmm')) {
+            photoHeaderElement.style.backgroundImage = 'url("/img/pucmm.png")';
+            return;
+        }
+        if (nombreStr.includes('utesa')) {
+            photoHeaderElement.style.backgroundImage = 'url("/img/utesa.png")';
+            return;
+        }
     }
-    return 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+    
+    // Si la imagen ya fue precargada en segundo plano, se muestra al instante
+    if (window.stationImagesCache && window.stationImagesCache[est.id]) {
+        photoHeaderElement.style.backgroundImage = `linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.6)), url("${window.stationImagesCache[est.id]}")`;
+        photoHeaderElement.style.backgroundPosition = 'center';
+        photoHeaderElement.style.backgroundSize = 'cover';
+        return;
+    }
+    
+    // Cargar con el motor de imágenes unificado
+    window.getDynamicImage(est, (imgUrl) => {
+        photoHeaderElement.style.backgroundImage = `linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.6)), url("${imgUrl}")`;
+        photoHeaderElement.style.backgroundPosition = 'center';
+        photoHeaderElement.style.backgroundSize = 'cover';
+    });
 }
 
 window.startSlideshow = function() {
@@ -784,4 +1158,17 @@ function initTempToggle() {
         });
     });
 }
+
+document.addEventListener('click', function(e) {
+    if (window._stationPopup) {
+        const isClickInsideMap = e.target.closest('#map-root');
+        const isClickInsidePopup = e.target.closest('.mapboxgl-popup');
+        const isClickInsideMarker = e.target.closest('.mapboxgl-marker');
+        
+        if (!isClickInsideMap && !isClickInsidePopup && !isClickInsideMarker) {
+            window._stationPopup.remove();
+            window._stationPopup = null;
+        }
+    }
+});
 initTempToggle();

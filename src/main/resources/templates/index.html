@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Estación Meteorológica</title>
-    <link rel="stylesheet" th:href="@{/css/dashboard.css(v='2.21')}" href="../static/css/dashboard.css">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css(v='2.23')}" href="../static/css/dashboard.css">
     <link rel="stylesheet" th:href="@{/css/components.css(v='1.2')}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js'></script>
@@ -13,6 +13,52 @@
     <link href='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css' rel='stylesheet' />
 </head>
 <body class="theme-light">
+
+<div id="splash-screen" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s ease, visibility 0.5s ease; color: white;">
+    <div style="animation: scalePulse 2s infinite ease-in-out;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 80px; height: 80px; margin-bottom: 20px;">
+            <path d="M17.5 19C19.985 19 22 16.985 22 14.5C22 12.18 20.25 10.26 18.01 10.05C17.43 6.64 14.47 4 11 4C7.13 4 4 7.13 4 11C1.79 11.23 0 13.12 0 15.5C0 17.985 2.015 20 4.5 20H17.5V19Z" fill="rgba(255,255,255,0.2)"></path>
+            <path d="M8 14V22M12 16V22M16 14V22"></path>
+        </svg>
+    </div>
+    <h1 style="font-size: 2.5rem; font-weight: 700; margin: 0; letter-spacing: -1px; animation: slideUpFade 0.8s forwards ease-out;">Estación Meteorológica</h1>
+    <p style="font-size: 1.1rem; opacity: 0; margin-top: 10px; animation: slideUpFade 0.8s forwards ease-out; animation-delay: 0.3s;">Gestión inteligente del clima</p>
+    <div style="width: 200px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; margin-top: 30px; overflow: hidden; opacity: 0; animation: slideUpFade 0.8s forwards ease-out; animation-delay: 0.6s;">
+        <div style="height: 100%; background: white; width: 0%; animation: loadingBar 2.5s forwards ease-in-out;"></div>
+    </div>
+</div>
+<style>
+@keyframes scalePulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+@keyframes slideUpFade {
+    0% { transform: translateY(20px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+@keyframes loadingBar {
+    0% { width: 0%; }
+    100% { width: 100%; }
+}
+</style>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    if (!sessionStorage.getItem('splashShown')) {
+        const splash = document.getElementById('splash-screen');
+        setTimeout(() => {
+            splash.style.opacity = '0';
+            splash.style.visibility = 'hidden';
+            sessionStorage.setItem('splashShown', 'true');
+            setTimeout(() => splash.remove(), 500);
+        }, 3000);
+    } else {
+        const splash = document.getElementById('splash-screen');
+        if (splash) splash.style.display = 'none';
+    }
+});
+</script>
+
 <div class="dashboard-container">
     <aside th:replace="~{fragments/components :: sidebar(activePage='inicio')}"></aside>
     <main class="main-area">
@@ -30,7 +76,7 @@
                 </div>
             </div>
             <div class="map-view-card">
-                <div id="map-root"></div>
+                <div id="map-root" class="map-is-light"></div>
                 <button class="expand-map-btn" id="expandMapBtn" title="Maximizar mapa" onclick="toggleMapExpansion()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
                 </button>

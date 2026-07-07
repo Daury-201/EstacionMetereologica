@@ -314,6 +314,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const endIndex = Math.min(startIndex + PAGE_SIZE, lecturasGlobales.length);
         const pageLecturas = lecturasGlobales.slice(startIndex, endIndex);
         tableMeta.textContent = `${lecturasGlobales.length} registros`;
+        const selectEst = document.getElementById('estacionId');
+        const showEstacion = (selectEst && selectEst.value === '0');
+        const colEstacionHeader = document.getElementById('col-estacion-header');
+        if (colEstacionHeader) {
+            colEstacionHeader.style.display = showEstacion ? 'table-cell' : 'none';
+        }
+        
         pageLecturas.forEach(l => {
             const date = new Date(l.fechaHora);
             const fechaStr = date.toLocaleString('es-ES', { 
@@ -327,9 +334,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const dirVal = l.direccionViento || '-';
             const lluviaVal = typeof l.lluvia === 'number' ? l.lluvia.toFixed(1) : '-';
             const sueloVal = typeof l.humedadSuelo === 'number' ? Math.round(l.humedadSuelo) : '-';
+            let tdEstacion = '';
+            if (showEstacion) {
+                const est = window.estacionesData ? window.estacionesData.find(e => e.id === l.estacionId) : null;
+                const estName = est ? est.nombre : ('ID: ' + l.estacionId);
+                tdEstacion = `<td>${estName}</td>`;
+            }
+            
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td data-col="fecha">${fechaStr}</td>
+                ${tdEstacion}
                 <td data-col="temp" class="${getCellClass('temp', tempVal)}">${tempVal}</td>
                 <td data-col="hum" class="${getCellClass('hum', humVal)}">${humVal}</td>
                 <td data-col="pres">${presVal}</td>

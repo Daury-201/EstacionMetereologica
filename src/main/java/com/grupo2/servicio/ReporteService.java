@@ -17,10 +17,15 @@ public class ReporteService {
     private final LecturaRepository lecturaRepository;
     private final com.grupo2.repositorio.AlarmaRepository alarmaRepository;
     private final TemplateEngine templateEngine;
-    public ReporteService(LecturaRepository lecturaRepository, com.grupo2.repositorio.AlarmaRepository alarmaRepository, TemplateEngine templateEngine) {
+    private final FormatoService formatoService;
+    private final com.grupo2.repositorio.EstacionRepository estacionRepository;
+    
+    public ReporteService(LecturaRepository lecturaRepository, com.grupo2.repositorio.AlarmaRepository alarmaRepository, TemplateEngine templateEngine, FormatoService formatoService, com.grupo2.repositorio.EstacionRepository estacionRepository) {
         this.lecturaRepository = lecturaRepository;
         this.alarmaRepository = alarmaRepository;
         this.templateEngine = templateEngine;
+        this.formatoService = formatoService;
+        this.estacionRepository = estacionRepository;
     }
     public Map<String, Object> getDatosReporte(int estacionId, LocalDateTime inicio, LocalDateTime fin) {
         List<LecturaSensor> lecturas = lecturaRepository.findLecturasParaReporte(estacionId, inicio, fin);
@@ -86,6 +91,14 @@ public class ReporteService {
             tiempoInactivo = "Estado general de la red";
         }
         datos.put("tiempoInactivo", tiempoInactivo);
+        
+        Map<Integer, String> estacionNombres = new HashMap<>();
+        List<com.grupo2.entidad.Estacion> todasEstaciones = estacionRepository.findAll();
+        for (com.grupo2.entidad.Estacion e : todasEstaciones) {
+            estacionNombres.put(e.getId().intValue(), e.getNombre());
+        }
+        datos.put("estacionNombres", estacionNombres);
+        
         return datos;
     }
     public byte[] generarPdfReporte(Map<String, Object> datos, String estacionNombre, String rangoFechas) throws Exception {
@@ -93,6 +106,7 @@ public class ReporteService {
         context.setVariables(datos);
         context.setVariable("estacionNombre", estacionNombre);
         context.setVariable("rangoFechas", rangoFechas);
+        context.setVariable("formatter", formatoService);
         String htmlContent = templateEngine.process("reporte-pdf", context);
         Document doc = Jsoup.parse(htmlContent, "UTF-8");
         doc.outputSettings().syntax(Document.OutputSettings.Syntax.xml);

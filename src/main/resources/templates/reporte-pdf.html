@@ -290,6 +290,7 @@
             <thead>
                 <tr>
                     <th>Fecha / Hora</th>
+                    <th th:if="${estacionNombre == 'Todas las Estaciones'}">Estación</th>
                     <th th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'temp'}">Temp (°C)</th>
                     <th th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'hum'}">Hum (%)</th>
                     <th th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'pres'}">Pres (hPa)</th>
@@ -302,6 +303,7 @@
             <tbody>
                 <tr th:each="l : ${lecturas}">
                     <td th:text="${formatter.formatDate(l.fechaHora)}"></td>
+                    <td th:if="${estacionNombre == 'Todas las Estaciones'}" th:text="${estacionNombres != null ? estacionNombres.get(l.estacionId) : l.estacionId}"></td>
                     <td th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'temp'}" th:text="${formatter.formatNumber(l.temperatura)}"></td>
                     <td th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'hum'}" th:text="${formatter.formatNumber(l.humedadAire)}"></td>
                     <td th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'pres'}" th:text="${formatter.formatNumber(l.presion)}"></td>
@@ -311,7 +313,7 @@
                     <td th:if="${variableFiltro == null or variableFiltro == 'all'}" th:text="${formatter.formatNumber(l.humedadSuelo)}"></td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(lecturas)}" class="empty-row">
-                    <td colspan="8">No se encontraron registros para el período seleccionado.</td>
+                    <td th:colspan="${estacionNombre == 'Todas las Estaciones' ? 9 : 8}">No se encontraron registros para el período seleccionado.</td>
                 </tr>
             </tbody>
         </table>

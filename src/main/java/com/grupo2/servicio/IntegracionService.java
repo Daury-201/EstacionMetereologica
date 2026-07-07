@@ -135,6 +135,7 @@ public class IntegracionService {
                     if (body.containsKey("main")) {
                         Map<String, Object> main = (Map<String, Object>) body.get("main");
                         if (main.containsKey("temp")) lectura.setTemperatura(Double.valueOf(main.get("temp").toString()));
+                        if (main.containsKey("feels_like")) lectura.setSensacionTermica(Double.valueOf(main.get("feels_like").toString()));
                         if (main.containsKey("humidity")) lectura.setHumedadAire(Double.valueOf(main.get("humidity").toString()));
                         if (main.containsKey("pressure")) lectura.setPresion(Double.valueOf(main.get("pressure").toString()));
                     }

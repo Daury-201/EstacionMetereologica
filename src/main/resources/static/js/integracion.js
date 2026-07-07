@@ -217,6 +217,10 @@ function guardarConfiguracion() {
             btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="margin-right: 6px; display: inline-block; vertical-align: middle;"><polyline points="20 6 9 17 4 12"></polyline></svg> Guardado';
             actualizarBadgePlataforma(data.plataforma, data.activa);
             actualizarTopNavStatus(data.activa);
+            
+            // Salir del modo edición tras guardar exitosamente
+            exitEditMode();
+            
             const overlay = document.getElementById('config-overlay');
             if (data.activa) {
                 overlay.style.opacity = '0';
@@ -481,6 +485,20 @@ function enableEditMode() {
     if (editActions) editActions.style.display = 'flex';
     const btnTest = document.getElementById('btn-test-conn');
     if (btnTest) btnTest.style.display = 'none';
+}
+
+function exitEditMode() {
+    const editableArea = document.getElementById('config-editable-area');
+    if (editableArea) {
+        editableArea.style.pointerEvents = 'none';
+        editableArea.style.opacity = '0.7';
+    }
+    const btnEdit = document.getElementById('btn-edit-config');
+    if (btnEdit) btnEdit.style.display = 'flex';
+    const editActions = document.getElementById('edit-actions');
+    if (editActions) editActions.style.display = 'none';
+    const btnTest = document.getElementById('btn-test-conn');
+    if (btnTest) btnTest.style.display = 'flex';
 }
 
 function cancelEditMode() {

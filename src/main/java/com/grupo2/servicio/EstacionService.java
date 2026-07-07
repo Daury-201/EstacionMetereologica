@@ -41,6 +41,7 @@ public class EstacionService {
             lecturaRepository.findTopByEstacionIdOrderByFechaHoraDesc(est.getId().intValue())
                 .ifPresent(lectura -> {
                     dto.setTemperatura(lectura.getTemperatura());
+                    dto.setSensacionTermica(lectura.getSensacionTermica());
                     dto.setHumedadAire(lectura.getHumedadAire());
                     dto.setVelocidadViento(lectura.getVelocidadViento());
                     dto.setPresion(lectura.getPresion());
