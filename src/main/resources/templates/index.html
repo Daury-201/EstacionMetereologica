@@ -8,23 +8,18 @@
     <link rel="stylesheet" th:href="@{/css/dashboard.css(v='2.23')}" href="../static/css/dashboard.css">
     <link rel="stylesheet" th:href="@{/css/components.css(v='1.2')}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js'></script>
-    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <!-- Heavy libraries loaded dynamically below to prevent main thread blocking during splash screen -->
     <link href='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css' rel='stylesheet' />
-    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
 </head>
 <body class="theme-light">
 
 <div id="splash-screen" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%); z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s ease, visibility 0.5s ease, transform 0.6s cubic-bezier(0.8, 0, 0.2, 1); color: white;">
+
+    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%); pointer-events: none; opacity: 0; animation: megaBgFlash 4s infinite; z-index: 0; mix-blend-mode: screen; will-change: opacity;"></div>
     
-    <!-- Destello relámpago global en el fondo -->
-    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%); pointer-events: none; opacity: 0; animation: megaFlash 4s infinite; z-index: 0; mix-blend-mode: screen;"></div>
-    
-    <!-- Estrella fugaz -->
+
     <div class="shooting-star"></div>
-    
-    <!-- Sistema de partículas (Luciérnagas/Estrellas) -->
+
     <div class="particles-container">
         <div class="particle" style="--px: 10%; --pd: 4s; --ps: 1.2;"></div>
         <div class="particle" style="--px: 25%; --pd: 6s; --ps: 0.8;"></div>
@@ -55,8 +50,8 @@
             <span>Iniciando sistema</span>
             <span id="loading-pct">0%</span>
         </div>
-        <div style="width: 220px; height: 6px; background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden; box-shadow: inset 0 2px 5px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1);">
-            <div style="height: 100%; width: 0%; border-radius: 4px; background: #FFFFFF; box-shadow: 0 0 12px rgba(255,255,255,0.8); animation: loadingBar 3.4s forwards cubic-bezier(0.4, 0, 0.2, 1);"></div>
+        <div style="width: 220px; height: 6px; background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden; box-shadow: inset 0 2px 5px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); transform: translateZ(0);">
+            <div id="loading-bar-inner" style="height: 100%; width: 100%; transform-origin: left; transform: scaleX(0); border-radius: 4px; background: #FFFFFF; box-shadow: 0 0 12px rgba(255,255,255,0.8); will-change: transform;"></div>
         </div>
     </div>
 </div>
@@ -77,8 +72,8 @@
     100% { transform: translateY(0); opacity: 1; }
 }
 @keyframes loadingBar {
-    0% { width: 0%; }
-    100% { width: 100%; }
+    0% { transform: scaleX(0); }
+    100% { transform: scaleX(1); }
 }
 .particles-container {
     position: absolute;
@@ -105,20 +100,21 @@
 }
 .shooting-star {
     position: absolute;
-    top: 15%; left: -20%;
+    top: 15vh; left: -20vw;
     width: 150px; height: 2px;
     background: linear-gradient(90deg, rgba(255,255,255,0), #fff);
     border-radius: 2px;
     filter: drop-shadow(0 0 5px #fff);
     animation: shootingStarAnim 4s infinite;
-    transform: rotate(15deg);
+    transform: translate3d(0, 0, 0) rotate(15deg);
     z-index: 1;
+    will-change: transform, opacity;
 }
 @keyframes shootingStarAnim {
-    0%, 65% { left: -20%; top: 15%; opacity: 0; }
-    70% { opacity: 1; }
-    80% { left: 120%; top: 40%; opacity: 0; }
-    100% { left: 120%; opacity: 0; }
+    0%, 65% { transform: translate3d(0, 0, 0) rotate(15deg); opacity: 0; }
+    70% { opacity: 1; transform: translate3d(40vw, 7vh, 0) rotate(15deg); }
+    78% { opacity: 1; transform: translate3d(120vw, 21vh, 0) rotate(15deg); }
+    82%, 100% { transform: translate3d(160vw, 28vh, 0) rotate(15deg); opacity: 0; }
 }
 .mega-weather-icon {
     position: relative;
@@ -155,8 +151,7 @@
     width: 100px; height: 40px;
     top: 60px; left: 20px;
     background: rgba(226, 232, 240, 0.9);
-    animation: megaCloudFloat 6s ease-in-out infinite alternate;
-    transform: translateZ(40px);
+    animation: megaCloudFloatBack 6s ease-in-out infinite alternate;
 }
 .m-back-cloud::before { width: 50px; height: 50px; top: -25px; left: 15px; animation-delay: 0s; }
 .m-back-cloud::after { width: 45px; height: 45px; top: -15px; right: 10px; animation-delay: -1s; }
@@ -165,20 +160,18 @@
     width: 130px; height: 50px;
     top: 80px; left: 40px;
     background: #FFFFFF;
-    animation: megaCloudFloat 4s ease-in-out infinite alternate-reverse;
-    transform: translateZ(80px);
+    animation: megaCloudFloatFront 4s ease-in-out infinite alternate-reverse;
 }
 .m-front-cloud::before { width: 70px; height: 70px; top: -35px; left: 20px; animation-delay: -2s; }
 .m-front-cloud::after { width: 55px; height: 55px; top: -20px; right: 15px; animation-delay: -3s; }
 
 .m-lightning {
     position: absolute;
-    top: 100px; left: 100px;
-    width: 40px; height: 40px;
-    animation: megaFlash 4s infinite;
+    top: 110px; left: 90px;
+    width: 55px; height: 55px;
+    animation: megaFlashIcon 4s infinite;
     z-index: 10;
-    filter: drop-shadow(0 0 15px rgba(253, 224, 71, 0.8));
-    transform: translateZ(60px);
+    filter: drop-shadow(0 0 20px rgba(253, 224, 71, 1));
 }
 .m-rain {
     position: absolute;
@@ -222,11 +215,22 @@
     100% { transform: scale(1.05); } 
 }
 
-@keyframes megaSunPulse { 0% { transform: scale(1) rotate(0deg); } 100% { transform: scale(1.15) rotate(15deg); box-shadow: 0 0 60px rgba(245,158,11,1); } }
-@keyframes megaCloudFloat { 0% { transform: translateY(0) translateX(0); } 100% { transform: translateY(-8px) translateX(8px); } }
-@keyframes megaFlash { 
-    0%, 90%, 94%, 100% { opacity: 0; transform: scale(0.8); } 
-    92%, 96% { opacity: 1; transform: scale(1.2); } 
+@keyframes megaSunPulse { 0% { transform: translateZ(20px) scale(1) rotate(0deg); } 100% { transform: translateZ(20px) scale(1.15) rotate(15deg); box-shadow: 0 0 60px rgba(245,158,11,1); } }
+@keyframes megaCloudFloatBack { 0% { transform: translateZ(40px) translateY(0) translateX(0); } 100% { transform: translateZ(40px) translateY(-8px) translateX(8px); } }
+@keyframes megaCloudFloatFront { 0% { transform: translateZ(80px) translateY(0) translateX(0); } 100% { transform: translateZ(80px) translateY(-8px) translateX(8px); } }
+@keyframes megaFlashIcon { 
+    0%, 89%, 100% { opacity: 0; transform: translateZ(60px) scale(0.8); } 
+    90% { opacity: 1; transform: translateZ(60px) scale(1.3); } 
+    91% { opacity: 0.3; transform: translateZ(60px) scale(1.1); } 
+    92% { opacity: 1; transform: translateZ(60px) scale(1.4); } 
+    95% { opacity: 0; transform: translateZ(60px) scale(0.9); } 
+}
+@keyframes megaBgFlash {
+    0%, 89%, 100% { opacity: 0; } 
+    90% { opacity: 0.8; } 
+    91% { opacity: 0.2; } 
+    92% { opacity: 0.95; } 
+    96% { opacity: 0; } 
 }
 @keyframes megaRainDrop { 
     0% { transform: translateY(0) scaleY(1); opacity: 1; } 
@@ -243,20 +247,32 @@ document.addEventListener("DOMContentLoaded", function() {
 
         if (!sessionStorage.getItem('splashShown')) {
             
-            // Animación del contador de porcentaje
+            // Animación del contador de porcentaje y barra sincronizados
             let pctElement = document.getElementById('loading-pct');
-            if(pctElement) {
+            let barElement = document.getElementById('loading-bar-inner');
+            if(pctElement && barElement) {
                 let startTime = Date.now();
                 let duration = 3400; // 3.4 segundos (4s total - 0.6s de animación inicial)
-                let interval = setInterval(() => {
+                
+                function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+                
+                function updateProgress() {
                     let elapsed = Date.now() - startTime;
-                    let currentPct = Math.floor((elapsed / duration) * 100);
-                    if(currentPct >= 100) {
-                        currentPct = 100;
-                        clearInterval(interval);
-                    }
+                    let rawPct = elapsed / duration;
+                    if(rawPct > 1) rawPct = 1;
+                    
+                    let easedPct = easeOutCubic(rawPct);
+                    let currentPct = Math.floor(easedPct * 100);
+                    
                     pctElement.textContent = currentPct + "%";
-                }, 30);
+                    barElement.style.transform = `scaleX(${easedPct})`;
+                    
+                    if (rawPct < 1) {
+                        requestAnimationFrame(updateProgress);
+                    }
+                }
+                
+                requestAnimationFrame(updateProgress);
             }
         // Añadir efecto Parallax 3D interactivo con el ratón
         document.addEventListener('mousemove', (e) => {
@@ -567,8 +583,43 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 </script>
-<script th:src="@{/js/notificaciones.js(v='1.2')}"></script>
-<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-<script th:src="@{/js/dashboard.js(v='2.18')}"></script>
+<script th:inline="javascript">
+    // Carga diferida de scripts pesados para asegurar 60FPS en la pantalla de carga (Dispositivos gama baja)
+    function loadDeferredAppScripts() {
+        const urlNotificaciones = /*[[@{/js/notificaciones.js(v='1.2')}]]*/ '/js/notificaciones.js';
+        const urlDashboard = /*[[@{/js/dashboard.js(v='2.19')}]]*/ '/js/dashboard.js';
+        
+        const scriptsToLoad = [
+            'https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js',
+            'https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js',
+            'https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js',
+            'https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js',
+            'https://cdn.jsdelivr.net/npm/apexcharts',
+            urlNotificaciones,
+            urlDashboard
+        ];
+        
+        let i = 0;
+        function loadNext() {
+            if (i >= scriptsToLoad.length) return;
+            const s = document.createElement('script');
+            s.src = scriptsToLoad[i];
+            s.onload = () => {
+                i++;
+                loadNext();
+            };
+            document.body.appendChild(s);
+        }
+        loadNext();
+    }
+
+    // Si es la primera vez (hay splash screen), retrasamos la carga pesada 3.2s para evitar tirones
+    if (!sessionStorage.getItem('splashShown')) {
+        setTimeout(loadDeferredAppScripts, 3200); 
+    } else {
+        // Si ya pasó el splash screen, cargar de inmediato
+        loadDeferredAppScripts();
+    }
+</script>
 </body>
 </html>

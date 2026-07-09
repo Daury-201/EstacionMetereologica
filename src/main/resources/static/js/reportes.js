@@ -193,7 +193,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const day = l.fechaHora.split('T')[0];
             lecturasPorDia[day] = (lecturasPorDia[day] || 0) + 1;
         });
-        const upKeys = Object.keys(lecturasPorDia).sort();
+        let upKeys = Object.keys(lecturasPorDia).sort();
+        if (upKeys.length > 7) {
+            upKeys = upKeys.slice(-7);
+        }
         const upVals = upKeys.map(k => lecturasPorDia[k]);
         chartUptime = initChart('chart-uptime', {
             series: [{ name: 'Lecturas', data: upVals }],

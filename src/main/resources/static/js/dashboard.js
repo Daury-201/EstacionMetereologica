@@ -246,8 +246,9 @@ estaciones.forEach((est, index) => {
         el.style.color = colorHex;
         el.style.cursor = 'pointer';
         el.style.boxShadow = `0 0 10px ${colorHex}`;
+        el.style.setProperty('--pulse-color', colorHex);
         el.innerHTML = `
-            <div class="radar-pulse" style="--pulse-color: ${colorHex}"></div>
+            <div class="radar-pulse"></div>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="position: relative; z-index: 2;">
                 <path d="M4 7h16l-3 8H7Z"></path>
                 <path d="M10 7v14"></path>
@@ -501,6 +502,10 @@ function connectWebSocket() {
             const alarma = JSON.parse(mensaje.body);
             actualizarAlarmaEnVivo(alarma);
         });
+        stompClient.subscribe('/topic/estaciones-estado', function (mensaje) {
+            const data = JSON.parse(mensaje.body);
+            actualizarEstadoMarcador(data);
+        });
     }, function(error) {
         console.error('WebSocket Error:', error);
         setTimeout(connectWebSocket, 5000); 
@@ -512,6 +517,24 @@ function formatVal(val, suffix) {
 function formatFechaISO(isoString) {
     if (!isoString) return 'Sin registro';
     return window.Utils && window.Utils.formatDate ? window.Utils.formatDate(isoString) : isoString.replace('T', ' ').substring(0, 19);
+}
+function actualizarEstadoMarcador(data) {
+    if (!data || !data.id) return;
+    const est = estaciones.find(e => e.id === data.id);
+    if (!est) return;
+    est.estado = data.estado;
+    const marker = stationMarkers[est.id];
+    if (marker) {
+        const el = marker.getElement();
+        const hasAlarms = est.alarmasActivas && est.alarmasActivas.length > 0;
+        const colorHex = hasAlarms ? '#F59E0B' : (est.estado === 'Sin señal' ? '#DC2626' : '#34D399'); 
+        el.style.border = `2px solid ${colorHex}`;
+        el.style.color = colorHex;
+        el.style.boxShadow = `0 0 10px ${colorHex}`;
+        el.style.setProperty('--pulse-color', colorHex);
+        const pulseEl = el.querySelector('.radar-pulse');
+        if (pulseEl) pulseEl.style.removeProperty('--pulse-color'); // Clean up old inline styles
+    }
 }
 function actualizarMarcadorEnVivo(lectura) {
     if (!lectura || !lectura.estacionId) return;
@@ -539,8 +562,9 @@ function actualizarMarcadorEnVivo(lectura) {
         el.style.border = `2px solid ${colorHex}`;
         el.style.color = colorHex;
         el.style.boxShadow = `0 0 10px ${colorHex}`;
+        el.style.setProperty('--pulse-color', colorHex);
         const pulseEl = el.querySelector('.radar-pulse');
-        if (pulseEl) pulseEl.style.setProperty('--pulse-color', colorHex);
+        if (pulseEl) pulseEl.style.removeProperty('--pulse-color');
         if (hasAlarms) {
             el.classList.add('has-alarms');
         } else {
@@ -575,8 +599,9 @@ function actualizarAlarmaEnVivo(alarma) {
         el.style.border = `2px solid ${colorHex}`;
         el.style.color = colorHex;
         el.style.boxShadow = `0 0 10px ${colorHex}`;
+        el.style.setProperty('--pulse-color', colorHex);
         const pulseEl = el.querySelector('.radar-pulse');
-        if (pulseEl) pulseEl.style.setProperty('--pulse-color', colorHex);
+        if (pulseEl) pulseEl.style.removeProperty('--pulse-color');
         if (hasAlarms) {
             el.classList.add('has-alarms');
         } else {
@@ -788,7 +813,7 @@ function actualizarWidgetLifestyle(est) {
     const lsIconWrapper = document.getElementById('lsIconWrapper');
     if (!lsIcon || !lsTitle || !lsDesc || !lsIconWrapper) return;
     
-    // Extract variables with fallbacks
+
     const lluvia = est.lluvia || 0;
     const viento = est.velocidadViento || 0;
     const temp = est.temperatura !== null ? est.temperatura : 25;
@@ -814,22 +839,22 @@ function actualizarWidgetLifestyle(est) {
     // Reset base classes
     lsIconWrapper.className = 'ls-icon-wrapper';
     
-    // Evaluation Logic - Priority Order
-    if (lluvia >= 15) { // 1. Inundación Repentina
+
+    if (lluvia >= 15) { //
         lsIcon.textContent = '🌊';
         lsTitle.textContent = 'Alerta de Inundación';
         lsDesc.textContent = 'Lluvias torrenciales extremas. Alto riesgo de inundaciones repentinas. Busca terreno elevado.';
         lsIconWrapper.style.background = 'linear-gradient(135deg, #111827 0%, #1E3A8A 100%)';
         lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(17, 24, 39, 0.7), inset 0 2px 4px rgba(255, 255, 255, 0.2)';
         lsIconWrapper.classList.add('ls-anim-rain');
-    } else if (lluvia >= 10) { // 2. Tormenta Severa
+    } else if (lluvia >= 10) {
         lsIcon.textContent = '⛈️';
         lsTitle.textContent = 'Tormenta Severa';
         lsDesc.textContent = 'Precipitaciones extremas. Evita zonas inundables y maneja con extrema precaución.';
         lsIconWrapper.style.background = 'linear-gradient(135deg, #1E3A8A 0%, #312E81 100%)';
         lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(30, 58, 138, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.3)';
         lsIconWrapper.classList.add('ls-anim-rain');
-    } else if (presion < 1005 && viento > 25) { // 3. Alerta Ciclónica
+    } else if (presion < 1005 && viento > 25) {
         lsIcon.textContent = '🌀';
         lsTitle.textContent = 'Alerta Ciclónica';
         lsDesc.textContent = 'Presión atmosférica críticamente baja y ráfagas. Posible formación de tormenta o depresión.';
@@ -891,7 +916,7 @@ function actualizarWidgetLifestyle(est) {
         lsIconWrapper.style.background = 'linear-gradient(135deg, #6EE7B7 0%, #059669 100%)';
         lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(16, 185, 129, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.3)';
         lsIconWrapper.classList.add('ls-anim-cold');
-    } else if (lluvia > 0) { // 12. Llovizna Ligera
+    } else if (lluvia > 0) {
         lsIcon.textContent = '🌦️';
         lsTitle.textContent = 'Llovizna Ligera';
         lsDesc.textContent = 'Ligeras lloviznas. Una chaqueta impermeable o sombrilla será suficiente.';
@@ -912,25 +937,25 @@ function actualizarWidgetLifestyle(est) {
         lsIconWrapper.style.background = 'linear-gradient(135deg, #C4B5FD 0%, #8B5CF6 100%)';
         lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(139, 92, 246, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.5)';
         lsIconWrapper.classList.add('ls-anim-wind');
-    } else if (isNight && temp < 22) { // 15. Noche Fresca
+    } else if (isNight && temp < 22) {
         lsIcon.textContent = '🌌';
         lsTitle.textContent = 'Noche Fresca';
         lsDesc.textContent = 'Noche estrellada con un clima algo frío. Duerme con una cobija extra.';
         lsIconWrapper.style.background = 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)';
         lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(15, 23, 42, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.2)';
-    } else if (isNight && humedad < 85 && presion >= 1010) { // 16. Noche Despejada
+    } else if (isNight && humedad < 85 && presion >= 1010) {
         lsIcon.textContent = '🌙';
         lsTitle.textContent = 'Noche Despejada';
         lsDesc.textContent = 'Cielo despejado, condiciones ideales para dar un paseo nocturno o ver las estrellas.';
         lsIconWrapper.style.background = 'linear-gradient(135deg, #334155 0%, #1E293B 100%)';
         lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(30, 41, 59, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.2)';
-    } else if (isNight) { // 17. Noche Nublada
+    } else if (isNight) {
         lsIcon.textContent = '☁️';
         lsTitle.textContent = 'Noche Nublada';
         lsDesc.textContent = 'Noche mayormente nublada. Condiciones tranquilas para descansar.';
         lsIconWrapper.style.background = 'linear-gradient(135deg, #475569 0%, #334155 100%)';
         lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(51, 65, 85, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.2)';
-    } else if (suelo > 85) { // 16. Suelo Saturado
+    } else if (suelo > 85) {
         lsIcon.textContent = '🌱';
         lsTitle.textContent = 'Suelo Saturado';
         lsDesc.textContent = 'La tierra está en su máxima capacidad hídrica. Riesgo de lodo o encharcamiento en cultivos.';
@@ -942,7 +967,7 @@ function actualizarWidgetLifestyle(est) {
         lsDesc.textContent = 'La tierra está perdiendo humedad rápidamente. Ideal para programar riego preventivo.';
         lsIconWrapper.style.background = 'linear-gradient(135deg, #FCD34D 0%, #D97706 100%)';
         lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(217, 119, 6, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.5)';
-    } else { // 18. Día Agradable
+    } else { 
         lsIcon.textContent = '☀️';
         lsTitle.textContent = 'Día Agradable';
         lsDesc.textContent = 'Las condiciones son perfectas para actividades al aire libre. ¡Disfruta el día!';

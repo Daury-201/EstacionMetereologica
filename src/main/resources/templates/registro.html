@@ -278,8 +278,24 @@
                     </div>
                     <input type="email" name="email" placeholder="Correo electrónico" required="required" />
                     <div style="display: flex; gap: 16px; width: 100%;">
-                        <input type="password" name="password" placeholder="Contraseña" required="required" autocomplete="new-password" style="flex: 1;" />
-                        <input type="password" name="confirmPassword" placeholder="Confirmar Contraseña" required="required" autocomplete="new-password" style="flex: 1;" />
+                        <div class="password-wrapper" style="position: relative; flex: 1;">
+                            <input type="password" id="reg-password" name="password" placeholder="Contraseña" required="required" autocomplete="new-password" oninput="document.getElementById('toggle-pwd-btn').style.display = this.value.length > 0 ? 'flex' : 'none';" style="width: 100%; padding-right: 36px; padding-left: 10px; font-size: 14px;" />
+                            <span id="toggle-pwd-btn" onclick="togglePasswordVisibility('reg-password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94A3B8; display: none; align-items: center; transition: color 0.2s;">
+                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="eye-icon">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="password-wrapper" style="position: relative; flex: 1;">
+                            <input type="password" id="reg-confirm-password" name="confirmPassword" placeholder="Confirmar" required="required" autocomplete="new-password" oninput="document.getElementById('toggle-cpwd-btn').style.display = this.value.length > 0 ? 'flex' : 'none';" style="width: 100%; padding-right: 36px; padding-left: 10px; font-size: 14px;" />
+                            <span id="toggle-cpwd-btn" onclick="togglePasswordVisibility('reg-confirm-password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94A3B8; display: none; align-items: center; transition: color 0.2s;">
+                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="eye-icon">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </span>
+                        </div>
                     </div>
                     <button type="submit" class="login-btn" style="margin-top: 4px;">Registrarse</button>
                 </form>
@@ -307,12 +323,33 @@
         35%  { transform: translate(calc(var(--sx) * 0.4px), calc(var(--sy) * 0.4px)) scale(1); opacity: 1; }
         100% { transform: translate(calc(var(--sx) * 1px), calc(var(--sy) * 1px)) scale(0.2); opacity: 0; }
     }
-    
-    /* Reducir padding de los inputs para que no crezca tanto la tarjeta respecto al login */
+
     .login-form input {
         padding: 11px 14px;
     }
 </style>
+
+<script>
+function togglePasswordVisibility(inputId, iconEl) {
+    const input = document.getElementById(inputId);
+    const svg = iconEl.querySelector('svg');
+    if (input.type === 'password') {
+        input.type = 'text';
+        iconEl.style.color = '#7C3AED';
+        svg.innerHTML = `
+            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+            <line x1="1" y1="1" x2="23" y2="23"></line>
+        `;
+    } else {
+        input.type = 'password';
+        iconEl.style.color = '#94A3B8';
+        svg.innerHTML = `
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+        `;
+    }
+}
+</script>
 
 </body>
 </html>
