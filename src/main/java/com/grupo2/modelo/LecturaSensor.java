@@ -11,6 +11,8 @@ public class LecturaSensor {
     private String direccionViento;
     private Double lluvia;
     private Double humedadSuelo;
+    private String origen;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public int getEstacionId() { return estacionId; }
@@ -35,4 +37,6 @@ public class LecturaSensor {
     public void setLluvia(Double lluvia) { this.lluvia = lluvia; }
     public Double getHumedadSuelo() { return humedadSuelo; }
     public void setHumedadSuelo(Double humedadSuelo) { this.humedadSuelo = humedadSuelo; }
+    public String getOrigen() { return origen; }
+    public void setOrigen(String origen) { this.origen = origen; }
 }

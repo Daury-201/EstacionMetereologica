@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Estación Meteorológica - Login</title>
+    <title>Registro</title>
     <link rel="stylesheet" th:href="@{/css/login.css}" href="../static/css/login.css" />
     <script th:src="@{/js/login.js}" src="../static/js/login.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
@@ -277,8 +278,8 @@
                     </div>
                     <input type="email" name="email" placeholder="Correo electrónico" required="required" />
                     <div style="display: flex; gap: 16px; width: 100%;">
-                        <input type="password" name="password" placeholder="Contraseña" required="required" style="flex: 1;" />
-                        <input type="password" name="confirmPassword" placeholder="Confirmar Contraseña" required="required" style="flex: 1;" />
+                        <input type="password" name="password" placeholder="Contraseña" required="required" autocomplete="new-password" style="flex: 1;" />
+                        <input type="password" name="confirmPassword" placeholder="Confirmar Contraseña" required="required" autocomplete="new-password" style="flex: 1;" />
                     </div>
                     <button type="submit" class="login-btn" style="margin-top: 4px;">Registrarse</button>
                 </form>

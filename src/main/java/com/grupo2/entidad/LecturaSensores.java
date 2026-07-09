@@ -2,7 +2,10 @@ package com.grupo2.entidad;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 @Entity
-@Table(name = "lecturas_sensores")
+@Table(name = "lecturas_sensores", indexes = {
+    @Index(name = "idx_lectura_estacion_fecha", columnList = "estacion_id, fecha_hora DESC"),
+    @Index(name = "idx_lectura_fecha", columnList = "fecha_hora DESC")
+})
 public class LecturaSensores {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,6 +27,10 @@ public class LecturaSensores {
     private Double lluvia;
     @Column(name = "humedad_suelo")
     private Double humedadSuelo;
+    
+    @Column(name = "origen", length = 50)
+    private String origen;
+
     public LecturaSensores() {
     }
     public Long getId() {
@@ -91,5 +98,11 @@ public class LecturaSensores {
     }
     public void setHumedadSuelo(Double humedadSuelo) {
         this.humedadSuelo = humedadSuelo;
+    }
+    public String getOrigen() {
+        return origen;
+    }
+    public void setOrigen(String origen) {
+        this.origen = origen;
     }
 }

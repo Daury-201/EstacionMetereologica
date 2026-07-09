@@ -26,8 +26,75 @@
         }
     </script>
     <div class="sidebar-header">
-        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        <svg class="logo-icon" viewBox="0 0 100 100" fill="none" style="width: 56px; height: 56px; flex-shrink: 0; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.3)); margin-right: 0; margin-left: -4px;">
+            <defs>
+                <linearGradient id="titaniumInst" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#FFFFFF" />
+                    <stop offset="35%" stop-color="#CBD5E1" />
+                    <stop offset="65%" stop-color="#64748B" />
+                    <stop offset="100%" stop-color="#334155" />
+                </linearGradient>
+            </defs>
+            <style>
+                @keyframes spin {
+                    from { transform: rotateY(0deg); }
+                    to { transform: rotateY(360deg); }
+                }
+                .rotor-3d {
+                    transform-origin: 70px 15.5px;
+                    animation: spin 1.2s linear infinite;
+                }
+                @keyframes sway {
+                    0%, 100% { transform: rotate(-8deg); }
+                    50% { transform: rotate(15deg); }
+                }
+                .vane {
+                    transform-origin: 34px 50px;
+                    animation: sway 5s ease-in-out infinite;
+                }
+            </style>
+            
+            <!-- Poste y Base (Blanco/Gris) -->
+            <polygon points="51,94 81,94 75,90 57,90" fill="#D1D5DB" />
+            <rect x="55" y="90" width="22" height="2" fill="#E5E7EB" />
+            <rect x="63" y="45" width="6" height="45" fill="#F3F4F6" />
+            <rect x="67" y="45" width="2" height="45" fill="#D1D5DB" />
+        
+            <!-- Cuerpo Horizontal (Housing) -->
+            <path d="M 55 40 L 77 40 L 75 45 L 57 45 Z" fill="#D1D5DB" />
+            <path d="M 28 26 L 77 26 L 77 38 L 22 38 Z" fill="#F9FAFB" />
+            <path d="M 22 38 L 77 38 L 77 40 L 21 40 Z" fill="#E5E7EB" />
+            
+            <!-- 1. Pluviómetro (Embudo Izquierdo) -->
+            <path d="M 22 14 L 46 14 L 39 26 L 29 26 Z" fill="url(#titaniumInst)" />
+            <path d="M 24 16 L 30 25 L 32 25 L 26 16 Z" fill="#FFFFFF" opacity="0.75" />
+            <ellipse cx="34" cy="14" rx="12" ry="3.5" fill="#1E293B" />
+            
+            <!-- Sensor Pequeño (Medio) -->
+            <path d="M 49 21 L 53 21 L 53 26 L 49 26 Z" fill="#D1D5DB" />
+            <circle cx="51" cy="21" r="2" fill="#F9FAFB" />
+        
+            <!-- 2. Veleta (Debajo Izquierda) -->
+            <rect x="33" y="40" width="2" height="11" fill="#9CA3AF" />
+            <g class="vane">
+                <rect x="20" y="49" width="30" height="2" fill="url(#titaniumInst)" />
+                <polygon points="16,44 22,45 22,55 16,56" fill="url(#titaniumInst)" />
+                <polygon points="50,47 58,50 50,53" fill="url(#titaniumInst)" />
+                <circle cx="34" cy="50" r="2.5" fill="#1E293B" />
+            </g>
+        
+            <!-- 3. Anemómetro (Arriba Derecha) -->
+            <path d="M 67 26 L 73 26 L 71 16 L 69 16 Z" fill="#E5E7EB" />
+            <g class="rotor-3d">
+                <rect x="52" y="14.5" width="36" height="2" fill="url(#titaniumInst)" />
+                <path d="M 52 11 C 45 11, 45 20, 52 20 Z" fill="url(#titaniumInst)" />
+                <ellipse cx="52" cy="15.5" rx="1.5" ry="4.5" fill="#1E293B" />
+                
+                <path d="M 88 11 C 95 11, 95 20, 88 20 Z" fill="url(#titaniumInst)" />
+                <ellipse cx="88" cy="15.5" rx="1.5" ry="4.5" fill="#1E293B" />
+                
+                <circle cx="70" cy="15.5" r="3" fill="#1E293B" />
+            </g>
         </svg>
         <div class="brand-info">
             <span class="brand-name">Estación</span>
@@ -53,7 +120,7 @@
         </li>
         <li>
             <a href="/estaciones" class="nav-item" th:classappend="${activePage == 'estaciones' ? 'active' : ''}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="-2 -2 28 28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="4" r="2" />
                     <path d="M12 6v16" />
                     <path d="M8 22l4-10 4 10" />
@@ -228,6 +295,9 @@
                         menu.offsetHeight; // trigger reflow
                         menu.style.opacity = '1';
                         menu.style.transform = 'translateY(0)';
+                        if (typeof cargarAlarmasDropdown === 'function') {
+                            cargarAlarmasDropdown();
+                        }
                     } else {
                         menu.style.opacity = '0';
                         menu.style.transform = 'translateY(-10px)';

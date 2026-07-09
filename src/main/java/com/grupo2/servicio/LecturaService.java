@@ -16,8 +16,15 @@ public class LecturaService {
     public List<LecturaSensor> getPaginaSiguiente(long ultimoId) {
         return repo.findPaginado(TAMANIO_PAGINA, ultimoId);
     }
-    public long getTotalRegistros() {
-        return repo.contarTotal();
+    private long cachedTotal = -1;
+    private long lastCountTime = 0;
+
+    public synchronized long getTotalRegistros() {
+        if (System.currentTimeMillis() - lastCountTime > 5000) {
+            cachedTotal = repo.contarTotal();
+            lastCountTime = System.currentTimeMillis();
+        }
+        return cachedTotal;
     }
     public List<LecturaSensor> getHistorialPorEstacion(int estacionId, int limite) {
         return repo.findHistorialPorEstacion(estacionId, limite);

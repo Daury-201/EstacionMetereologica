@@ -434,7 +434,7 @@ body {
 @keyframes compassWobble { 0%, 100% { transform: rotate(-10deg); } 50% { transform: rotate(10deg); } }
 .toast-container {
     position: fixed;
-    bottom: 24px;
+    top: 24px;
     right: 24px;
     z-index: 2000;
     display: flex;
@@ -444,7 +444,6 @@ body {
 }
 .toast {
     background: #FFFFFF;
-    border-left: 5px solid #7C3AED;
     border-radius: 6px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     padding: 16px;
@@ -1095,7 +1094,7 @@ body.theme-light .ls-content p { color: #4B5563; }
     font-weight: 800;
     margin: 0;
     letter-spacing: -0.02em;
-    background: linear-gradient(135deg, #FFFFFF 0%, #A78BFA 100%);
+    background: linear-gradient(135deg, #F8FAFC 0%, #94A3B8 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -1236,6 +1235,119 @@ body.theme-light .ls-content p { color: #4B5563; }
 .forecast-day.active .day-rain svg {
     color: #93C5FD;
 }
+
+/* Custom Weather SVG & Glassmorphism Animations */
+.weather-svg {
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.15));
+    overflow: visible;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.forecast-day:hover .weather-svg {
+    transform: scale(1.15) translateY(-5px);
+}
+.sun-core {
+    animation: pulseSun 3s ease-in-out infinite alternate;
+}
+.forecast-day:hover .sun-core {
+    animation: pulseSun 1s ease-in-out infinite alternate;
+}
+.sun-rays {
+    transform-origin: 50px 50px;
+    animation: spinRays 14s linear infinite;
+}
+.forecast-day:hover .sun-rays {
+    animation: spinRays 4s linear infinite;
+}
+.cloud-body {
+    animation: floatCloud 4s ease-in-out infinite;
+    transform-origin: center;
+}
+.forecast-day:hover .cloud-body {
+    animation: floatCloudActive 2s ease-in-out infinite;
+}
+.drop {
+    animation: dropFall 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    transform-origin: center top;
+}
+.d1 { animation-delay: 0.1s; }
+.d2 { animation-delay: 0.6s; }
+.d3 { animation-delay: 0.3s; }
+.lightning {
+    transform-origin: 50px 55px;
+    animation: flashStrike 3.5s infinite;
+    opacity: 0;
+}
+.forecast-day:hover .lightning {
+    animation: flashStrike 1.2s infinite;
+}
+
+@keyframes pulseSun {
+    0% { transform: scale(0.95); filter: brightness(0.9); }
+    100% { transform: scale(1.05); filter: brightness(1.2); }
+}
+@keyframes spinRays {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+@keyframes floatCloud {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+@keyframes floatCloudActive {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    25% { transform: translateY(-5px) rotate(-2deg); }
+    75% { transform: translateY(-2px) rotate(2deg); }
+}
+@keyframes dropFall {
+    0% { transform: translateY(-6px) scaleY(1); opacity: 0; }
+    20% { opacity: 1; transform: translateY(-2px) scaleY(1.2); }
+    70% { transform: translateY(4px) scaleY(1.3); opacity: 1; }
+    100% { transform: translateY(8px) scaleY(1.4); opacity: 0; }
+}
+@keyframes flashStrike {
+    0%, 90%, 100% { opacity: 0; filter: brightness(1); transform: scale(0.9) rotate(-5deg); }
+    92% { opacity: 1; filter: brightness(3); transform: scale(1.1) rotate(5deg); }
+    94% { opacity: 0; filter: brightness(1); transform: scale(0.95) rotate(-2deg); }
+    96% { opacity: 1; filter: brightness(2.5); transform: scale(1.05) rotate(2deg); }
+    98% { opacity: 0; filter: brightness(1); transform: scale(1) rotate(0); }
+}
+
+/* Background effects for the active day */
+.bg-effect {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 0;
+    border-radius: 16px;
+    opacity: 0.8;
+}
+.bg-effect-rain {
+    background: linear-gradient(to bottom, rgba(59,130,246,0.15), transparent);
+    animation: rainBgPulse 2s infinite alternate;
+}
+.bg-effect-thunder {
+    background: linear-gradient(to bottom, rgba(139,92,246,0.1), transparent);
+    animation: thunderBgFlash 4s infinite;
+}
+.bg-effect-clear {
+    background: radial-gradient(circle at top right, rgba(251,191,36,0.2), transparent 70%);
+}
+
+@keyframes rainBgPulse {
+    0% { opacity: 0.4; }
+    100% { opacity: 1; }
+}
+@keyframes thunderBgFlash {
+    0%, 90%, 100% { background: linear-gradient(to bottom, rgba(139,92,246,0.1), transparent); }
+    92%, 96% { background: linear-gradient(to bottom, rgba(255,255,255,0.4), rgba(139,92,246,0.2)); }
+}
+
+/* Make sure the content stays above the bg-effect */
+.forecast-day > span {
+    z-index: 1;
+    position: relative;
+}
+
 body.theme-light .main-area {
     background-color: #F3F4F6;
     background-image: none;
@@ -1316,7 +1428,7 @@ body.theme-light .forecast-bar::before {
     background: radial-gradient(circle at 0% 0%, rgba(124, 58, 237, 0.05) 0%, transparent 50%);
 }
 body.theme-light .forecast-title {
-    background: linear-gradient(135deg, #111827 0%, #7C3AED 100%);
+    background: linear-gradient(135deg, #334155 0%, #64748B 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -1365,4 +1477,38 @@ body.theme-light .forecast-day.active .day-name,
 body.theme-light .forecast-day.active .day-desc,
 body.theme-light .forecast-day.active .day-temp {
     color: #FFFFFF;
+}
+
+/* Radar Pulse for Map Markers */
+.custom-marker {
+    position: relative;
+    --pulse-color: #34D399; /* Initial definition to satisfy IDE validation. Will be overridden by inline JS style */
+}
+
+.custom-marker .radar-pulse {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background-color: transparent;
+    border: 2px solid var(--pulse-color, #34D399);
+    animation: radarPulse 2s infinite ease-out;
+    z-index: 1;
+    pointer-events: none;
+}
+
+@keyframes radarPulse {
+    0% {
+        width: 100%;
+        height: 100%;
+        opacity: 0.8;
+    }
+    100% {
+        width: 300%;
+        height: 300%;
+        opacity: 0;
+    }
 }

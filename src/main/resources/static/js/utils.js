@@ -10,7 +10,7 @@ const Utils = {
         `;
         document.body.appendChild(toast);
         toast.style.position = 'fixed';
-        toast.style.bottom = '20px';
+        toast.style.top = '24px';
         toast.style.right = '20px';
         toast.style.padding = '12px 20px';
         toast.style.background = type === 'success' ? '#10B981' : (type === 'error' ? '#EF4444' : '#3B82F6');

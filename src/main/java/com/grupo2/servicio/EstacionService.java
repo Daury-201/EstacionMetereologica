@@ -26,9 +26,16 @@ public class EstacionService {
     private ConfiguracionService configuracionService;
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
-    public List<EstacionDTO> obtenerTodasConUltimaLectura() {
-        List<Estacion> estaciones = estacionRepository.findAll();
-        List<EstacionDTO> resultado = new ArrayList<>();
+    @Autowired
+    private NotificacionService notificacionService;
+
+    private List<EstacionDTO> cachedEstaciones = null;
+    private long lastEstacionesTime = 0;
+
+    public synchronized List<EstacionDTO> obtenerTodasConUltimaLectura() {
+        if (System.currentTimeMillis() - lastEstacionesTime > 2000) {
+            List<Estacion> estaciones = estacionRepository.findAll();
+            List<EstacionDTO> resultado = new ArrayList<>();
         for (Estacion est : estaciones) {
             EstacionDTO dto = new EstacionDTO();
             dto.setId(est.getId());
@@ -61,8 +68,29 @@ public class EstacionService {
                 });
             resultado.add(dto);
         }
+        cachedEstaciones = resultado;
+        lastEstacionesTime = System.currentTimeMillis();
+    }
+        return cachedEstaciones;
+    }
+
+    public List<EstacionDTO> obtenerBasico() {
+        List<Estacion> estaciones = estacionRepository.findAll();
+        List<EstacionDTO> resultado = new ArrayList<>();
+        for (Estacion est : estaciones) {
+            EstacionDTO dto = new EstacionDTO();
+            dto.setId(est.getId());
+            dto.setCodigo(est.getCodigo());
+            dto.setNombre(est.getNombre());
+            dto.setUbicacion(est.getUbicacion());
+            dto.setEstado(est.getEstado());
+            dto.setLatitud(est.getLatitud());
+            dto.setLongitud(est.getLongitud());
+            resultado.add(dto);
+        }
         return resultado;
     }
+
     public Estacion guardar(Estacion estacion) {
         return estacionRepository.save(estacion);
     }
@@ -94,6 +122,7 @@ public class EstacionService {
                             dto.setId(est.getId());
                             dto.setEstado("Sin señal");
                             messagingTemplate.convertAndSend("/topic/estaciones-estado", dto);
+                            notificacionService.notificarDesconexion(est);
                         }
                     } else {
                         if (!"En línea".equals(est.getEstado())) {

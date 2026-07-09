@@ -413,7 +413,7 @@
 }
 .toast-container {
     position: fixed;
-    bottom: 24px;
+    top: 24px;
     right: 24px;
     z-index: 2000;
     display: flex;
@@ -423,7 +423,6 @@
 }
 .toast {
     background: var(--white);
-    border-left: 5px solid var(--primary);
     border-radius: var(--radius-sm);
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     padding: 16px;

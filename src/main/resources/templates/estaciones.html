@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Estaciones</title>
@@ -107,6 +108,9 @@
                             menu.offsetHeight; // reflow
                             menu.style.opacity = '1';
                             menu.style.transform = 'translateY(0)';
+                            if (typeof cargarAlarmasDropdown === 'function') {
+                                cargarAlarmasDropdown();
+                            }
                         } else {
                             menu.style.opacity = '0';
                             menu.style.transform = 'translateY(-10px)';

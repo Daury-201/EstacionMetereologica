@@ -76,8 +76,12 @@ public class UsuarioController {
 
     @PostMapping("/eliminar/{id}")
     public String eliminarUsuario(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        usuarioService.eliminarUsuario(id);
-        redirectAttributes.addAttribute("success", "usuario_eliminado");
+        try {
+            usuarioService.eliminarUsuario(id);
+            redirectAttributes.addAttribute("success", "usuario_eliminado");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addAttribute("error_usuario", e.getMessage());
+        }
         return "redirect:/configuracion?tab=usuarios";
     }
 }

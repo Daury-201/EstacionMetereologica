@@ -33,7 +33,8 @@ build/
 .vscode/
 
 src/main/resources/application-local.properties
-
+src/main/resources/application-produccion.properties
+src/main/java/com/grupo2/config/DataInitializer.java
 ### Database and Secrets ###
 /data/
 *.db

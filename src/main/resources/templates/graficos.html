@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gráficos y Análisis - Dashboard</title>
+    <title>Gráficos y Análisis</title>
     <link rel="stylesheet" th:href="@{/css/estaciones.css(v='1.3')}" href="../static/css/estaciones.css">
     <link rel="stylesheet" th:href="@{/css/graficos.css}" href="../static/css/graficos.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -120,9 +121,25 @@
                 <h3 class="chart-title">Rosa de los Vientos</h3>
                 <div id="chartWindRose"></div>
             </div>
-              <div class="chart-card" style="grid-column: 1 / -1;">
-                  <h3 class="chart-title">Análisis Predictivo: Realidad vs. OpenWeatherMap</h3>
+              <div class="chart-card" style="grid-column: 1 / -1;" id="predictiveCardContainer">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                      <h3 class="chart-title" style="margin-bottom: 0;">Análisis Predictivo: Realidad vs. OpenWeatherMap</h3>
+                      <select id="owmVarSelect" class="date-filter-btn" style="background: white; border: 1px solid #E5E7EB; color: #374151; cursor: pointer; padding: 6px 12px;">
+                          <option value="temp">Temperatura (°C)</option>
+                          <option value="hum">Humedad (%)</option>
+                          <option value="viento">Viento (km/h)</option>
+                          <option value="presion">Presión (hPa)</option>
+                      </select>
+                  </div>
                   <div id="chartPredictivo"></div>
+                  <div id="predictiveNoData" style="display: none; text-align: center; padding: 40px; color: #6B7280;">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48" style="margin-bottom: 10px; opacity: 0.5; display: block; margin-left: auto; margin-right: auto;">
+                          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                          <line x1="12" y1="9" x2="12" y2="13"></line>
+                          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                      </svg>
+                      No hay datos reales del Arduino para comparar.
+                  </div>
               </div>
         </div>
         <div id="globalAnalysis" style="display: block;">

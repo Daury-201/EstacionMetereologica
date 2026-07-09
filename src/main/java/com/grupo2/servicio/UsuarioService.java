@@ -44,6 +44,10 @@ public class UsuarioService {
     }
 
     public void eliminarUsuario(Long id) {
+        Usuario usuario = obtenerPorId(id);
+        if (usuario != null && "admin".equals(usuario.getUsername())) {
+            throw new IllegalArgumentException("No se puede eliminar el usuario administrador por defecto.");
+        }
         usuarioRepository.deleteById(id);
     }
 }

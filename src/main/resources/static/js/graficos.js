@@ -8,6 +8,7 @@ let chartWindRose = null;
 let chartPredictivo = null;
 let chartExtremos = null;
 let currentStationId = null;
+let currentOwmDataCache = null;
 let stompClient = null;
 const MAX_RAW_POINTS = 2000;   
 let rawData = { temp: [], hum: [], viento: [], presion: [], suelo: [], lluvia: [] };
@@ -125,6 +126,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const dateFilters = document.getElementById('dateFilters');
     const btnFiltrar = document.getElementById('btnFiltrarFechas');
     const btnDarkMode = document.getElementById('btnDarkMode');
+    const owmVarSelect = document.getElementById('owmVarSelect');
+    
+    if (owmVarSelect) {
+        owmVarSelect.addEventListener('change', () => {
+            if (currentStationId) loadOWMPrediction(currentStationId);
+        });
+    }
+
     if (isDarkMode) document.body.classList.add('dark-mode');
     updateDarkModeIcons();
     if (btnDarkMode) {
@@ -202,6 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 dateFilters.style.display = 'none';
                 document.getElementById('summaryCards').style.display = 'none';
                 destroyCharts();
+                cargarExtremosTermicosGlobales();
             }
         });
     }
@@ -333,12 +343,13 @@ function loadHistoricalData(estId) {
             data.forEach((lectura) => {
                 const dateObj = parseServerDate(lectura.fechaHora);
                 const timestamp = dateObj.getTime();
-                rawData.temp.push({ x: timestamp, y: lectura.temperatura });
-                rawData.hum.push({ x: timestamp, y: lectura.humedadAire });
-                rawData.viento.push({ x: timestamp, y: lectura.velocidadViento });
-                rawData.presion.push({ x: timestamp, y: lectura.presion });
-                rawData.suelo.push({ x: timestamp, y: lectura.humedadSuelo });
-                rawData.lluvia.push({ x: timestamp, y: lectura.lluvia });
+                const origin = lectura.origen || 'OWM';
+                rawData.temp.push({ x: timestamp, y: lectura.temperatura, origen: origin });
+                rawData.hum.push({ x: timestamp, y: lectura.humedadAire, origen: origin });
+                rawData.viento.push({ x: timestamp, y: lectura.velocidadViento, origen: origin });
+                rawData.presion.push({ x: timestamp, y: lectura.presion, origen: origin });
+                rawData.suelo.push({ x: timestamp, y: lectura.humedadSuelo, origen: origin });
+                rawData.lluvia.push({ x: timestamp, y: lectura.lluvia, origen: origin });
                 if(lectura.temperatura > maxTemp) maxTemp = lectura.temperatura;
                 if(lectura.temperatura < minTemp) minTemp = lectura.temperatura;
                 if(lectura.velocidadViento > maxViento) maxViento = lectura.velocidadViento;
@@ -499,20 +510,60 @@ async function loadWindRose(estacionId) {
 
 async function loadOWMPrediction(estacionId) {
     try {
-        const response = await fetch('/api/analisis/estacion/' + estacionId + '/prediccion-owm');
-        const owmData = await response.json();
-        
+        if (!currentOwmDataCache || currentOwmDataCache.estacionId !== estacionId) {
+            const response = await fetch('/api/analisis/estacion/' + estacionId + '/prediccion-owm');
+            currentOwmDataCache = { data: await response.json(), estacionId: estacionId };
+        }
+        const owmData = currentOwmDataCache.data;
         if (!owmData || !owmData.list) return;
 
-        const owmTemps = owmData.list.slice(0, 10).map(item => ({
-            x: new Date(item.dt * 1000).getTime(),
-            y: item.main.temp
-        }));
+        const variable = document.getElementById('owmVarSelect') ? document.getElementById('owmVarSelect').value : 'temp';
+        const chartDiv = document.getElementById('chartPredictivo');
+        const noDataDiv = document.getElementById('predictiveNoData');
+
+        // Check if Arduino has REAL physical data for this station/variable
+        const realArduinoData = rawData[variable] ? rawData[variable].filter(p => p.origen === 'ARDUINO') : [];
+        if (realArduinoData.length === 0) {
+            if (chartDiv) chartDiv.style.display = 'none';
+            if (noDataDiv) noDataDiv.style.display = 'block';
+            if (chartPredictivo) { chartPredictivo.destroy(); chartPredictivo = null; }
+            return;
+        } else {
+            if (chartDiv) chartDiv.style.display = 'block';
+            if (noDataDiv) noDataDiv.style.display = 'none';
+        }
+
+        const owmTemps = owmData.list.slice(0, 10).map(item => {
+            let yVal = 0;
+            if (variable === 'temp') yVal = item.main.temp;
+            else if (variable === 'hum') yVal = item.main.humidity;
+            else if (variable === 'presion') yVal = item.main.pressure;
+            else if (variable === 'viento') yVal = item.wind.speed * 3.6; // convert m/s to km/h
+            return {
+                x: new Date(item.dt * 1000).getTime(),
+                y: parseFloat(yVal.toFixed(2))
+            };
+        });
         
-        const pastTemps = rawData.temp.slice(-15).map(p => ({
+        const pastTemps = realArduinoData.slice(-15).map(p => ({
             x: new Date(p.x).getTime(),
             y: p.y
         }));
+
+        // Conectar la línea de predicción con el último punto real
+        if (pastTemps.length > 0 && owmTemps.length > 0) {
+            const lastReal = pastTemps[pastTemps.length - 1];
+            if (owmTemps[0].x > lastReal.x) {
+                owmTemps.unshift({ x: lastReal.x, y: lastReal.y });
+            }
+        }
+
+        const varNames = {
+            'temp': 'Temperatura (°C)',
+            'hum': 'Humedad (%)',
+            'presion': 'Presión (hPa)',
+            'viento': 'Viento (km/h)'
+        };
 
         const options = {
             ...getCommonOptions(),
@@ -526,6 +577,9 @@ async function loadOWMPrediction(estacionId) {
             xaxis: {
                 type: 'datetime',
                 labels: { style: { colors: isDarkMode ? '#9CA3AF' : '#6B7280' } }
+            },
+            yaxis: {
+                title: { text: varNames[variable] }
             },
             dataLabels: { enabled: false }
         };

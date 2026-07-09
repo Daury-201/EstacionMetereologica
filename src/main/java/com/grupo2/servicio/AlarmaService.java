@@ -20,14 +20,17 @@ public class AlarmaService {
     private final UmbralRepository umbralRepository;
     private final EstacionRepository estacionRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final NotificacionService notificacionService;
     public AlarmaService(AlarmaRepository alarmaRepository,
                           UmbralRepository umbralRepository,
                           EstacionRepository estacionRepository,
-                          SimpMessagingTemplate messagingTemplate) {
+                          SimpMessagingTemplate messagingTemplate,
+                          NotificacionService notificacionService) {
         this.alarmaRepository = alarmaRepository;
         this.umbralRepository = umbralRepository;
         this.estacionRepository = estacionRepository;
         this.messagingTemplate = messagingTemplate;
+        this.notificacionService = notificacionService;
     }
     private static final Map<String, Double> MARGENES_ADVERTENCIA = new HashMap<>();
     static {
@@ -39,7 +42,7 @@ public class AlarmaService {
         MARGENES_ADVERTENCIA.put("presion", 10.0);         
     }
     private final Map<String, Integer> lecturasAnormales = new java.util.concurrent.ConcurrentHashMap<>();
-    private static final int LECTURAS_REQUERIDAS = 3; 
+    private static final int LECTURAS_REQUERIDAS = 3;
     @Transactional
     public void evaluarSensor(int estacionId, String sensor, Double valor) {
         if (valor == null) return;
@@ -115,8 +118,11 @@ public class AlarmaService {
     private void notificarAlarma(Alarma alarma) {
         try {
             messagingTemplate.convertAndSend("/topic/alarmas", alarma);
+            if (!alarma.isResuelta()) {
+                notificacionService.notificarAlarma(alarma);
+            }
         } catch (Exception e) {
-            System.err.println("Error enviando alerta por WebSocket: " + e.getMessage());
+            System.err.println("Error enviando alerta: " + e.getMessage());
         }
     }
     private String getUnidad(String sensor) {
@@ -224,5 +230,10 @@ public class AlarmaService {
     }
     public Optional<Alarma> obtenerPorId(Long id) {
         return alarmaRepository.findById(id);
+    }
+    @Transactional
+    public void borrarUmbral(String sensor, Integer estacionId) {
+        Optional<Umbral> existente = umbralRepository.findByEstacionIdAndSensor(estacionId, sensor);
+        existente.ifPresent(umbralRepository::delete);
     }
 }

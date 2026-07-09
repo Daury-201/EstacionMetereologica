@@ -46,6 +46,12 @@ public class AlarmaController {
         alarmaService.guardarUmbrales(umbrales);
         return ResponseEntity.ok("Configuración guardada correctamente");
     }
+    @DeleteMapping("/api/alarmas/umbrales/{sensor}")
+    @ResponseBody
+    public ResponseEntity<String> borrarUmbral(@PathVariable String sensor, @RequestParam(required = false) Integer estacionId) {
+        alarmaService.borrarUmbral(sensor, estacionId);
+        return ResponseEntity.ok("Umbral borrado correctamente");
+    }
     @PostMapping("/api/alarmas/resolver/{id}")
     @ResponseBody
     public ResponseEntity<String> resolverAlarma(@PathVariable Long id, @RequestParam(required = false, defaultValue = "") String notas) {

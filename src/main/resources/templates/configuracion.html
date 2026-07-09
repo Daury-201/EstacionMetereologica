@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <th:block th:replace="~{fragments/components :: headLinks('Configuraci&oacute;n - MeteoStation')}"></th:block>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <th:block th:replace="~{fragments/components :: headLinks('Configuración')}"></th:block>
     <link rel="stylesheet" th:href="@{/css/configuracion.css}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
     <script th:src="@{/js/configuracion.js}" defer></script>
@@ -161,13 +162,22 @@
                             <h3>Seguridad</h3>
                             <p>Contrase&ntilde;a y configuraci&oacute;n de acceso</p>
                         </div>
-                        <div id="password-view" th:style="${param.error_pwd != null or param.success_pwd != null ? 'display: none;' : 'display: block; padding-top: 10px;'}">
+                        <div id="password-view" th:style="${param.error_pwd != null ? 'display: none;' : 'display: block; padding-top: 10px;'}">
                             <div class="section-label" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E5E7EB; padding-bottom: 12px; margin-bottom: 24px;">
                                 <span>Cambiar contrase&ntilde;a</span>
                                 <button type="button" class="btn-primary" onclick="document.getElementById('password-view').style.display='none'; document.getElementById('password-form').style.display='block';" style="padding: 8px 24px; min-width: 170px; justify-content: center; font-size: 13px; border-radius: 6px; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(139, 92, 246, 0.2);">
                                     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
                                     Modificar contrase&ntilde;a
                                 </button>
+                            </div>
+                            <div th:if="${param.success_pwd}" id="pwd-success-alert" style="margin-bottom: 20px; display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 12px; color: #065F46; animation: slideInDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                                <div style="background: #10B981; color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                </div>
+                                <div style="display: flex; flex-direction: column;">
+                                    <span style="font-weight: 700; font-size: 14px; margin-bottom: 2px;">&iexcl;&Eacute;xito!</span>
+                                    <span style="font-size: 13px; color: #047857;">Contrase&ntilde;a actualizada correctamente</span>
+                                </div>
                             </div>
                             <div style="padding: 16px; background: #F9FAFB; border-radius: 12px; border: 1px solid #F3F4F6; display: flex; align-items: center; gap: 16px;">
                                 <div style="background: #E5E7EB; border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #4B5563; flex-shrink: 0;">
@@ -180,7 +190,7 @@
                             </div>
                         </div>
 
-                        <form id="password-form" th:action="@{/configuracion/seguridad/password}" method="POST" novalidate th:style="${param.error_pwd != null or param.success_pwd != null ? 'display: block; padding-top: 10px;' : 'display: none; padding-top: 10px;'}">
+                        <form id="password-form" th:action="@{/configuracion/seguridad/password}" method="POST" novalidate th:style="${param.error_pwd != null ? 'display: block; padding-top: 10px;' : 'display: none; padding-top: 10px;'}">
 
                             <div id="client-error-alert" class="alert-box error-alert slide-in-down" style="display: none; margin-bottom: 20px; align-items: center; gap: 12px; padding: 12px 16px; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 12px; color: #991B1B; transition: opacity 0.3s ease;">
                                 <div class="alert-icon" style="background: #EF4444; color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
@@ -210,16 +220,6 @@
                                     }
                                 }, 2000);
                             </script>
-                            <div th:if="${param.success_pwd}" id="pwd-success-alert" style="margin-bottom: 20px; display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 12px; color: #065F46; animation: slideInDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
-                                <div style="background: #10B981; color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                </div>
-                                <div style="display: flex; flex-direction: column;">
-                                    <span style="font-weight: 700; font-size: 14px; margin-bottom: 2px;">&iexcl;&Eacute;xito!</span>
-                                    <span style="font-size: 13px; color: #047857;">Contrase&ntilde;a actualizada correctamente</span>
-                                </div>
-                            </div>
-
                             <div class="section-label" style="border-bottom: 1px solid #E5E7EB; padding-bottom: 12px; margin-bottom: 24px;">Modificar contrase&ntilde;a</div>
                             <div class="form-group">
                                 <label>Contrase&ntilde;a actual</label>
@@ -381,7 +381,7 @@
                                     </td>
                                     <td style="padding: 12px; text-align: right; display: flex; justify-content: flex-end; gap: 8px;">
                                         <button class="btn-outline" style="padding: 6px 10px; font-size: 11px; margin: 0;" th:data-id="${u.id}" th:data-nombre="${u.nombre}" th:data-username="${u.username}" th:data-email="${u.email}" th:data-rol="${u.rol}" onclick="openModalEditarUsuario(this.getAttribute('data-id'), this.getAttribute('data-nombre'), this.getAttribute('data-username'), this.getAttribute('data-email'), this.getAttribute('data-rol'))">Editar</button>
-                                        <button type="button" class="btn-cancel" style="padding: 6px 10px; font-size: 11px; margin: 0; color: #EF4444; background: #FEF2F2;" th:data-id="${u.id}" th:data-nombre="${u.nombre}" onclick="openModalEliminarUsuario(this.getAttribute('data-id'), this.getAttribute('data-nombre'))">Eliminar</button>
+                                        <button type="button" th:if="${u.username != 'admin'}" class="btn-cancel" style="padding: 6px 10px; font-size: 11px; margin: 0; color: #EF4444; background: #FEF2F2;" th:data-id="${u.id}" th:data-nombre="${u.nombre}" onclick="openModalEliminarUsuario(this.getAttribute('data-id'), this.getAttribute('data-nombre'))">Eliminar</button>
                                     </td>
                                 </tr>
                                 </tbody>

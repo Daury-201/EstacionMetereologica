@@ -1,7 +1,7 @@
 package com.grupo2.entidad;
 import jakarta.persistence.*;
 @Entity
-@Table(name = "configuracion_umbrales_v2")
+@Table(name = "configuracion_umbrales")
 public class Umbral {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

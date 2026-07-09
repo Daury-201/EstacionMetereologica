@@ -181,6 +181,11 @@ public class ConfiguracionController {
                 return "redirect:/configuracion?tab=seguridad";
             }
             
+            if (encoder.matches(newPassword, usuario.getPassword())) {
+                redirectAttributes.addAttribute("error_pwd", "La nueva contraseña debe ser diferente a la actual");
+                return "redirect:/configuracion?tab=seguridad";
+            }
+            
             
             if (!newPassword.equals(confirmPassword)) {
                 redirectAttributes.addAttribute("error_pwd", "Las contraseñas nuevas no coinciden");

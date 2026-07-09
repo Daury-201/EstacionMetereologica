@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Integración - Dashboard</title>
+    <title>Integración</title>
     <link rel="stylesheet" th:href="@{/css/dashboard.css(v='2.19')}">
     <link rel="stylesheet" th:href="@{/css/components.css(v='1.2')}">
     <link rel="stylesheet" th:href="@{/css/integracion.css}">
@@ -95,6 +96,9 @@
                                 menu.offsetHeight; // reflow
                                 menu.style.opacity = '1';
                                 menu.style.transform = 'translateY(0)';
+                                if (typeof cargarAlarmasDropdown === 'function') {
+                                    cargarAlarmasDropdown();
+                                }
                             } else {
                                 menu.style.opacity = '0';
                                 menu.style.transform = 'translateY(-10px)';

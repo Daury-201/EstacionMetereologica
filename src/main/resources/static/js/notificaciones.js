@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!window.location.pathname.includes('/alarmas')) {
         connectNotificationWebSocket();
     }
-    initAlarmsDropdown();
 });
 function connectNotificationWebSocket() {
     if (typeof SockJS === 'undefined' || typeof Stomp === 'undefined') return;
@@ -89,30 +88,7 @@ function decrementGlobalAlarmBadge() {
         }
     }
 }
-function initAlarmsDropdown() {
-    const alarmsBtn = document.getElementById('alarms-badge-btn');
-    const alarmsDropdown = document.getElementById('alarms-dropdown');
-    if (!alarmsBtn || !alarmsDropdown) return;
-    alarmsBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const summaryDropdown = document.getElementById('summary-dropdown');
-        if (summaryDropdown) {
-            summaryDropdown.style.display = 'none';
-        }
-        const isVisible = alarmsDropdown.style.display === 'flex';
-        if (!isVisible) {
-            cargarAlarmasDropdown();
-            alarmsDropdown.style.display = 'flex';
-        } else {
-            alarmsDropdown.style.display = 'none';
-        }
-    });
-    document.addEventListener('click', (e) => {
-        if (alarmsDropdown.style.display === 'flex' && !alarmsDropdown.contains(e.target)) {
-            alarmsDropdown.style.display = 'none';
-        }
-    });
-}
+
 function cargarAlarmasDropdown() {
     const container = document.getElementById('alarms-dropdown-items');
     const activeCountBadge = document.getElementById('dropdownActiveCount');
@@ -166,12 +142,13 @@ function updateBadgesLocally(count) {
 function initSidebarToggle() {
     const toggleBtn = document.getElementById('sidebarToggle');
     const sidebar = document.querySelector('.sidebar');
+    const logoIcon = document.querySelector('.logo-icon');
     if (toggleBtn && sidebar) {
         const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
         if (isCollapsed) {
             sidebar.classList.add('collapsed');
         }
-        toggleBtn.addEventListener('click', () => {
+        const doToggle = () => {
             sidebar.classList.toggle('collapsed');
             localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
             let start = Date.now();
@@ -184,7 +161,15 @@ function initSidebarToggle() {
                     if (window.map) window.map.resize();
                 }
             }, 15);
-        });
+        };
+        toggleBtn.addEventListener('click', doToggle);
+        if (logoIcon) {
+            logoIcon.addEventListener('click', () => {
+                if (sidebar.classList.contains('collapsed')) {
+                    doToggle();
+                }
+            });
+        }
     }
 }
 initSidebarToggle();

@@ -86,10 +86,10 @@ public class LectorEstacion {
                         String checkSql = "SELECT count(*) FROM lecturas_sensores WHERE estacion_id = ? AND fecha_hora = CAST(? AS TIMESTAMP)";
                         int count = jdbcTemplate.queryForObject(checkSql, Integer.class, estacionId, timestamp);
                         if (count > 0) {
-                            String updateSql = "UPDATE lecturas_sensores SET " + sensor + " = ? WHERE estacion_id = ? AND fecha_hora = CAST(? AS TIMESTAMP)";
+                            String updateSql = "UPDATE lecturas_sensores SET " + sensor + " = ?, origen = 'ARDUINO' WHERE estacion_id = ? AND fecha_hora = CAST(? AS TIMESTAMP)";
                             jdbcTemplate.update(updateSql, valorDb, estacionId, timestamp);
                         } else {
-                            String insertSql = "INSERT INTO lecturas_sensores (estacion_id, fecha_hora, " + sensor + ") VALUES (?, CAST(? AS TIMESTAMP), ?)";
+                            String insertSql = "INSERT INTO lecturas_sensores (estacion_id, fecha_hora, origen, " + sensor + ") VALUES (?, CAST(? AS TIMESTAMP), 'ARDUINO', ?)";
                             jdbcTemplate.update(insertSql, estacionId, timestamp, valorDb);
                         }
                         if (!sensor.equals("direccion_viento")) {
@@ -117,8 +117,8 @@ public class LectorEstacion {
                                     l.setDireccionViento(rs.getString("direccion_viento"));
                                     v = rs.getDouble("lluvia");
                                     l.setLluvia(rs.wasNull() ? null : v);
-                                    v = rs.getDouble("humedad_suelo");
                                     l.setHumedadSuelo(rs.wasNull() ? null : v);
+                                    l.setOrigen(rs.getString("origen"));
                                     return l;
                                 },
                                 estacionId

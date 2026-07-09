@@ -19,6 +19,7 @@ public class IntegracionSyncLog {
     private String estado; 
     @Column(length = 500)
     private String mensaje;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public LocalDateTime getFechaHora() { return fechaHora; }

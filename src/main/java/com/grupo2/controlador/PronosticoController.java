@@ -21,7 +21,7 @@ public class PronosticoController {
     }
 
     @GetMapping
-    public List<Map<String, Object>> obtenerPronostico() {
-        return integracionService.obtenerPronosticoGeneral();
+    public List<Map<String, Object>> obtenerPronostico(@org.springframework.web.bind.annotation.RequestParam(required = false) Long estacionId) {
+        return integracionService.obtenerPronosticoGeneral(estacionId);
     }
 }

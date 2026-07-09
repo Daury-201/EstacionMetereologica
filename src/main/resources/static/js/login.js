@@ -207,6 +207,9 @@ document.addEventListener("DOMContentLoaded", function() {
     const loginForm = document.querySelector('.login-form');
     if (loginForm) {
         loginForm.addEventListener('submit', function(e) {
+            // Only intercept actual login forms for AJAX, allow others (like forgot password) to submit normally
+            if (!loginForm.action.includes('/login')) return;
+
             let isValid = true;
             const inputs = loginForm.querySelectorAll('input[required]');
             

@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Estación Meteorológica</title>
+    <title>Dashboard</title>
     <link rel="stylesheet" th:href="@{/css/dashboard.css(v='2.23')}" href="../static/css/dashboard.css">
     <link rel="stylesheet" th:href="@{/css/components.css(v='1.2')}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -11,22 +12,60 @@
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css' rel='stylesheet' />
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
 </head>
 <body class="theme-light">
 
-<div id="splash-screen" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s ease, visibility 0.5s ease; color: white;">
-    <div style="animation: scalePulse 2s infinite ease-in-out;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 80px; height: 80px; margin-bottom: 20px;">
-            <path d="M17.5 19C19.985 19 22 16.985 22 14.5C22 12.18 20.25 10.26 18.01 10.05C17.43 6.64 14.47 4 11 4C7.13 4 4 7.13 4 11C1.79 11.23 0 13.12 0 15.5C0 17.985 2.015 20 4.5 20H17.5V19Z" fill="rgba(255,255,255,0.2)"></path>
-            <path d="M8 14V22M12 16V22M16 14V22"></path>
-        </svg>
+<div id="splash-screen" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%); z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s ease, visibility 0.5s ease, transform 0.6s cubic-bezier(0.8, 0, 0.2, 1); color: white;">
+    
+    <!-- Destello relámpago global en el fondo -->
+    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%); pointer-events: none; opacity: 0; animation: megaFlash 4s infinite; z-index: 0; mix-blend-mode: screen;"></div>
+    
+    <!-- Estrella fugaz -->
+    <div class="shooting-star"></div>
+    
+    <!-- Sistema de partículas (Luciérnagas/Estrellas) -->
+    <div class="particles-container">
+        <div class="particle" style="--px: 10%; --pd: 4s; --ps: 1.2;"></div>
+        <div class="particle" style="--px: 25%; --pd: 6s; --ps: 0.8;"></div>
+        <div class="particle" style="--px: 40%; --pd: 5s; --ps: 1.5;"></div>
+        <div class="particle" style="--px: 60%; --pd: 7s; --ps: 0.9;"></div>
+        <div class="particle" style="--px: 75%; --pd: 4.5s; --ps: 1.1;"></div>
+        <div class="particle" style="--px: 90%; --pd: 6.5s; --ps: 1.3;"></div>
+    </div>
+
+    <div class="mega-weather-icon" style="z-index: 2;">
+        <div class="m-sun"></div>
+        <div class="m-cloud m-back-cloud"></div>
+        <div class="m-cloud m-front-cloud"></div>
+        <div class="m-lightning">
+            <svg viewBox="0 0 24 24" fill="#FDE047" stroke="#FDE047" stroke-width="1"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+        </div>
+        <div class="m-rain">
+            <div class="drop" style="--d: 0.1s; left: 20%;"></div>
+            <div class="drop" style="--d: 0.4s; left: 40%;"></div>
+            <div class="drop" style="--d: 0.2s; left: 60%;"></div>
+            <div class="drop" style="--d: 0.5s; left: 80%;"></div>
+        </div>
     </div>
     <h1 style="font-size: 2.5rem; font-weight: 700; margin: 0; letter-spacing: -1px; animation: slideUpFade 0.8s forwards ease-out;">Estación Meteorológica</h1>
     <p style="font-size: 1.1rem; opacity: 0; margin-top: 10px; animation: slideUpFade 0.8s forwards ease-out; animation-delay: 0.3s;">Gestión inteligente del clima</p>
-    <div style="width: 200px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; margin-top: 30px; overflow: hidden; opacity: 0; animation: slideUpFade 0.8s forwards ease-out; animation-delay: 0.6s;">
-        <div style="height: 100%; background: white; width: 0%; animation: loadingBar 2.5s forwards ease-in-out;"></div>
+    <div style="display: flex; flex-direction: column; align-items: center; margin-top: 30px; opacity: 0; animation: slideUpFade 0.8s forwards ease-out; animation-delay: 0.6s;">
+        <div style="display: flex; justify-content: space-between; width: 220px; font-size: 0.75rem; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255,255,255,0.9);">
+            <span>Iniciando sistema</span>
+            <span id="loading-pct">0%</span>
+        </div>
+        <div style="width: 220px; height: 6px; background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden; box-shadow: inset 0 2px 5px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1);">
+            <div style="height: 100%; width: 0%; border-radius: 4px; background: #FFFFFF; box-shadow: 0 0 12px rgba(255,255,255,0.8); animation: loadingBar 3.4s forwards cubic-bezier(0.4, 0, 0.2, 1);"></div>
+        </div>
     </div>
 </div>
+<script>
+    // Se ejecuta de manera síncrona mientras el navegador lee el HTML para evitar "pantallazos"
+    if (sessionStorage.getItem('splashShown')) {
+        document.getElementById('splash-screen').style.display = 'none';
+    }
+</script>
 <style>
 @keyframes scalePulse {
     0% { transform: scale(1); }
@@ -41,20 +80,319 @@
     0% { width: 0%; }
     100% { width: 100%; }
 }
+.particles-container {
+    position: absolute;
+    width: 100%; height: 100%;
+    overflow: hidden;
+    z-index: 1;
+    pointer-events: none;
+}
+.particle {
+    position: absolute;
+    bottom: -20px;
+    left: var(--px);
+    width: 5px; height: 5px;
+    background: #FFFFFF;
+    border-radius: 50%;
+    box-shadow: 0 0 12px 2px rgba(255,255,255,0.9);
+    animation: floatParticle var(--pd) ease-in infinite;
+}
+@keyframes floatParticle {
+    0% { transform: translateY(0) scale(var(--ps)); opacity: 0; }
+    20% { opacity: 0.8; }
+    80% { opacity: 0.8; }
+    100% { transform: translateY(-100vh) scale(var(--ps)); opacity: 0; }
+}
+.shooting-star {
+    position: absolute;
+    top: 15%; left: -20%;
+    width: 150px; height: 2px;
+    background: linear-gradient(90deg, rgba(255,255,255,0), #fff);
+    border-radius: 2px;
+    filter: drop-shadow(0 0 5px #fff);
+    animation: shootingStarAnim 4s infinite;
+    transform: rotate(15deg);
+    z-index: 1;
+}
+@keyframes shootingStarAnim {
+    0%, 65% { left: -20%; top: 15%; opacity: 0; }
+    70% { opacity: 1; }
+    80% { left: 120%; top: 40%; opacity: 0; }
+    100% { left: 120%; opacity: 0; }
+}
+.mega-weather-icon {
+    position: relative;
+    width: 200px; height: 180px;
+    margin-bottom: 30px;
+    transform: scale(1.1) rotateX(0deg) rotateY(0deg);
+    transform-style: preserve-3d;
+    transition: transform 0.1s ease-out;
+}
+.m-sun {
+    position: absolute;
+    top: 20px; right: 30px;
+    width: 70px; height: 70px;
+    background: radial-gradient(circle at 30% 30%, #FDE68A, #F59E0B);
+    border-radius: 50%;
+    box-shadow: 0 0 40px rgba(245,158,11,0.8);
+    animation: megaSunPulse 3s ease-in-out infinite alternate;
+    transform: translateZ(20px);
+}
+.m-cloud {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 50px;
+    filter: drop-shadow(0 15px 15px rgba(0,0,0,0.25));
+}
+.m-cloud::before, .m-cloud::after {
+    content: '';
+    position: absolute;
+    background: inherit;
+    border-radius: 50%;
+    animation: cloudBumpBreathe 4s ease-in-out infinite alternate;
+}
+.m-back-cloud {
+    width: 100px; height: 40px;
+    top: 60px; left: 20px;
+    background: rgba(226, 232, 240, 0.9);
+    animation: megaCloudFloat 6s ease-in-out infinite alternate;
+    transform: translateZ(40px);
+}
+.m-back-cloud::before { width: 50px; height: 50px; top: -25px; left: 15px; animation-delay: 0s; }
+.m-back-cloud::after { width: 45px; height: 45px; top: -15px; right: 10px; animation-delay: -1s; }
+
+.m-front-cloud {
+    width: 130px; height: 50px;
+    top: 80px; left: 40px;
+    background: #FFFFFF;
+    animation: megaCloudFloat 4s ease-in-out infinite alternate-reverse;
+    transform: translateZ(80px);
+}
+.m-front-cloud::before { width: 70px; height: 70px; top: -35px; left: 20px; animation-delay: -2s; }
+.m-front-cloud::after { width: 55px; height: 55px; top: -20px; right: 15px; animation-delay: -3s; }
+
+.m-lightning {
+    position: absolute;
+    top: 100px; left: 100px;
+    width: 40px; height: 40px;
+    animation: megaFlash 4s infinite;
+    z-index: 10;
+    filter: drop-shadow(0 0 15px rgba(253, 224, 71, 0.8));
+    transform: translateZ(60px);
+}
+.m-rain {
+    position: absolute;
+    top: 120px; left: 50px;
+    width: 110px; height: 60px;
+    overflow: hidden;
+    transform: translateZ(30px);
+}
+.m-rain .drop {
+    position: absolute;
+    bottom: 100%;
+    width: 4px; height: 18px;
+    background: linear-gradient(transparent, #38BDF8);
+    border-radius: 3px;
+    animation: megaRainDrop 1s linear infinite;
+    animation-delay: var(--d);
+}
+
+.splash-ripple {
+    position: absolute;
+    width: 30px; height: 30px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: splashRippleAnim 0.8s ease-out forwards;
+    pointer-events: none;
+    z-index: 999999;
+}
+@keyframes splashRippleAnim {
+    0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(25); opacity: 0; }
+}
+
+@keyframes cloudBumpBreathe { 
+    0% { transform: scale(0.95); } 
+    100% { transform: scale(1.05); } 
+}
+
+@keyframes cloudBumpBreathe { 
+    0% { transform: scale(0.95); } 
+    100% { transform: scale(1.05); } 
+}
+
+@keyframes megaSunPulse { 0% { transform: scale(1) rotate(0deg); } 100% { transform: scale(1.15) rotate(15deg); box-shadow: 0 0 60px rgba(245,158,11,1); } }
+@keyframes megaCloudFloat { 0% { transform: translateY(0) translateX(0); } 100% { transform: translateY(-8px) translateX(8px); } }
+@keyframes megaFlash { 
+    0%, 90%, 94%, 100% { opacity: 0; transform: scale(0.8); } 
+    92%, 96% { opacity: 1; transform: scale(1.2); } 
+}
+@keyframes megaRainDrop { 
+    0% { transform: translateY(0) scaleY(1); opacity: 1; } 
+    100% { transform: translateY(70px) scaleY(1.5); opacity: 0; } 
+}
 </style>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    if (!sessionStorage.getItem('splashShown')) {
-        const splash = document.getElementById('splash-screen');
+    const splash = document.getElementById('splash-screen');
+    const icon = document.querySelector('.mega-weather-icon');
+    
+        // Configurar perspectiva 3D
+        if(splash) splash.style.perspective = "1200px";
+
+        if (!sessionStorage.getItem('splashShown')) {
+            
+            // Animación del contador de porcentaje
+            let pctElement = document.getElementById('loading-pct');
+            if(pctElement) {
+                let startTime = Date.now();
+                let duration = 3400; // 3.4 segundos (4s total - 0.6s de animación inicial)
+                let interval = setInterval(() => {
+                    let elapsed = Date.now() - startTime;
+                    let currentPct = Math.floor((elapsed / duration) * 100);
+                    if(currentPct >= 100) {
+                        currentPct = 100;
+                        clearInterval(interval);
+                    }
+                    pctElement.textContent = currentPct + "%";
+                }, 30);
+            }
+        // Añadir efecto Parallax 3D interactivo con el ratón
+        document.addEventListener('mousemove', (e) => {
+            if(splash && splash.style.visibility !== 'hidden' && icon) {
+                const xAxis = (window.innerWidth / 2 - e.pageX) / 15;
+                const yAxis = (window.innerHeight / 2 - e.pageY) / 15;
+                icon.style.transform = `scale(1.1) rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+            }
+        });
+        
+        // Efecto Parallax en móviles usando el Giroscopio (Orientación)
+        window.addEventListener('deviceorientation', (e) => {
+            if(splash && splash.style.visibility !== 'hidden' && icon && e.gamma != null) {
+                let xAxis = e.gamma / 1.5; // Izquierda-Derecha
+                let yAxis = (e.beta - 45) / 1.5; // Arriba-Abajo (asumiendo que el usuario lo sostiene en 45 grados)
+                // Limitar para que no se voltee demasiado
+                xAxis = Math.max(-30, Math.min(30, xAxis));
+                yAxis = Math.max(-30, Math.min(30, yAxis));
+                icon.style.transform = `scale(1.1) rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+            }
+        });
+        
+        // --- Efectos de Sonido y Respuesta Háptica ---
+        let audioCtx = null;
+        function playInteractiveMagic() {
+            try {
+                // Vibración Háptica (si está disponible en móvil)
+                if (navigator.vibrate) {
+                    navigator.vibrate([30, 50, 40]); // Patrón sutil
+                }
+
+                // Iniciar Audio Context si no existe
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+
+                // Crear un sonido tipo "Chime" o "Gotas mágicas"
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'sine';
+                // Frecuencia aleatoria para que cada toque suene distinto (pentatónica)
+                const freqs = [523.25, 659.25, 783.99, 1046.50];
+                osc.frequency.setValueAtTime(freqs[Math.floor(Math.random() * freqs.length)], audioCtx.currentTime);
+                
+                gain.gain.setValueAtTime(0, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+                
+                // Efecto de paneo espacial (3D) basado en el toque
+                const panner = audioCtx.createStereoPanner ? audioCtx.createStereoPanner() : null;
+                
+                if (panner) {
+                    osc.connect(gain);
+                    gain.connect(panner);
+                    panner.connect(audioCtx.destination);
+                } else {
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                }
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 1.5);
+            } catch (e) {
+                console.log("Audio/Haptics no soportados", e);
+            }
+        }
+
+        // Efecto de Ondas "Ripples" interactivo al tocar o hacer clic
+        if (splash) {
+            splash.addEventListener('click', function(e) {
+                // Disparar sonido y vibración
+                playInteractiveMagic();
+
+                let ripple = document.createElement('div');
+                ripple.className = 'splash-ripple';
+                ripple.style.left = e.clientX + 'px';
+                ripple.style.top = e.clientY + 'px';
+                this.appendChild(ripple);
+                
+                // Si soporta paneo espacial, ajustar según dónde se hizo clic
+                if (audioCtx && audioCtx.createStereoPanner) {
+                    // Simular paneo 3D simple
+                }
+
+                setTimeout(() => { if(ripple && ripple.parentNode) ripple.remove() }, 800);
+            });
+            
+            // Sonido de fondo tipo "viento" (Intento de autoplay, los navegadores a veces lo bloquean)
+            setTimeout(() => {
+                try {
+                    if (navigator.vibrate) navigator.vibrate(50); // Pequeña vibración de inicio
+                    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    
+                    // Solo ruido de viento muy bajo
+                    const bufferSize = audioCtx.sampleRate * 3; 
+                    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+                    
+                    const noise = audioCtx.createBufferSource();
+                    noise.buffer = buffer;
+                    
+                    const bandpass = audioCtx.createBiquadFilter();
+                    bandpass.type = 'bandpass';
+                    bandpass.frequency.value = 400;
+                    
+                    const vol = audioCtx.createGain();
+                    vol.gain.setValueAtTime(0, audioCtx.currentTime);
+                    vol.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 1);
+                    vol.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 3);
+                    
+                    noise.connect(bandpass);
+                    bandpass.connect(vol);
+                    vol.connect(audioCtx.destination);
+                    
+                    noise.start();
+                } catch(e) {}
+            }, 500);
+            
+            // Tocar campana mágica justo cuando sale el relámpago (92% de 4s = ~3680ms)
+            setTimeout(() => {
+                playInteractiveMagic();
+            }, 3650);
+        }
+
         setTimeout(() => {
+            splash.style.transform = 'scale(1.5)';
             splash.style.opacity = '0';
             splash.style.visibility = 'hidden';
             sessionStorage.setItem('splashShown', 'true');
-            setTimeout(() => splash.remove(), 500);
-        }, 3000);
-    } else {
-        const splash = document.getElementById('splash-screen');
-        if (splash) splash.style.display = 'none';
+            setTimeout(() => {
+                if(splash && splash.parentNode) splash.remove();
+            }, 600);
+        }, 4000); // 4 seconds so they can play with it
     }
 });
 </script>

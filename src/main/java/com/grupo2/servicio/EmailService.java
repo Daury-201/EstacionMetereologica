@@ -35,4 +35,18 @@ public class EmailService {
             System.out.println("NUEVA CLAVE PARA " + email + " ES: " + nuevaClave);
         }
     }
+
+    public void enviarCorreoSimple(String email, String asunto, String texto) {
+        try {
+            SimpleMailMessage mensaje = new SimpleMailMessage();
+            mensaje.setFrom(senderEmail);
+            mensaje.setTo(email);
+            mensaje.setSubject(asunto);
+            mensaje.setText(texto);
+            mailSender.send(mensaje);
+            System.out.println("Correo enviado a: " + email + " con asunto: " + asunto);
+        } catch (Exception e) {
+            System.err.println("Error al enviar correo a " + email + ": " + e.getMessage());
+        }
+    }
 }

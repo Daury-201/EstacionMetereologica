@@ -134,16 +134,23 @@
     visibility: hidden;
 }
 .sidebar.collapsed .sidebar-toggle-btn {
-    margin-left: 0;
-}
-.sidebar.collapsed .sidebar-toggle-btn svg {
-    transform: rotate(180deg);
+    display: none;
 }
 .sidebar.collapsed .sidebar-header {
     justify-content: center;
     padding-left: 0;
     padding-right: 0;
-    gap: 0;
+    padding-top: 4px;
+}
+.sidebar.collapsed .logo-icon {
+    width: 50px !important;
+    height: 50px !important;
+    margin: 0 !important;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.sidebar.collapsed .logo-icon:hover {
+    transform: scale(1.08);
 }
 .sidebar.collapsed .nav-item,
 .sidebar.collapsed .logout-btn {

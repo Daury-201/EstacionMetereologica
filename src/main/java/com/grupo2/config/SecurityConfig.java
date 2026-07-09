@@ -29,7 +29,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf
-                .ignoringRequestMatchers("/api/**", "/ws-estacion/**", "/h2-console/**", "/reportes/**")
+                .ignoringRequestMatchers("/api/**", "/ws-estacion/**", "/reportes/**", "/h2-console/**")
             )
             .headers(headers -> headers.frameOptions(org.springframework.security.config.annotation.web.configurers.HeadersConfigurer.FrameOptionsConfig::disable)) 
             .authorizeHttpRequests(authz -> authz

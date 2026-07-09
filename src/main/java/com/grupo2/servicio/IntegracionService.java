@@ -35,6 +35,8 @@ public class IntegracionService {
     private AlarmaService alarmaService;
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
+    @Autowired
+    private NotificacionService notificacionService;
     @Value("${api.openweathermap.key}")
     private String openWeatherMapApiKey;
 
@@ -75,6 +77,14 @@ public class IntegracionService {
                 }
             }
         }
+    }
+
+    @Scheduled(cron = "0 0 0 * * ?") // Runs every day at midnight
+    @Transactional
+    public void limpiarLogsAntiguos() {
+        LocalDateTime sieteDiasAtras = LocalDateTime.now().minusDays(7);
+        syncLogRepository.deleteByFechaHoraBefore(sieteDiasAtras);
+        System.out.println("Limpieza automática: Logs de sincronización de integraciones anteriores a " + sieteDiasAtras + " han sido eliminados.");
     }
     @Transactional
     public void forzarSincronizacion(String plataforma) {
@@ -132,6 +142,7 @@ public class IntegracionService {
                     LecturaSensores lectura = new LecturaSensores();
                     lectura.setEstacionId(est.getId().intValue());
                     lectura.setFechaHora(LocalDateTime.now());
+                    lectura.setOrigen("OWM");
                     if (body.containsKey("main")) {
                         Map<String, Object> main = (Map<String, Object>) body.get("main");
                         if (main.containsKey("temp")) lectura.setTemperatura(Double.valueOf(main.get("temp").toString()));
@@ -203,6 +214,7 @@ public class IntegracionService {
         } else {
             log.setEstado("ERROR");
             log.setMensaje("Fallo total. " + mensajeError.toString());
+            notificacionService.notificarSyncFallida(log.getMensaje());
         }
         syncLogRepository.save(log);
         LocalDateTime now = LocalDateTime.now();
@@ -229,58 +241,149 @@ public class IntegracionService {
         return direcciones[(int) Math.round(((grados % 360) / 45))];
     }
     
-    public List<Map<String, Object>> obtenerPronosticoGeneral() {
-        if (cachedForecast != null && lastForecastTime != null && 
-            java.time.Duration.between(lastForecastTime, LocalDateTime.now()).toHours() < 2) {
-            return cachedForecast;
+    // Cache per station id to avoid excessive API calls (key 0 for default coordinates)
+    private java.util.Map<Long, List<Map<String, Object>>> forecastCache = new java.util.concurrent.ConcurrentHashMap<>();
+    private java.util.Map<Long, LocalDateTime> forecastCacheTimes = new java.util.concurrent.ConcurrentHashMap<>();
+
+    public List<Map<String, Object>> obtenerPronosticoGeneral(Long estacionId) {
+        Long cacheKey = estacionId != null ? estacionId : 0L;
+        LocalDateTime lastTime = forecastCacheTimes.get(cacheKey);
+        if (lastTime != null && java.time.Duration.between(lastTime, LocalDateTime.now()).toHours() < 2) {
+            return forecastCache.get(cacheKey);
         }
         
         try {
+            double lat = 19.45;
+            double lon = -70.697;
             
-            String url = "https://api.open-meteo.com/v1/forecast?latitude=19.45&longitude=-70.697&daily=temperature_2m_max,precipitation_probability_max,weather_code&timezone=America%2FNew_York";
+            if (estacionId != null) {
+                java.util.Optional<com.grupo2.entidad.Estacion> estOpt = estacionRepository.findById(estacionId);
+                if (estOpt.isPresent()) {
+                    lat = estOpt.get().getLatitud();
+                    lon = estOpt.get().getLongitud();
+                }
+            }
+
+            String url = String.format("https://api.openweathermap.org/data/2.5/forecast?lat=%s&lon=%s&appid=%s&units=metric",
+                    lat, lon, openWeatherMapApiKey);
+                    
             ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map<String, Object> body = response.getBody();
-                Map<String, Object> daily = (Map<String, Object>) body.get("daily");
+                List<Map<String, Object>> list = (List<Map<String, Object>>) body.get("list");
                 
-                List<String> time = (List<String>) daily.get("time");
-                List<Number> tempMax = (List<Number>) daily.get("temperature_2m_max");
-                List<Number> precipProb = (List<Number>) daily.get("precipitation_probability_max");
-                List<Number> weatherCode = (List<Number>) daily.get("weather_code");
+                java.util.Map<String, Map<String, Object>> dailyData = new java.util.LinkedHashMap<>();
                 
-                List<Map<String, Object>> pronostico7Dias = new java.util.ArrayList<>();
-                
-                for (int i = 0; i < time.size() && i < 7; i++) {
-                    Map<String, Object> dayForecast = new java.util.HashMap<>();
+                for (Map<String, Object> item : list) {
+                    String dtTxt = (String) item.get("dt_txt"); 
+                    String dayDate = dtTxt.substring(0, 10);
                     
-                    dayForecast.put("temp", tempMax.get(i).doubleValue());
+                    Map<String, Object> main = (Map<String, Object>) item.get("main");
+                    double temp = ((Number) main.get("temp_max")).doubleValue();
+                    double pop = 0.0;
+                    if (item.containsKey("pop")) {
+                        pop = ((Number) item.get("pop")).doubleValue();
+                    }
                     
-                    int code = weatherCode.get(i).intValue();
-                    String condition = "Clear";
-                    if (code == 1 || code == 2 || code == 3) condition = "Clouds";
-                    else if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) condition = "Rain";
-                    else if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) condition = "Snow";
-                    else if (code >= 95 && code <= 99) condition = "Thunderstorm";
+                    List<Map<String, Object>> weather = (List<Map<String, Object>>) item.get("weather");
+                    String mainWeather = (String) weather.get(0).get("main");
                     
-                    dayForecast.put("condition", condition);
-                    
-                    dayForecast.put("pop", precipProb.get(i).doubleValue() / 100.0);
-                    
-                    String dateStr = time.get(i);
-                    java.time.LocalDate date = java.time.LocalDate.parse(dateStr);
-                    dayForecast.put("dt", date.atStartOfDay(java.time.ZoneOffset.UTC).toEpochSecond());
-                    
-                    pronostico7Dias.add(dayForecast);
+                    if (!dailyData.containsKey(dayDate)) {
+                        Map<String, Object> dayInfo = new java.util.HashMap<>();
+                        dayInfo.put("temp", temp);
+                        dayInfo.put("pop", pop);
+                        dayInfo.put("condition", mainWeather);
+                        dayInfo.put("dt", ((Number) item.get("dt")).longValue());
+                        dailyData.put(dayDate, dayInfo);
+                    } else {
+                        Map<String, Object> dayInfo = dailyData.get(dayDate);
+                        double currentMaxTemp = (double) dayInfo.get("temp");
+                        if (temp > currentMaxTemp) {
+                            dayInfo.put("temp", temp);
+                        }
+                        
+                        double currentMaxPop = (double) dayInfo.get("pop");
+                        if (pop > currentMaxPop) {
+                            dayInfo.put("pop", pop);
+                        }
+                        
+                        String currentCond = (String) dayInfo.get("condition");
+                        if (mainWeather.equals("Thunderstorm") || 
+                           (mainWeather.equals("Rain") && !currentCond.equals("Thunderstorm")) ||
+                           (mainWeather.equals("Snow") && !currentCond.equals("Thunderstorm") && !currentCond.equals("Rain"))) {
+                            dayInfo.put("condition", mainWeather);
+                        }
+                    }
                 }
                 
-                this.cachedForecast = pronostico7Dias;
-                this.lastForecastTime = LocalDateTime.now();
-                return pronostico7Dias;
+                List<Map<String, Object>> pronosticoDias = new java.util.ArrayList<>(dailyData.values());
+                
+                // Keep only next 7 days (usually OWM returns 5 days max anyway)
+                if (pronosticoDias.size() > 7) {
+                    pronosticoDias = pronosticoDias.subList(0, 7);
+                }
+                
+                // HYBRID FORECAST: If OWM provided less than 7 days, complement with Open-Meteo
+                if (pronosticoDias.size() < 7) {
+                    complementarConOpenMeteo(pronosticoDias, lat, lon);
+                }
+                
+                forecastCache.put(cacheKey, pronosticoDias);
+                forecastCacheTimes.put(cacheKey, LocalDateTime.now());
+                return pronosticoDias;
             }
         } catch (Exception e) {
-            System.err.println("Error obteniendo pronostico de Open-Meteo: " + e.getMessage());
+            System.err.println("Error obteniendo pronostico de OWM: " + e.getMessage());
         }
         
         return new java.util.ArrayList<>();
+    }
+
+    private void complementarConOpenMeteo(List<Map<String, Object>> pronosticoDias, double lat, double lon) {
+        try {
+            String url = String.format(java.util.Locale.US, "https://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f&daily=weathercode,temperature_2m_max,precipitation_probability_max&timezone=auto", lat, lon);
+            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> body = response.getBody();
+                if (body.containsKey("daily")) {
+                    Map<String, Object> daily = (Map<String, Object>) body.get("daily");
+                    List<String> time = (List<String>) daily.get("time");
+                    List<Number> tempMax = (List<Number>) daily.get("temperature_2m_max");
+                    List<Number> popMax = (List<Number>) daily.get("precipitation_probability_max");
+                    List<Number> weathercode = (List<Number>) daily.get("weathercode");
+
+                    // Start from the day after the last OWM day
+                    int daysNeeded = 7 - pronosticoDias.size();
+                    int added = 0;
+                    
+                    // We skip the first few days of Open-Meteo since OWM already provided them.
+                    // A simple heuristic is to take the last days of the 7-day Open-Meteo forecast.
+                    for (int i = time.size() - daysNeeded; i < time.size() && i >= 0 && added < daysNeeded; i++) {
+                        Map<String, Object> dayInfo = new java.util.HashMap<>();
+                        dayInfo.put("temp", tempMax.get(i) != null ? tempMax.get(i).doubleValue() : 25.0);
+                        dayInfo.put("pop", popMax.get(i) != null ? popMax.get(i).doubleValue() / 100.0 : 0.0);
+                        dayInfo.put("condition", mapOpenMeteoCode(weathercode.get(i) != null ? weathercode.get(i).intValue() : 0));
+                        dayInfo.put("dt", System.currentTimeMillis() / 1000 + (86400 * (pronosticoDias.size() + added)));
+                        
+                        pronosticoDias.add(dayInfo);
+                        added++;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error obteniendo pronostico complementario de Open-Meteo: " + e.getMessage());
+        }
+    }
+
+    private String mapOpenMeteoCode(int code) {
+        if (code == 0) return "Clear";
+        if (code >= 1 && code <= 3) return "Clouds";
+        if (code == 45 || code == 48) return "Clouds";
+        if (code >= 51 && code <= 67) return "Rain";
+        if (code >= 71 && code <= 77) return "Snow";
+        if (code >= 80 && code <= 82) return "Rain";
+        if (code == 85 || code == 86) return "Snow";
+        if (code >= 95 && code <= 99) return "Thunderstorm";
+        return "Clear";
     }
 }

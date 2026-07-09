@@ -6,4 +6,5 @@ import java.util.Optional;
 @Repository
 public interface EstacionRepository extends JpaRepository<Estacion, Long> {
     Optional<Estacion> findByCodigo(String codigo);
+    long countByEstado(String estado);
 }

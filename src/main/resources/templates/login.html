@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Estación Meteorológica - Login</title>
+    <title>Login</title>
     <link rel="stylesheet" th:href="@{/css/login.css}" href="../static/css/login.css" />
     <script th:src="@{/js/login.js}" src="../static/js/login.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
@@ -11,6 +12,10 @@
     <!-- Force early CSRF token generation to prevent session creation errors after response is committed -->
     <meta th:if="${_csrf != null}" name="_csrf" th:content="${_csrf.token}"/>
     <meta th:if="${_csrf != null}" name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <script>
+        // Clear splash flag so it shows again on next login
+        sessionStorage.removeItem('splashShown');
+    </script>
 </head>
 <body>
 <div th:if="${loginError != null or param.error != null}" class="alert-box error-alert slide-in-down">
@@ -289,12 +294,12 @@
                 <h1 class="login-title">Estación Meteorológica</h1>
                 <p class="login-subtitle">Ingresa tus credenciales para continuar</p>
 
-                <form class="login-form" th:action="@{/login}" method="POST" novalidate>
+                <form class="login-form" th:action="@{/login}" method="POST" autocomplete="off" novalidate>
                     <div class="input-wrapper" style="position: relative; width: 100%;">
-                        <input type="text" name="username" placeholder="Usuario" required="required" th:value="${lastUsername}" />
+                        <input type="text" name="username" placeholder="Usuario" required="required" th:value="${lastUsername}" autocomplete="off" />
                     </div>
                     <div class="password-wrapper">
-                        <input type="password" id="password" name="password" placeholder="Contraseña" required="required" />
+                        <input type="password" id="password" name="password" placeholder="Contraseña" required="required" autocomplete="current-password" />
                         <button type="button" class="password-toggle" onclick="togglePasswordVisibility()" title="Mostrar u ocultar contraseña">
                             <svg id="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
                                 <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>

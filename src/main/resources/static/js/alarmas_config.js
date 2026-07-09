@@ -5,6 +5,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const configModal = document.getElementById('configThresholdsModal');
     const btnCloseConfigModal = document.getElementById('btnCloseConfigModal');
     const btnCancelConfig = document.getElementById('btnCancelConfig');
+    
+    // Custom Delete Modal Elements
+    const deleteThresholdModal = document.getElementById('deleteThresholdModal');
+    const closeDeleteThresholdModal = document.getElementById('closeDeleteThresholdModal');
+    const btnCancelDeleteThreshold = document.getElementById('btnCancelDeleteThreshold');
+    const btnConfirmDeleteThreshold = document.getElementById('btnConfirmDeleteThreshold');
+    
+    let lastEmptyWarningTime = 0;
+    
+    // Modal logic
+    function closeDeleteModal() {
+        if (deleteThresholdModal) deleteThresholdModal.style.display = 'none';
+    }
+    
+    if (closeDeleteThresholdModal) closeDeleteThresholdModal.addEventListener('click', closeDeleteModal);
+    if (btnCancelDeleteThreshold) btnCancelDeleteThreshold.addEventListener('click', closeDeleteModal);
     const radioApplyGlobal = document.querySelector('input[name="applyTarget"][value="global"]');
     const radioApplySpecific = document.querySelector('input[name="applyTarget"][value="specific"]');
     const multiStationSelectWrapper = document.getElementById('multiStationSelectWrapper');
@@ -97,9 +113,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const u = umbralesValues.find(umb => umb.sensor === sensor.id) || {};
             html += `
                 <div class="th-sensor-card" data-sensor="${sensor.id}">
-                    <div class="th-sensor-header">
-                        <div class="th-sensor-icon">${sensor.icon}</div>
-                        <span>${sensor.label}</span>
+                    <div class="th-sensor-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div class="th-sensor-icon">${sensor.icon}</div>
+                            <span>${sensor.label}</span>
+                        </div>
+                        <button type="button" class="btn-delete-threshold" data-sensor="${sensor.id}" style="background: none; border: none; color: #EF4444; cursor: pointer; padding: 4px; border-radius: 4px;" title="Borrar umbrales para ${sensor.label}">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
+                        </button>
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
             `;
@@ -138,6 +159,84 @@ document.addEventListener('DOMContentLoaded', () => {
             html += `</div></div>`;
         });
         dynamicFormSensors.innerHTML = html;
+        
+        // Attach delete event listeners
+        dynamicFormSensors.querySelectorAll('.btn-delete-threshold').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const sensorId = btn.getAttribute('data-sensor');
+                
+                let targets = [];
+                if (radioApplyGlobal.checked) {
+                    targets.push(null); 
+                } else {
+                    const checkedBoxes = document.querySelectorAll('.th-station-check:checked');
+                    if (checkedBoxes.length === 0) {
+                        if (window.Utils) Utils.showToast("Debes seleccionar al menos una estación.", "error");
+                        else alert("Debes seleccionar al menos una estación.");
+                        return;
+                    }
+                    checkedBoxes.forEach(chk => targets.push(parseInt(chk.value)));
+                }
+
+                let isEmpty = true;
+                const card = btn.closest('.th-sensor-card');
+                if (card) {
+                    const inputs = card.querySelectorAll('input[type="number"]');
+                    inputs.forEach(inp => {
+                        if (inp.value.trim() !== '') {
+                            isEmpty = false;
+                        }
+                    });
+                }
+
+                if (isEmpty) {
+                    const now = Date.now();
+                    if (now - lastEmptyWarningTime > 5000) {
+                        lastEmptyWarningTime = now;
+                        if (window.Utils) {
+                            Utils.showToast("No hay umbrales configurados para este sensor", "warning");
+                        } else {
+                            alert("No hay umbrales configurados para este sensor");
+                        }
+                    }
+                    return; // Stop deletion process
+                }
+
+                if (deleteThresholdModal) {
+                    deleteThresholdModal.style.display = 'flex';
+                    
+                    // Remove any existing listeners to avoid multiple triggers
+                    const newConfirmBtn = btnConfirmDeleteThreshold.cloneNode(true);
+                    btnConfirmDeleteThreshold.parentNode.replaceChild(newConfirmBtn, btnConfirmDeleteThreshold);
+                    
+                    newConfirmBtn.addEventListener('click', () => {
+                        closeDeleteModal();
+                        ejecutarBorradoUmbral(targets, sensorId);
+                    });
+                } else {
+                    if(confirm("¿Estás seguro de que quieres borrar los umbrales de este sensor?")) {
+                        ejecutarBorradoUmbral(targets, sensorId);
+                    }
+                }
+            });
+        });
+    }
+    
+    function ejecutarBorradoUmbral(targets, sensorId) {
+        Promise.all(targets.map(estId => {
+            let url = `/api/alarmas/umbrales/${sensorId}`;
+            if (estId !== null) {
+                url += `?estacionId=${estId}`;
+            }
+            return fetch(url, { method: 'DELETE' });
+        }))
+        .then(() => {
+            if (window.Utils) Utils.showToast("Umbrales borrados", "success");
+            openConfigModal();
+            loadReadonlyThresholds(estacionSelector.value);
+        })
+        .catch(err => console.error("Error al borrar", err));
     }
     function openConfigModal() {
         const currentEstacionId = estacionSelector.value;

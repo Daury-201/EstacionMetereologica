@@ -6,4 +6,8 @@ public interface IntegracionSyncLogRepository extends JpaRepository<IntegracionS
     List<IntegracionSyncLog> findTop20ByOrderByFechaHoraDesc();
     long countByFechaHoraAfter(java.time.LocalDateTime fecha);
     IntegracionSyncLog findTop1ByOrderByFechaHoraDesc();
+    
+    @org.springframework.transaction.annotation.Transactional
+    @org.springframework.data.jpa.repository.Modifying
+    void deleteByFechaHoraBefore(java.time.LocalDateTime date);
 }

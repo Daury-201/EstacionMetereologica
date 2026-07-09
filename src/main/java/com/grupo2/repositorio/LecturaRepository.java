@@ -27,8 +27,8 @@ public class LecturaRepository {
         l.setDireccionViento(rs.getString("direccion_viento"));
         v = rs.getDouble("lluvia");
         l.setLluvia(rs.wasNull() ? null : v);
-        v = rs.getDouble("humedad_suelo");
         l.setHumedadSuelo(rs.wasNull() ? null : v);
+        l.setOrigen(rs.getString("origen"));
         return l;
     };
     public List<LecturaSensor> findPaginado(int limit, long ultimoId) {

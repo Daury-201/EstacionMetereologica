@@ -247,7 +247,8 @@ estaciones.forEach((est, index) => {
         el.style.cursor = 'pointer';
         el.style.boxShadow = `0 0 10px ${colorHex}`;
         el.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+            <div class="radar-pulse" style="--pulse-color: ${colorHex}"></div>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="position: relative; z-index: 2;">
                 <path d="M4 7h16l-3 8H7Z"></path>
                 <path d="M10 7v14"></path>
                 <path d="M14 7v14"></path>
@@ -452,12 +453,13 @@ styleButtons.forEach(btn => {
         const newStyle = e.target.getAttribute('data-style');
         map.setStyle(newStyle);
         const mapEl = document.getElementById('map-root');
-        if (newStyle.includes('light')) {
-            mapEl.classList.remove('map-is-light');
-            mapEl.classList.add('map-is-dark');
-        } else {
+        const isMapLight = newStyle.includes('light') || newStyle.includes('outdoors') || newStyle.includes('streets');
+        if (isMapLight) {
             mapEl.classList.remove('map-is-dark');
             mapEl.classList.add('map-is-light');
+        } else {
+            mapEl.classList.remove('map-is-light');
+            mapEl.classList.add('map-is-dark');
         }
     });
 });
@@ -533,10 +535,12 @@ function actualizarMarcadorEnVivo(lectura) {
         const el = marker.getElement();
         const hasAlarms = est && est.alarmasActivas && est.alarmasActivas.length > 0;
         
-        const colorHex = hasAlarms ? '#F59E0B' : '#34D399'; 
+        const colorHex = hasAlarms ? '#F59E0B' : (est.estado === 'Sin señal' ? '#DC2626' : '#34D399'); 
         el.style.border = `2px solid ${colorHex}`;
         el.style.color = colorHex;
         el.style.boxShadow = `0 0 10px ${colorHex}`;
+        const pulseEl = el.querySelector('.radar-pulse');
+        if (pulseEl) pulseEl.style.setProperty('--pulse-color', colorHex);
         if (hasAlarms) {
             el.classList.add('has-alarms');
         } else {
@@ -567,10 +571,12 @@ function actualizarAlarmaEnVivo(alarma) {
     if (marker) {
         const el = marker.getElement();
         const hasAlarms = est.alarmasActivas && est.alarmasActivas.length > 0;
-        const colorHex = hasAlarms ? '#F59E0B' : '#34D399'; 
+        const colorHex = hasAlarms ? '#F59E0B' : (est.estado === 'Sin señal' ? '#DC2626' : '#34D399'); 
         el.style.border = `2px solid ${colorHex}`;
         el.style.color = colorHex;
         el.style.boxShadow = `0 0 10px ${colorHex}`;
+        const pulseEl = el.querySelector('.radar-pulse');
+        if (pulseEl) pulseEl.style.setProperty('--pulse-color', colorHex);
         if (hasAlarms) {
             el.classList.add('has-alarms');
         } else {
@@ -637,6 +643,14 @@ window.seleccionarEstacion = function(est, skipFly) {
     }
     actualizarTarjetaClima(est);
     cargarHistorialGrafico(est.id);
+    
+    // Refresh forecast for the new station
+    window.forecastDataCache = null;
+    window.fullForecastDataCache = null;
+    window.hasAttemptedForecastFetch = false;
+    if (typeof initForecastBar === 'function') {
+        initForecastBar();
+    }
 };
 function cargarHistorialGrafico(estacionId) {
     const end = new Date();
@@ -822,48 +836,48 @@ function actualizarWidgetLifestyle(est) {
         lsIconWrapper.style.background = 'linear-gradient(135deg, #3730A3 0%, #312E81 100%)';
         lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(49, 46, 129, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.2)';
         lsIconWrapper.classList.add('ls-anim-wind');
-    } else if (temp > 30 && humedad < 40 && viento > 25) { // 4. Riesgo de Incendio
+    } else if (temp > 30 && humedad < 40 && viento > 25) {
         lsIcon.textContent = '🔥';
         lsTitle.textContent = 'Riesgo de Incendio';
         lsDesc.textContent = 'Condiciones calurosas, secas y ventosas. ALTO RIESGO de incendios forestales. Evita encender fuego.';
         lsIconWrapper.style.background = 'linear-gradient(135deg, #EA580C 0%, #9A3412 100%)';
         lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(154, 52, 18, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.3)';
         lsIconWrapper.classList.add('ls-anim-sun');
-    } else if (viento > 35) { // 5. Vientos Peligrosos
+    } else if (viento > 35) { 
         lsIcon.textContent = '🌪️';
         lsTitle.textContent = 'Vientos Peligrosos';
         lsDesc.textContent = 'Ráfagas muy intensas. Aléjate de estructuras inestables o árboles viejos.';
         lsIconWrapper.style.background = 'linear-gradient(135deg, #4C1D95 0%, #7C3AED 100%)';
         lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(124, 58, 237, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.3)';
         lsIconWrapper.classList.add('ls-anim-wind');
-    } else if (lluvia >= 2) { // 6. Lluvia Fuerte
+    } else if (lluvia >= 2) {
         lsIcon.textContent = '☔';
         lsTitle.textContent = 'Lluvia Fuerte';
         lsDesc.textContent = 'Lluvia sostenida en la zona. No salgas sin paraguas ni equipo de lluvia.';
         lsIconWrapper.style.background = 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)';
         lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(59, 130, 246, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.3)';
         lsIconWrapper.classList.add('ls-anim-rain');
-    } else if (humedad >= 95 && viento < 5 && temp < 22) { // 7. Niebla
+    } else if (humedad >= 95 && viento < 5 && temp < 22) {
         lsIcon.textContent = '🌫️';
         lsTitle.textContent = 'Riesgo de Niebla';
         lsDesc.textContent = 'Humedad saturada y sin viento. Probabilidad de neblina espesa. Enciende las luces antiniebla.';
         lsIconWrapper.style.background = 'linear-gradient(135deg, #9CA3AF 0%, #6B7280 100%)';
         lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(107, 114, 128, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.3)';
-    } else if (temp >= 37) { // 8. Calor Extremo
+    } else if (temp >= 37) {
         lsIcon.textContent = '🌡️';
         lsTitle.textContent = 'Calor Extremo';
         lsDesc.textContent = 'Temperaturas sumamente altas (' + temp + '°C). Usa protector solar y evita el sol directo.';
         lsIconWrapper.style.background = 'linear-gradient(135deg, #FCA5A5 0%, #EF4444 100%)';
         lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(239, 68, 68, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.5)';
         lsIconWrapper.classList.add('ls-anim-sun');
-    } else if (sensacion >= temp + 3 && temp > 28) { // 9. Calor Pegajoso / Sofocante
+    } else if (sensacion >= temp + 3 && temp > 28) {
         lsIcon.textContent = '🥵';
         lsTitle.textContent = 'Calor Sofocante';
         lsDesc.textContent = 'La altísima humedad hace que se sienta mucho más calor del que marca el termómetro. Riesgo de fatiga.';
         lsIconWrapper.style.background = 'linear-gradient(135deg, #DC2626 0%, #991B1B 100%)';
         lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(220, 38, 38, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.3)';
         lsIconWrapper.classList.add('ls-anim-sun');
-    } else if (sensacion <= temp - 3 && temp < 20) { // 10. Viento Helado
+    } else if (sensacion <= temp - 3 && temp < 20) {
         lsIcon.textContent = '🧊';
         lsTitle.textContent = 'Viento Helado';
         lsDesc.textContent = 'El viento corta la piel. Se siente mucho más frío de lo que marca el termómetro.';
@@ -1016,13 +1030,149 @@ async function initForecastBar() {
     
     const getIcon = (condition) => {
         condition = (condition || '').toLowerCase();
-        const base = 'https://www.amcharts.com/wp-content/themes/amcharts4/css/img/icons/weather/animated/';
-        if (condition.includes('clear')) return `<img src="${base}day.svg" width="48" height="48" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));">`;
-        if (condition.includes('cloud')) return `<img src="${base}cloudy.svg" width="48" height="48" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));">`;
-        if (condition.includes('rain') || condition.includes('drizzle')) return `<img src="${base}rainy-3.svg" width="48" height="48" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));">`;
-        if (condition.includes('thunderstorm')) return `<img src="${base}thunder.svg" width="48" height="48" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));">`;
-        if (condition.includes('snow')) return `<img src="${base}snowy-3.svg" width="48" height="48" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));">`;
-        return `<img src="${base}cloudy-day-1.svg" width="48" height="48" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));">`;
+        const defs = `
+            <defs>
+                <linearGradient id="sunGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#FEF08A" />
+                    <stop offset="100%" stop-color="#F59E0B" />
+                </linearGradient>
+                <filter id="sunGlow">
+                    <feGaussianBlur stdDeviation="3" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+                
+                <linearGradient id="cloudFront" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.95" />
+                    <stop offset="100%" stop-color="#F3F4F6" stop-opacity="0.75" />
+                </linearGradient>
+                <linearGradient id="cloudBack" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#E5E7EB" stop-opacity="0.7" />
+                    <stop offset="100%" stop-color="#D1D5DB" stop-opacity="0.4" />
+                </linearGradient>
+                
+                <linearGradient id="stormFront" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#94A3B8" stop-opacity="0.95" />
+                    <stop offset="100%" stop-color="#475569" stop-opacity="0.85" />
+                </linearGradient>
+                <linearGradient id="stormBack" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#64748B" stop-opacity="0.75" />
+                    <stop offset="100%" stop-color="#1E293B" stop-opacity="0.55" />
+                </linearGradient>
+
+                <linearGradient id="rainGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#93C5FD" />
+                    <stop offset="100%" stop-color="#2563EB" />
+                </linearGradient>
+
+                <linearGradient id="lightningGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#FEF08A" />
+                    <stop offset="100%" stop-color="#F59E0B" />
+                </linearGradient>
+                <filter id="lightningGlow">
+                    <feGaussianBlur stdDeviation="3" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+                
+                <filter id="cloudShadow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#0F172A" flood-opacity="0.15"/>
+                </filter>
+                
+                <filter id="blurAmbient" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="2"/>
+                </filter>
+
+                <radialGradient id="snowGrad">
+                    <stop offset="0%" stop-color="#FFFFFF" />
+                    <stop offset="100%" stop-color="#E2E8F0" />
+                </radialGradient>
+            </defs>
+        `;
+
+        // Common cloud path based on the high-quality login screen design
+        const cloud3D = `
+            <g class="cloud-body">
+                <path filter="url(#cloudShadow)" fill="url(#cloudBack)" 
+                      d="M 34 66 L 64 66 A 16 16 0 0 0 80 50 A 16 16 0 0 0 71 39 A 24 24 0 0 0 30 41 A 13 13 0 0 0 21 53 A 13 13 0 0 0 34 66 Z" />
+                <path fill="url(#cloudFront)" stroke="#FFFFFF" stroke-width="1.2" stroke-opacity="0.6"
+                      d="M 32 68 L 62 68 A 15 15 0 0 0 78 52 A 15 15 0 0 0 69 41 A 23 23 0 0 0 28 43 A 12 12 0 0 0 19 55 A 12 12 0 0 0 32 68 Z" />
+                <ellipse cx="48" cy="62" rx="22" ry="4.5" fill="#60A5FA" opacity="0.15" filter="url(#blurAmbient)"/>
+                <ellipse cx="46" cy="37" rx="14" ry="7" fill="#ffffff" opacity="0.4" filter="url(#blurAmbient)"/>
+            </g>
+        `;
+        
+        const stormCloud3D = `
+            <g class="cloud-body">
+                <path filter="url(#cloudShadow)" fill="url(#stormBack)" 
+                      d="M 34 66 L 64 66 A 16 16 0 0 0 80 50 A 16 16 0 0 0 71 39 A 24 24 0 0 0 30 41 A 13 13 0 0 0 21 53 A 13 13 0 0 0 34 66 Z" />
+                <path fill="url(#stormFront)" stroke="#94A3B8" stroke-width="1.2" stroke-opacity="0.5"
+                      d="M 32 68 L 62 68 A 15 15 0 0 0 78 52 A 15 15 0 0 0 69 41 A 23 23 0 0 0 28 43 A 12 12 0 0 0 19 55 A 12 12 0 0 0 32 68 Z" />
+                <ellipse cx="48" cy="62" rx="22" ry="4.5" fill="#1E293B" opacity="0.25" filter="url(#blurAmbient)"/>
+                <ellipse cx="46" cy="37" rx="14" ry="7" fill="#94A3B8" opacity="0.3" filter="url(#blurAmbient)"/>
+            </g>
+        `;
+
+        if (condition.includes('clear')) {
+            return `<svg class="weather-svg glass-sun" viewBox="0 0 100 100" width="56" height="56">
+                ${defs}
+                <g class="sun-rays" stroke="url(#sunGrad)" stroke-width="4.5" stroke-linecap="round">
+                    <line x1="50" y1="12" x2="50" y2="20" /><line x1="50" y1="80" x2="50" y2="88" />
+                    <line x1="12" y1="50" x2="20" y2="50" /><line x1="80" y1="50" x2="88" y2="50" />
+                    <line x1="23" y1="23" x2="29" y2="29" /><line x1="71" y1="71" x2="77" y2="77" />
+                    <line x1="23" y1="77" x2="29" y2="71" /><line x1="71" y1="29" x2="77" y2="23" />
+                </g>
+                <circle cx="50" cy="50" r="20" fill="url(#sunGrad)" filter="url(#sunGlow)" class="sun-core" />
+            </svg>`;
+        }
+        if (condition.includes('rain') || condition.includes('drizzle')) {
+            return `<svg class="weather-svg glass-rain" viewBox="0 0 100 100" width="56" height="56">
+                ${defs}
+                <g class="rain-drops">
+                    <rect x="30" y="68" width="3.5" height="12" rx="1.75" fill="url(#rainGrad)" class="drop d1" />
+                    <rect x="45" y="66" width="3.5" height="12" rx="1.75" fill="url(#rainGrad)" class="drop d2" />
+                    <rect x="60" y="68" width="3.5" height="12" rx="1.75" fill="url(#rainGrad)" class="drop d3" />
+                </g>
+                ${cloud3D}
+            </svg>`;
+        }
+        if (condition.includes('thunderstorm')) {
+            return `<svg class="weather-svg glass-thunder" viewBox="0 0 100 100" width="56" height="56">
+                ${defs}
+                <path d="M52,38 L38,62 L48,62 L42,85 L62,55 L52,55 Z" fill="url(#lightningGrad)" filter="url(#lightningGlow)" class="lightning" />
+                ${stormCloud3D}
+            </svg>`;
+        }
+        if (condition.includes('snow')) {
+            return `<svg class="weather-svg glass-snow" viewBox="0 0 100 100" width="56" height="56">
+                ${defs}
+                <g class="rain-drops">
+                    <circle cx="33" cy="74" r="3" fill="url(#snowGrad)" class="drop d1" />
+                    <circle cx="48" cy="70" r="3.5" fill="url(#snowGrad)" class="drop d2" />
+                    <circle cx="63" cy="74" r="3" fill="url(#snowGrad)" class="drop d3" />
+                </g>
+                ${cloud3D}
+            </svg>`;
+        }
+        if (condition.includes('cloud')) {
+            return `<svg class="weather-svg glass-cloud" viewBox="0 0 100 100" width="56" height="56">
+                ${defs}
+                ${cloud3D}
+            </svg>`;
+        }
+        
+        // Partly cloudy default
+        return `<svg class="weather-svg glass-partly" viewBox="0 0 100 100" width="56" height="56">
+            ${defs}
+            <g class="sun-group" transform="translate(18, -12) scale(0.8)">
+                <g class="sun-rays" stroke="url(#sunGrad)" stroke-width="4.5" stroke-linecap="round">
+                    <line x1="50" y1="12" x2="50" y2="20" /><line x1="50" y1="80" x2="50" y2="88" />
+                    <line x1="12" y1="50" x2="20" y2="50" /><line x1="80" y1="50" x2="88" y2="50" />
+                    <line x1="23" y1="23" x2="29" y2="29" /><line x1="71" y1="71" x2="77" y2="77" />
+                    <line x1="23" y1="77" x2="29" y2="71" /><line x1="71" y1="29" x2="77" y2="23" />
+                </g>
+                <circle cx="50" cy="50" r="20" fill="url(#sunGrad)" filter="url(#sunGlow)" class="sun-core" />
+            </g>
+            ${cloud3D}
+        </svg>`;
     };
 
     const getConditionDesc = (condition) => {
@@ -1039,7 +1189,8 @@ async function initForecastBar() {
     
     if (!forecastData && !window.hasAttemptedForecastFetch) {
         window.hasAttemptedForecastFetch = true;
-        fetch('/api/pronostico')
+        let url = currentStationId ? `/api/pronostico?estacionId=${currentStationId}` : '/api/pronostico';
+        fetch(url)
             .then(response => {
                 if (response.ok) return response.json();
                 throw new Error('API request failed');
@@ -1051,52 +1202,28 @@ async function initForecastBar() {
             .catch(error => {
                 console.error("Error fetching forecast:", error);
             });
+        return; // Prevent multiple re-renders before fetch completes
     }
 
     if (!window.fullForecastDataCache || (forecastData && forecastData.length > 0 && !window.fullForecastDataCache.fromApi)) {
         let fullData = [];
         let sourceData = window.forecastDataCache || [];
-        let isFromApi = sourceData.length > 0;
         
-        let lastTempMax = 28;
-        let lastPop = 0;
-        let lastCondition = 'Clear';
-
         for (let i = 0; i < 7; i++) {
             if (i < sourceData.length) {
                 let item = sourceData[i];
-                lastTempMax = item.temp_max || item.temp;
-                lastCondition = item.condition;
-                lastPop = item.pop;
-                
                 fullData.push({
-                    temp: lastTempMax,
-                    cond: lastCondition,
-                    pop: Math.round(lastPop * 100)
+                    temp: item.temp_max || item.temp || 25,
+                    cond: item.condition || 'Clear',
+                    pop: Math.round((item.pop || 0) * 100)
                 });
-            } else if (sourceData.length === 0) {
-                
-                let temp = Math.floor(Math.random() * (32 - 24 + 1)) + 24;
-                let cond = ['Clear', 'Clouds', 'Rain', 'Thunderstorm', 'Clouds'][Math.floor(Math.random() * 5)];
-                let pop = Math.floor(Math.random() * 40) + (i % 2 === 0 ? 0 : 20);
-                fullData.push({ temp, cond, pop });
             } else {
-                
-                lastTempMax += (Math.random() * 2) - 1;
-                lastPop = Math.max(0, Math.min(1, lastPop + (Math.random() * 0.4) - 0.2));
-                let simCond = 'Clear';
-                if (lastPop > 0.6) simCond = 'Rain';
-                else if (lastPop > 0.2) simCond = 'Clouds';
-                
-                fullData.push({
-                    temp: lastTempMax,
-                    cond: simCond,
-                    pop: Math.round(lastPop * 100)
-                });
+                // Fallback just in case the API returned fewer than 7 days despite our hybrid logic
+                fullData.push({ temp: 25, cond: 'Clear', pop: 0 });
             }
         }
         window.fullForecastDataCache = fullData;
-        window.fullForecastDataCache.fromApi = isFromApi;
+        window.fullForecastDataCache.fromApi = true;
     }
 
     const today = new Date();
@@ -1115,8 +1242,16 @@ async function initForecastBar() {
         let desc = getConditionDesc(item.cond);
         let rainProb = item.pop;
         
+        let bgEffectClass = '';
+        if (i === 0) {
+            if (item.cond.toLowerCase().includes('rain')) bgEffectClass = 'bg-effect-rain';
+            else if (item.cond.toLowerCase().includes('thunder')) bgEffectClass = 'bg-effect-thunder';
+            else if (item.cond.toLowerCase().includes('clear')) bgEffectClass = 'bg-effect-clear';
+        }
+
         html += `
             <div class="forecast-day ${activeClass}" style="animation-delay: ${delay}s">
+                ${i === 0 ? `<div class="bg-effect ${bgEffectClass}"></div>` : ''}
                 <span class="day-name">${dayName}</span>
                 <span class="day-icon">${icon}</span>
                 <span class="day-desc">${desc}</span>
@@ -1125,7 +1260,18 @@ async function initForecastBar() {
             </div>
         `;
     }
-    container.innerHTML = html;
+    
+    // Smooth transition
+    if (container.innerHTML !== '') {
+        container.style.transition = 'opacity 0.2s ease-in-out';
+        container.style.opacity = '0';
+        setTimeout(() => {
+            container.innerHTML = html;
+            container.style.opacity = '1';
+        }, 200);
+    } else {
+        container.innerHTML = html;
+    }
 }
 initForecastBar();
 function initTempToggle() {
