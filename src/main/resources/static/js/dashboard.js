@@ -1111,78 +1111,107 @@ async function initForecastBar() {
             </g>
         `;
 
-        if (condition.includes('clear')) {
+        const sunSVG = `
+            <g class="sun-rays" stroke="url(#sunGrad)" stroke-width="4.5" stroke-linecap="round">
+                <line x1="50" y1="12" x2="50" y2="20" /><line x1="50" y1="80" x2="50" y2="88" />
+                <line x1="12" y1="50" x2="20" y2="50" /><line x1="80" y1="50" x2="88" y2="50" />
+                <line x1="23" y1="23" x2="29" y2="29" /><line x1="71" y1="71" x2="77" y2="77" />
+                <line x1="23" y1="77" x2="29" y2="71" /><line x1="71" y1="29" x2="77" y2="23" />
+            </g>
+            <circle cx="50" cy="50" r="20" fill="url(#sunGrad)" filter="url(#sunGlow)" class="sun-core" />
+        `;
+
+        const lightningSVG = `<path d="M52,38 L38,62 L48,62 L42,85 L62,55 L52,55 Z" fill="url(#lightningGrad)" filter="url(#lightningGlow)" class="lightning" />`;
+        
+        const rainSVG = `
+            <g class="rain-drops">
+                <rect x="30" y="68" width="3.5" height="12" rx="1.75" fill="url(#rainGrad)" class="drop d1" />
+                <rect x="45" y="66" width="3.5" height="12" rx="1.75" fill="url(#rainGrad)" class="drop d2" />
+                <rect x="60" y="68" width="3.5" height="12" rx="1.75" fill="url(#rainGrad)" class="drop d3" />
+            </g>
+        `;
+
+        const snowSVG = `
+            <g class="rain-drops">
+                <circle cx="33" cy="74" r="3" fill="url(#snowGrad)" class="drop d1" />
+                <circle cx="48" cy="70" r="3.5" fill="url(#snowGrad)" class="drop d2" />
+                <circle cx="63" cy="74" r="3" fill="url(#snowGrad)" class="drop d3" />
+            </g>
+        `;
+
+        if (condition === 'clear') {
             return `<svg class="weather-svg glass-sun" viewBox="0 0 100 100" width="56" height="56">
-                ${defs}
-                <g class="sun-rays" stroke="url(#sunGrad)" stroke-width="4.5" stroke-linecap="round">
-                    <line x1="50" y1="12" x2="50" y2="20" /><line x1="50" y1="80" x2="50" y2="88" />
-                    <line x1="12" y1="50" x2="20" y2="50" /><line x1="80" y1="50" x2="88" y2="50" />
-                    <line x1="23" y1="23" x2="29" y2="29" /><line x1="71" y1="71" x2="77" y2="77" />
-                    <line x1="23" y1="77" x2="29" y2="71" /><line x1="71" y1="29" x2="77" y2="23" />
-                </g>
-                <circle cx="50" cy="50" r="20" fill="url(#sunGrad)" filter="url(#sunGlow)" class="sun-core" />
+                ${defs} ${sunSVG}
             </svg>`;
         }
-        if (condition.includes('rain') || condition.includes('drizzle')) {
-            return `<svg class="weather-svg glass-rain" viewBox="0 0 100 100" width="56" height="56">
+        if (condition === 'mostlysunny') {
+            return `<svg class="weather-svg glass-mostly-sun" viewBox="0 0 100 100" width="56" height="56">
+                ${defs} ${sunSVG}
+                <g transform="translate(35, 30) scale(0.6)">${cloud3D}</g>
+            </svg>`;
+        }
+        if (condition === 'partlysunny') {
+            return `<svg class="weather-svg glass-partly" viewBox="0 0 100 100" width="56" height="56">
                 ${defs}
-                <g class="rain-drops">
-                    <rect x="30" y="68" width="3.5" height="12" rx="1.75" fill="url(#rainGrad)" class="drop d1" />
-                    <rect x="45" y="66" width="3.5" height="12" rx="1.75" fill="url(#rainGrad)" class="drop d2" />
-                    <rect x="60" y="68" width="3.5" height="12" rx="1.75" fill="url(#rainGrad)" class="drop d3" />
-                </g>
+                <g class="sun-group" transform="translate(18, -12) scale(0.8)">${sunSVG}</g>
                 ${cloud3D}
             </svg>`;
         }
-        if (condition.includes('thunderstorm')) {
-            return `<svg class="weather-svg glass-thunder" viewBox="0 0 100 100" width="56" height="56">
+        if (condition === 'mostlycloudy') {
+            return `<svg class="weather-svg glass-mostly-cloud" viewBox="0 0 100 100" width="56" height="56">
                 ${defs}
-                <path d="M52,38 L38,62 L48,62 L42,85 L62,55 L52,55 Z" fill="url(#lightningGrad)" filter="url(#lightningGlow)" class="lightning" />
-                ${stormCloud3D}
-            </svg>`;
-        }
-        if (condition.includes('snow')) {
-            return `<svg class="weather-svg glass-snow" viewBox="0 0 100 100" width="56" height="56">
-                ${defs}
-                <g class="rain-drops">
-                    <circle cx="33" cy="74" r="3" fill="url(#snowGrad)" class="drop d1" />
-                    <circle cx="48" cy="70" r="3.5" fill="url(#snowGrad)" class="drop d2" />
-                    <circle cx="63" cy="74" r="3" fill="url(#snowGrad)" class="drop d3" />
-                </g>
+                <g class="sun-group" transform="translate(25, -5) scale(0.6)">${sunSVG}</g>
                 ${cloud3D}
             </svg>`;
         }
-        if (condition.includes('cloud')) {
+        if (condition === 'overcast' || condition === 'clouds') {
             return `<svg class="weather-svg glass-cloud" viewBox="0 0 100 100" width="56" height="56">
-                ${defs}
-                ${cloud3D}
+                ${defs} ${cloud3D}
+            </svg>`;
+        }
+        if (condition === 'scatteredstorm') {
+            return `<svg class="weather-svg glass-scattered-thunder" viewBox="0 0 100 100" width="56" height="56">
+                ${defs} ${lightningSVG} ${stormCloud3D}
+            </svg>`;
+        }
+        if (condition === 'storm' || condition === 'thunderstorm') {
+            return `<svg class="weather-svg glass-thunder" viewBox="0 0 100 100" width="56" height="56">
+                ${defs} ${rainSVG} ${lightningSVG} ${stormCloud3D}
+            </svg>`;
+        }
+        if (condition === 'rain' || condition === 'drizzle') {
+            return `<svg class="weather-svg glass-rain" viewBox="0 0 100 100" width="56" height="56">
+                ${defs} ${rainSVG} ${cloud3D}
+            </svg>`;
+        }
+        if (condition === 'snow') {
+            return `<svg class="weather-svg glass-snow" viewBox="0 0 100 100" width="56" height="56">
+                ${defs} ${snowSVG} ${cloud3D}
             </svg>`;
         }
         
-        // Partly cloudy default
+        // Fallback
         return `<svg class="weather-svg glass-partly" viewBox="0 0 100 100" width="56" height="56">
             ${defs}
-            <g class="sun-group" transform="translate(18, -12) scale(0.8)">
-                <g class="sun-rays" stroke="url(#sunGrad)" stroke-width="4.5" stroke-linecap="round">
-                    <line x1="50" y1="12" x2="50" y2="20" /><line x1="50" y1="80" x2="50" y2="88" />
-                    <line x1="12" y1="50" x2="20" y2="50" /><line x1="80" y1="50" x2="88" y2="50" />
-                    <line x1="23" y1="23" x2="29" y2="29" /><line x1="71" y1="71" x2="77" y2="77" />
-                    <line x1="23" y1="77" x2="29" y2="71" /><line x1="71" y1="29" x2="77" y2="23" />
-                </g>
-                <circle cx="50" cy="50" r="20" fill="url(#sunGrad)" filter="url(#sunGlow)" class="sun-core" />
-            </g>
+            <g class="sun-group" transform="translate(18, -12) scale(0.8)">${sunSVG}</g>
             ${cloud3D}
         </svg>`;
     };
 
     const getConditionDesc = (condition) => {
         condition = (condition || '').toLowerCase();
-        if (condition.includes('clear')) return 'Despejado';
-        if (condition.includes('cloud')) return 'Nublado';
+        if (condition === 'clear') return 'Soleado';
+        if (condition === 'mostlysunny') return 'Mayormente soleado';
+        if (condition === 'partlysunny') return 'Parcialmente soleado';
+        if (condition === 'mostlycloudy') return 'Mayormente nublado';
+        if (condition === 'overcast') return 'Nublado';
+        if (condition === 'scatteredstorm') return 'Tormenta eléctrica dispersa';
+        if (condition === 'storm') return 'Tormenta';
+        // Fallbacks
+        if (condition.includes('clear')) return 'Soleado';
         if (condition.includes('rain') || condition.includes('drizzle')) return 'Lluvia';
-        if (condition.includes('thunderstorm')) return 'Tormenta';
         if (condition.includes('snow')) return 'Nieve';
-        return 'Parcial';
+        return 'Parcialmente soleado';
     };
 
     let forecastData = window.forecastDataCache;

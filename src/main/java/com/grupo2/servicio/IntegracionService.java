@@ -287,6 +287,23 @@ public class IntegracionService {
                     
                     List<Map<String, Object>> weather = (List<Map<String, Object>>) item.get("weather");
                     String mainWeather = (String) weather.get(0).get("main");
+                    int weatherId = ((Number) weather.get(0).get("id")).intValue();
+                    
+                    if (weatherId == 800) {
+                        mainWeather = "Clear";
+                    } else if (weatherId == 801) {
+                        mainWeather = "MostlySunny";
+                    } else if (weatherId == 802) {
+                        mainWeather = "PartlySunny";
+                    } else if (weatherId == 803) {
+                        mainWeather = "MostlyCloudy";
+                    } else if (weatherId == 804) {
+                        mainWeather = "Overcast";
+                    } else if (weatherId >= 210 && weatherId <= 221) {
+                        mainWeather = "ScatteredStorm";
+                    } else if (weatherId >= 200 && weatherId <= 232) {
+                        mainWeather = "Storm";
+                    }
                     
                     if (!dailyData.containsKey(dayDate)) {
                         Map<String, Object> dayInfo = new java.util.HashMap<>();
@@ -308,9 +325,9 @@ public class IntegracionService {
                         }
                         
                         String currentCond = (String) dayInfo.get("condition");
-                        if (mainWeather.equals("Thunderstorm") || 
-                           (mainWeather.equals("Rain") && !currentCond.equals("Thunderstorm")) ||
-                           (mainWeather.equals("Snow") && !currentCond.equals("Thunderstorm") && !currentCond.equals("Rain"))) {
+                        if (mainWeather.equals("Storm") || mainWeather.equals("ScatteredStorm") || 
+                           (mainWeather.equals("Rain") && !currentCond.contains("Storm")) ||
+                           (mainWeather.equals("Snow") && !currentCond.contains("Storm") && !currentCond.equals("Rain"))) {
                             dayInfo.put("condition", mainWeather);
                         }
                     }
@@ -377,13 +394,16 @@ public class IntegracionService {
 
     private String mapOpenMeteoCode(int code) {
         if (code == 0) return "Clear";
-        if (code >= 1 && code <= 3) return "Clouds";
-        if (code == 45 || code == 48) return "Clouds";
+        if (code == 1) return "MostlySunny";
+        if (code == 2) return "PartlySunny";
+        if (code == 3) return "Overcast";
+        if (code == 45 || code == 48) return "Overcast";
         if (code >= 51 && code <= 67) return "Rain";
         if (code >= 71 && code <= 77) return "Snow";
         if (code >= 80 && code <= 82) return "Rain";
         if (code == 85 || code == 86) return "Snow";
-        if (code >= 95 && code <= 99) return "Thunderstorm";
+        if (code == 95) return "ScatteredStorm";
+        if (code >= 96 && code <= 99) return "Storm";
         return "Clear";
     }
 }
