@@ -40,18 +40,34 @@ public class RegistroController {
             @RequestParam String confirmPassword,
             RedirectAttributes redirectAttributes) {
         
-        if (!password.equals(confirmPassword)) {
-            redirectAttributes.addFlashAttribute("error", "Las contraseñas no coinciden");
+        if (nombre == null || nombre.trim().isEmpty() || 
+            username == null || username.trim().isEmpty() || 
+            email == null || email.trim().isEmpty() || 
+            password == null || password.isEmpty() || 
+            confirmPassword == null || confirmPassword.isEmpty()) {
+            
+            redirectAttributes.addFlashAttribute("error", "Todos los campos son obligatorios");
+            redirectAttributes.addFlashAttribute("nombre", nombre);
+            redirectAttributes.addFlashAttribute("username", username);
+            redirectAttributes.addFlashAttribute("email", email);
             return "redirect:/registro";
         }
 
-        if (usuarioService.obtenerPorUsername(username) != null) {
-            redirectAttributes.addFlashAttribute("error", "El nombre de usuario ya está en uso");
-            return "redirect:/registro";
-        }
+        if (!password.equals(confirmPassword) || 
+            usuarioService.obtenerPorUsername(username) != null || 
+            usuarioService.obtenerPorEmail(email) != null) {
 
-        if (usuarioService.obtenerPorEmail(email) != null) {
-            redirectAttributes.addFlashAttribute("error", "El correo electrónico ya está registrado");
+            redirectAttributes.addFlashAttribute("nombre", nombre);
+            redirectAttributes.addFlashAttribute("username", username);
+            redirectAttributes.addFlashAttribute("email", email);
+
+            if (!password.equals(confirmPassword)) {
+                redirectAttributes.addFlashAttribute("error", "Las contraseñas no coinciden");
+            } else if (usuarioService.obtenerPorUsername(username) != null) {
+                redirectAttributes.addFlashAttribute("error", "El nombre de usuario ya está en uso");
+            } else if (usuarioService.obtenerPorEmail(email) != null) {
+                redirectAttributes.addFlashAttribute("error", "El correo electrónico ya está registrado");
+            }
             return "redirect:/registro";
         }
 

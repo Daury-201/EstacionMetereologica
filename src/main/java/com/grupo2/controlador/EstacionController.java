@@ -32,26 +32,41 @@ public class EstacionController {
             estacion.setEstado("En línea"); 
         }
         Estacion existente = estacionService.obtenerPorCodigo(estacion.getCodigo());
-        if (existente != null && !existente.getId().equals(estacion.getId())) {
+        
+        // El id es null cuando creamos una estacion nueva. Si existente != null, el código ya está en uso.
+        if (existente != null && (estacion.getId() == null || !existente.getId().equals(estacion.getId()))) {
             redirectAttrs.addFlashAttribute("error", "El código de la estación ya existe.");
             redirectAttrs.addFlashAttribute("estacionConError", estacion);
             redirectAttrs.addFlashAttribute("modalToOpen", estacion.getId() != null ? "estacionEditModal" : "estacionModal");
             return "redirect:/estaciones";
         }
+        
         boolean esEdicion = (estacion.getId() != null);
-        estacionService.guardar(estacion);
-        if (esEdicion) {
-            redirectAttrs.addFlashAttribute("exitoEdit", "Estación modificada correctamente.");
+        try {
+            estacionService.guardar(estacion);
+            if (esEdicion) {
+                redirectAttrs.addFlashAttribute("exitoEdit", "Estación modificada correctamente.");
+                redirectAttrs.addFlashAttribute("estacionConError", estacion);
+                redirectAttrs.addFlashAttribute("modalToOpen", "estacionEditModal");
+            } else {
+                redirectAttrs.addFlashAttribute("exito", "Estación guardada correctamente.");
+            }
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            redirectAttrs.addFlashAttribute("error", "El código de la estación ya existe (detectado por la base de datos).");
             redirectAttrs.addFlashAttribute("estacionConError", estacion);
-            redirectAttrs.addFlashAttribute("modalToOpen", "estacionEditModal");
-        } else {
-            redirectAttrs.addFlashAttribute("exito", "Estación guardada correctamente.");
+            redirectAttrs.addFlashAttribute("modalToOpen", esEdicion ? "estacionEditModal" : "estacionModal");
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("error", "Ocurrió un error inesperado al guardar la estación.");
+            redirectAttrs.addFlashAttribute("estacionConError", estacion);
+            redirectAttrs.addFlashAttribute("modalToOpen", esEdicion ? "estacionEditModal" : "estacionModal");
         }
         return "redirect:/estaciones";
     }
-    @PostMapping("/eliminar/{id}")
-    public String eliminarEstacion(@PathVariable Long id) {
+    
+    @org.springframework.web.bind.annotation.PostMapping("/eliminar/{id}")
+    public String eliminarEstacion(@org.springframework.web.bind.annotation.PathVariable Long id, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttrs) {
         estacionService.eliminar(id);
+        redirectAttrs.addFlashAttribute("exito", "Estación eliminada correctamente.");
         return "redirect:/estaciones";
     }
 }

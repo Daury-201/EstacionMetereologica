@@ -630,6 +630,7 @@
             &iquest;Est&aacute;s seguro de que deseas eliminar al usuario <strong id="delete-user-name" style="color:#111827;"></strong>? Esta acci&oacute;n no se puede deshacer.
         </p>
         <form method="POST" id="form-eliminar-usuario" style="margin: 0;">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
             <div style="display: flex; gap: 12px; justify-content: center;">
                 <button type="button" class="btn-cancel" onclick="document.getElementById('modal-eliminar-usuario').style.display='none'" style="flex: 1;">Cancelar</button>
                 <button type="submit" class="btn-primary" style="flex: 1; background: #EF4444; border-color: #EF4444; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);">S&iacute;, Eliminar</button>

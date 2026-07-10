@@ -273,10 +273,10 @@
                         </div>
                     </div>
                     <div style="display: flex; gap: 16px; width: 100%;">
-                        <input type="text" name="nombre" placeholder="Nombre completo" required="required" style="flex: 1;" />
-                        <input type="text" name="username" placeholder="Usuario" required="required" style="flex: 1;" />
+                        <input type="text" name="nombre" placeholder="Nombre completo" required="required" style="flex: 1;" th:value="${nombre}" />
+                        <input type="text" name="username" placeholder="Usuario" required="required" style="flex: 1;" th:value="${username}" />
                     </div>
-                    <input type="email" name="email" placeholder="Correo electrónico" required="required" />
+                    <input type="email" name="email" placeholder="Correo electrónico" required="required" th:value="${email}" />
                     <div style="display: flex; gap: 16px; width: 100%;">
                         <div class="password-wrapper" style="position: relative; flex: 1;">
                             <input type="password" id="reg-password" name="password" placeholder="Contraseña" required="required" autocomplete="new-password" oninput="document.getElementById('toggle-pwd-btn').style.display = this.value.length > 0 ? 'flex' : 'none';" style="width: 100%; padding-right: 36px; padding-left: 10px; font-size: 14px;" />

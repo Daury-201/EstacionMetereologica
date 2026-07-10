@@ -999,15 +999,14 @@ function aplicarImagenClimatica(est, photoHeaderElement) {
         }
     }
     
-    // Si la imagen ya fue precargada en segundo plano, se muestra al instante
+
     if (window.stationImagesCache && window.stationImagesCache[est.id]) {
         photoHeaderElement.style.backgroundImage = `linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.6)), url("${window.stationImagesCache[est.id]}")`;
         photoHeaderElement.style.backgroundPosition = 'center';
         photoHeaderElement.style.backgroundSize = 'cover';
         return;
     }
-    
-    // Cargar con el motor de imágenes unificado
+
     window.getDynamicImage(est, (imgUrl) => {
         photoHeaderElement.style.backgroundImage = `linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.6)), url("${imgUrl}")`;
         photoHeaderElement.style.backgroundPosition = 'center';
@@ -1113,7 +1112,6 @@ async function initForecastBar() {
             </defs>
         `;
 
-        // Common cloud path based on the high-quality login screen design
         const cloud3D = `
             <g class="cloud-body">
                 <path filter="url(#cloudShadow)" fill="url(#cloudBack)" 
@@ -1244,6 +1242,18 @@ async function initForecastBar() {
     if (!forecastData && !window.hasAttemptedForecastFetch) {
         window.hasAttemptedForecastFetch = true;
         let url = currentStationId ? `/api/pronostico?estacionId=${currentStationId}` : '/api/pronostico';
+        
+        if (url === '/api/pronostico' && window.forecastDataPromise) {
+            window.forecastDataPromise.then(data => {
+                window.forecastDataPromise = null;
+                if (data) {
+                    window.forecastDataCache = data;
+                    initForecastBar(); 
+                }
+            });
+            return;
+        }
+
         fetch(url)
             .then(response => {
                 if (response.ok) return response.json();
@@ -1257,6 +1267,11 @@ async function initForecastBar() {
                 console.error("Error fetching forecast:", error);
             });
         return; // Prevent multiple re-renders before fetch completes
+    }
+    
+    // Prevent rendering default mock data (flashing 'Soleado') if a fetch is currently in progress
+    if (!forecastData && window.hasAttemptedForecastFetch) {
+        return; 
     }
 
     if (!window.fullForecastDataCache || (forecastData && forecastData.length > 0 && !window.fullForecastDataCache.fromApi)) {
@@ -1272,12 +1287,15 @@ async function initForecastBar() {
                     pop: Math.round((item.pop || 0) * 100)
                 });
             } else {
-                // Fallback just in case the API returned fewer than 7 days despite our hybrid logic
                 fullData.push({ temp: 25, cond: 'Clear', pop: 0 });
             }
         }
         window.fullForecastDataCache = fullData;
-        window.fullForecastDataCache.fromApi = true;
+        if (forecastData && forecastData.length > 0) {
+            window.fullForecastDataCache.fromApi = true;
+        } else {
+            window.fullForecastDataCache.fromApi = false;
+        }
     }
 
     const today = new Date();
@@ -1314,8 +1332,7 @@ async function initForecastBar() {
             </div>
         `;
     }
-    
-    // Smooth transition
+
     if (container.innerHTML !== '') {
         container.style.transition = 'opacity 0.2s ease-in-out';
         container.style.opacity = '0';
