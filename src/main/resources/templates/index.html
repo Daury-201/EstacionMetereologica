@@ -64,9 +64,9 @@
             <span>Iniciando Sistema</span>
             <span id="loading-pct" style="color: #ffffff;">0%</span>
         </div>
-        <!-- Barra gruesa y redondeada -->
+        <!-- Barra gruesa y redondeada (Animada 100% por GPU) -->
         <div style="width: 300px; height: 6px; background: rgba(0,0,0,0.3); border-radius: 10px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
-            <div id="loading-bar-inner" style="height: 100%; width: 100%; transform-origin: left; transform: scaleX(0); background: #ffffff; border-radius: 10px; box-shadow: 0 0 10px rgba(255,255,255,0.8); will-change: transform;"></div>
+            <div id="loading-bar-inner" style="height: 100%; width: 100%; transform-origin: left; transform: scaleX(0); background: #ffffff; border-radius: 10px; box-shadow: 0 0 10px rgba(255,255,255,0.8); will-change: transform; animation: loadingBar 3.4s cubic-bezier(0.215, 0.610, 0.355, 1.000) forwards;"></div>
         </div>
     </div>
 
@@ -80,11 +80,12 @@
     }
 </script>
 <style>
-@keyframes screenShake {
-  10%, 90% { transform: translate3d(-5px, 5px, 0) scale(1.02); filter: blur(1px); }
-  20%, 80% { transform: translate3d(10px, -5px, 0) scale(1.02); filter: blur(2px); }
-  30%, 50%, 70% { transform: translate3d(-15px, 10px, 0) scale(1.02); }
-  40%, 60% { transform: translate3d(15px, -10px, 0) scale(1.02); }
+@keyframes screenFlash {
+  0% { filter: brightness(1) contrast(1); }
+  5% { filter: brightness(2) contrast(1.3); }
+  20% { filter: brightness(1) contrast(1); }
+  35% { filter: brightness(1.5) contrast(1.1); }
+  100% { filter: brightness(1) contrast(1); }
 }
 
 @keyframes fadeText {
@@ -345,7 +346,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     let currentPct = Math.floor(easedPct * 100);
                     
                     pctElement.textContent = currentPct + "%";
-                    barElement.style.transform = `scaleX(${easedPct})`;
+                    // La barra ahora se anima con CSS puro en la GPU, ya no usamos JS para escalarla
                     
                     if (rawPct < 1) {
                         requestAnimationFrame(updateProgress);
@@ -535,8 +536,8 @@ document.addEventListener("DOMContentLoaded", function() {
                 });
                 
                 drawExplosion();
-                
-                splash.style.animation = "screenShake 0.6s cubic-bezier(.36,.07,.19,.97) both";
+
+                splash.style.animation = "screenFlash 0.6s ease-out forwards";
                 
                 const cloudIcon = document.getElementById('cloudIcon');
                 if(cloudIcon) {
@@ -559,6 +560,11 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         setTimeout(() => {
+            // Inicializar WebGL exactamente AHORA (4000ms).
+            // Esto causa un pico de CPU, pero como la animación de salida es CSS (GPU),
+            // el usuario no notará ningún tirón.
+            if (window.loadDashboardGlobal) window.loadDashboardGlobal();
+            
             splash.style.transform = 'scale(1.5)';
             splash.style.opacity = '0';
             splash.style.visibility = 'hidden';
@@ -588,6 +594,24 @@ document.addEventListener("DOMContentLoaded", function() {
                 </div>
             </div>
             <div class="map-view-card">
+                <div class="map-filter-bar">
+                    <button class="map-filter-btn" data-filter="Todas" onclick="setMapFilter('Todas', this)" style="--icon-color: #6B7280; --shadow-color: rgba(107, 114, 128, 0.4);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M4 7h16l-3 8H7Z"></path><path d="M10 7v14"></path><path d="M14 7v14"></path><path d="M12 7V3"></path><path d="M10 3h4"></path></svg>
+                        <span class="filter-text">Todas</span>
+                    </button>
+                    <button class="map-filter-btn" data-filter="En línea" onclick="setMapFilter('En línea', this)" style="--icon-color: #10B981; --shadow-color: rgba(16, 185, 129, 0.4);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M4 7h16l-3 8H7Z"></path><path d="M10 7v14"></path><path d="M14 7v14"></path><path d="M12 7V3"></path><path d="M10 3h4"></path></svg>
+                        <span class="filter-text">Activas</span>
+                    </button>
+                    <button class="map-filter-btn" data-filter="Con alarmas" onclick="setMapFilter('Con alarmas', this)" style="--icon-color: #F59E0B; --shadow-color: rgba(245, 158, 11, 0.4);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M4 7h16l-3 8H7Z"></path><path d="M10 7v14"></path><path d="M14 7v14"></path><path d="M12 7V3"></path><path d="M10 3h4"></path></svg>
+                        <span class="filter-text">Alarmas</span>
+                    </button>
+                    <button class="map-filter-btn active" data-filter="Sin señal" onclick="setMapFilter('Sin señal', this)" style="--icon-color: #EF4444; --shadow-color: rgba(239, 68, 68, 0.4);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M4 7h16l-3 8H7Z"></path><path d="M10 7v14"></path><path d="M14 7v14"></path><path d="M12 7V3"></path><path d="M10 3h4"></path></svg>
+                        <span class="filter-text">Inactivas</span>
+                    </button>
+                </div>
                 <div id="map-root" class="map-is-light"></div>
                 <button class="expand-map-btn" id="expandMapBtn" title="Maximizar mapa" onclick="toggleMapExpansion()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
@@ -721,13 +745,19 @@ document.addEventListener("DOMContentLoaded", function() {
     function toggleMapExpansion() {
         const isExpanded = document.body.classList.toggle('map-fullscreen');
         const expandBtn = document.getElementById('expandMapBtn');
+        const filterBar = document.querySelector('.map-filter-bar');
+        const navRight = document.querySelector('.nav-right');
+        const mapViewCard = document.querySelector('.map-view-card');
+        
         if (expandBtn) {
             if (isExpanded) {
+                if (filterBar && navRight) navRight.insertBefore(filterBar, navRight.firstChild);
                 expandBtn.innerHTML = `
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"/></svg>
                 `;
                 expandBtn.title = "Contraer mapa";
             } else {
+                if (filterBar && mapViewCard) mapViewCard.insertBefore(filterBar, mapViewCard.firstChild);
                 expandBtn.innerHTML = `
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
                 `;
@@ -745,7 +775,13 @@ document.addEventListener("DOMContentLoaded", function() {
     // Carga diferida de scripts pesados para asegurar 60FPS en la pantalla de carga (Dispositivos gama baja)
     function loadDeferredAppScripts() {
         const urlNotificaciones = /*[[@{/js/notificaciones.js(v='1.2')}]]*/ '/js/notificaciones.js';
-        const urlDashboard = /*[[@{/js/dashboard.js(v='2.19')}]]*/ '/js/dashboard.js';
+        window.urlDashboard = /*[[@{/js/dashboard.js(v='2.19')}]]*/ '/js/dashboard.js';
+        
+        window.loadDashboardGlobal = function() {
+            const ds = document.createElement('script');
+            ds.src = window.urlDashboard;
+            document.body.appendChild(ds);
+        };
         
         const scriptsToLoad = [
             'https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js',
@@ -753,8 +789,7 @@ document.addEventListener("DOMContentLoaded", function() {
             'https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js',
             'https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js',
             'https://cdn.jsdelivr.net/npm/apexcharts',
-            urlNotificaciones,
-            urlDashboard
+            urlNotificaciones
         ];
         
         let i = 0;
@@ -764,7 +799,9 @@ document.addEventListener("DOMContentLoaded", function() {
             s.src = scriptsToLoad[i];
             s.onload = () => {
                 i++;
-                loadNext();
+                // Cedemos el control al hilo principal (Main Thread) por 150ms entre cada script.
+                // Esto permite que el navegador dibuje los fotogramas de la animación de carga a 60fps sin congelarse.
+                setTimeout(loadNext, 150);
             };
             document.body.appendChild(s);
         }
@@ -773,14 +810,13 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
     if (!sessionStorage.getItem('splashShown')) {
-        // Ejecutamos la carga pesada (Mapbox, ApexCharts, etc.) casi de inmediato (100ms)
-        // Todo el proceso de parseo y renderizado 3D ocurrirá oculto detrás de la pantalla de carga.
-        // Para cuando llegue el rayo (3400ms) y desaparezca (4000ms), el mapa estará 100% listo
-        // y el "hilo principal" (Main Thread) estará libre, garantizando 60fps.
-        setTimeout(loadDeferredAppScripts, 100); 
+        // Iniciamos la carga de librerías de fondo a los 1000ms (cuando el texto ya terminó de aparecer).
+        // Las librerías base (Mapbox, SockJS, etc) cargarán silenciosamente gracias al retraso de 150ms.
+        // Pero dashboard.js (que enciende WebGL) NO se cargará aquí.
+        setTimeout(loadDeferredAppScripts, 1000);
     } else {
-        // Si ya pasó el splash screen, cargar de inmediato
         loadDeferredAppScripts();
+        if (window.loadDashboardGlobal) window.loadDashboardGlobal();
     }
 </script>
 </body>

@@ -173,3 +173,29 @@ function initSidebarToggle() {
     }
 }
 initSidebarToggle();
+
+window.toggleMobileSidebar = function() {
+    const sidebar = document.querySelector('.sidebar');
+    if (!sidebar) return;
+    
+    sidebar.classList.toggle('mobile-open');
+    
+    let overlay = document.getElementById('mobile-sidebar-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'mobile-sidebar-overlay';
+        overlay.className = 'sidebar-overlay';
+        document.body.appendChild(overlay);
+        
+        overlay.addEventListener('click', function() {
+            sidebar.classList.remove('mobile-open');
+            overlay.classList.remove('active');
+        });
+    }
+    
+    if (sidebar.classList.contains('mobile-open')) {
+        overlay.classList.add('active');
+    } else {
+        overlay.classList.remove('active');
+    }
+};

@@ -18,6 +18,11 @@ const map = new mapboxgl.Map({
     
 });
 window.map = map; 
+window.isMapLocked = false;
+map.on('dragstart', () => { window.isMapLocked = false; });
+map.on('zoomstart', (e) => { 
+    if (e.originalEvent) window.isMapLocked = false; 
+});
 let currentStationId = null;
 let dashboardChart = null;
 function apply3DEffects(mapInstance) {
@@ -219,12 +224,39 @@ window.getDynamicImage = function(est, callback) {
 const estaciones = window.estacionesData || [];
 window.stationImagesCache = {};
 estaciones.forEach(est => {
+    // Solo procesar estaciones inactivas
+    if (est.estado !== 'Sin señal') return;
     if (est.nombre && (est.nombre.toLowerCase().includes('homs') || est.nombre.toLowerCase().includes('pucmm') || est.nombre.toLowerCase().includes('utesa'))) return;
     window.getDynamicImage(est, (imgUrl) => {
         const img = new Image();
         img.src = imgUrl; // Pre-descarga
     });
 });
+window.currentMapFilter = 'Sin señal'; // Por defecto, Inactivas
+
+window.setMapFilter = function(filter, btn) {
+    document.querySelectorAll('.map-filter-btn').forEach(b => b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    window.currentMapFilter = filter;
+    
+    Object.values(window.stationMarkers).forEach(item => {
+        let show = false;
+        if (filter === 'Todas') show = true;
+        else if (filter === 'Con alarmas') show = item.hasAlarms;
+        else show = (item.estado === filter);
+        item.el.style.display = show ? 'flex' : 'none';
+    });
+    
+    if (window.isMapLocked && typeof window.resetMapView === 'function') {
+        window.resetMapView();
+        window.isMapLocked = false;
+    }
+    
+    window.navigateStation(0, null, true);
+};
+
+// Removido el IIFE de mover el filtro permanente, ahora se mueve dinámicamente.
+
 const stationMarkers = {};
 window.stationMarkers = stationMarkers;
 estaciones.forEach((est, index) => {
@@ -239,7 +271,14 @@ estaciones.forEach((est, index) => {
         el.style.width = '32px';
         el.style.height = '32px';
         el.style.borderRadius = '50%';
-        el.style.display = 'flex';
+        
+        let showInitially = false;
+        if (window.currentMapFilter === 'Todas') showInitially = true;
+        else if (window.currentMapFilter === 'Con alarmas') showInitially = hasAlarms;
+        else showInitially = (est.estado === window.currentMapFilter);
+        
+        el.style.display = showInitially ? 'flex' : 'none';
+        
         el.style.justifyContent = 'center';
         el.style.alignItems = 'center';
         el.style.border = `2px solid ${colorHex}`;
@@ -383,7 +422,7 @@ estaciones.forEach((est, index) => {
                 .setHTML(popupHTML)
                 .addTo(map);
         });
-        stationMarkers[est.id] = marker;
+        stationMarkers[est.id] = { marker: marker, el: el, estado: est.estado, hasAlarms: hasAlarms };
     }
 });
 let activas = estaciones.filter(e => e.estado === 'En línea').length;
@@ -409,7 +448,23 @@ function renderSearchResults(results) {
             </div>
         `;
         div.addEventListener('click', () => {
-            seleccionarEstacion(est);
+            let estadoFiltro = est.estado;
+            if (est.alarmasActivas && est.alarmasActivas.length > 0) estadoFiltro = 'Con alarmas';
+            
+            let needsChange = false;
+            if (window.currentMapFilter !== 'Todas') {
+                if (window.currentMapFilter === 'Con alarmas' && (!est.alarmasActivas || est.alarmasActivas.length === 0)) needsChange = true;
+                else if (window.currentMapFilter !== 'Con alarmas' && window.currentMapFilter !== est.estado) needsChange = true;
+            }
+            
+            if (needsChange) {
+                const btn = Array.from(document.querySelectorAll('.map-filter-btn')).find(b => b.dataset.filter === estadoFiltro);
+                if (btn && window.setMapFilter) {
+                    window.setMapFilter(estadoFiltro, btn);
+                }
+            }
+            
+            seleccionarEstacion(est, false);
             searchDropdown.style.display = 'none';
             searchInput.value = '';
             searchInput.blur();
@@ -656,6 +711,7 @@ window.seleccionarEstacion = function(est, skipFly) {
     if (!skipFly) window.mapRotationActive = false; 
     currentStationId = est.id;
     if (!skipFly) {
+        window.isMapLocked = true;
         map.flyTo({
             center: [est.longitud, est.latitud],
             zoom: 16,
@@ -1035,15 +1091,33 @@ window.navigateStation = function(direction, event, isAuto = false) {
         }, 15000);
     }
     const estacionesConDatos = window.estacionesData || [];
-    if (estacionesConDatos.length === 0) return;
-    let idx = estacionesConDatos.findIndex(e => e.id === currentStationId);
+    let validStations = estacionesConDatos.filter(e => {
+        if (window.currentMapFilter === 'Todas') return true;
+        if (window.currentMapFilter === 'Con alarmas') return e.alarmasActivas && e.alarmasActivas.length > 0;
+        return e.estado === window.currentMapFilter;
+    });
+    
+    if (validStations.length === 0) return;
+    
+    let idx = validStations.findIndex(e => e.id === currentStationId);
+    if (idx === -1 && direction === 0) idx = 0;
     if (idx === -1) idx = 0;
-    idx = (idx + direction + estacionesConDatos.length) % estacionesConDatos.length;
-    seleccionarEstacion(estacionesConDatos[idx], isAuto);
+    idx = (idx + direction + validStations.length) % validStations.length;
+    seleccionarEstacion(validStations[idx], isAuto);
 };
 if (estaciones.length > 0) {
     setTimeout(() => {
-        seleccionarEstacion(estaciones[0], true);
+        let validStations = estaciones.filter(e => {
+            if (window.currentMapFilter === 'Todas') return true;
+            if (window.currentMapFilter === 'Con alarmas') return e.alarmasActivas && e.alarmasActivas.length > 0;
+            return e.estado === window.currentMapFilter;
+        });
+        
+        if (validStations.length > 0) {
+            seleccionarEstacion(validStations[0], true);
+        } else {
+            seleccionarEstacion(estaciones[0], true);
+        }
         window.startSlideshow();
     }, 500);
 }

@@ -113,8 +113,8 @@
                             <p>Configura cu&aacute;ndo y c&oacute;mo recibir alertas del sistema</p>
                         </div>
                         <form th:action="@{/configuracion/notificaciones}" method="POST">
-                            <input type="hidden" name="notificarAlarmas" id="val-notificarAlarmas" th:value="${usuarioActual != null ? usuarioActual.notificarAlarmas : true}">
-                            <input type="hidden" name="notificarDesconexion" id="val-notificarDesconexion" th:value="${usuarioActual != null ? usuarioActual.notificarDesconexion : true}">
+                            <input type="hidden" name="notificarAlarmas" id="val-notificarAlarmas" th:value="${usuarioActual != null ? usuarioActual.notificarAlarmas : false}">
+                            <input type="hidden" name="notificarDesconexion" id="val-notificarDesconexion" th:value="${usuarioActual != null ? usuarioActual.notificarDesconexion : false}">
                             <input type="hidden" name="notificarSyncFallida" id="val-notificarSyncFallida" th:value="${usuarioActual != null ? usuarioActual.notificarSyncFallida : false}">
                             <input type="hidden" name="reportesDiarios" id="val-reportesDiarios" th:value="${usuarioActual != null ? usuarioActual.reportesDiarios : false}">
 
@@ -123,7 +123,7 @@
                                     <p>Alarmas activas</p>
                                     <span>Notificar cuando una lectura supere el umbral</span>
                                 </div>
-                                <div class="toggle" th:classappend="${usuarioActual == null or usuarioActual.notificarAlarmas} ? 'active' : 'off'"
+                                <div class="toggle" th:classappend="${usuarioActual != null and usuarioActual.notificarAlarmas} ? 'active' : 'off'"
                                      onclick="this.classList.toggle('active'); this.classList.toggle('off'); document.getElementById('val-notificarAlarmas').value = this.classList.contains('active');"></div>
                             </div>
                             <div class="toggle-row">
@@ -131,7 +131,7 @@
                                     <p>Estaci&oacute;n sin se&ntilde;al</p>
                                     <span>Notificar cuando una estaci&oacute;n deje de comunicar</span>
                                 </div>
-                                <div class="toggle" th:classappend="${usuarioActual == null or usuarioActual.notificarDesconexion} ? 'active' : 'off'"
+                                <div class="toggle" th:classappend="${usuarioActual != null and usuarioActual.notificarDesconexion} ? 'active' : 'off'"
                                      onclick="this.classList.toggle('active'); this.classList.toggle('off'); document.getElementById('val-notificarDesconexion').value = this.classList.contains('active');"></div>
                             </div>
                             <div class="toggle-row">

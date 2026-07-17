@@ -379,3 +379,25 @@
     color: #10B981;
     font-size: 20px;
 }
+
+/* ==========================================================================
+   RESPONSIVE DESIGN (Mobile & Tablet)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .config-layout {
+        flex-direction: column;
+    }
+    .left-col {
+        width: 100%;
+    }
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    .config-content {
+        padding: 16px;
+    }
+    .card {
+        padding: 16px;
+    }
+}

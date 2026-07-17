@@ -30,10 +30,10 @@ public class Usuario {
 
     
     @Column(name = "notificar_alarmas")
-    private Boolean notificarAlarmas = true;
+    private Boolean notificarAlarmas = false;
 
     @Column(name = "notificar_desconexion")
-    private Boolean notificarDesconexion = true;
+    private Boolean notificarDesconexion = false;
 
     @Column(name = "notificar_sync_fallida")
     private Boolean notificarSyncFallida = false;

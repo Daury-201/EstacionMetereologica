@@ -573,10 +573,68 @@ body.theme-dark .panel-item-card:hover {
     width: 32px;
     height: 32px;
     background: inherit;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: -4px 4px 10px rgba(0,0,0,0.1);
-    color: inherit;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    color: white;
     border-radius: 8px 0 0 8px;
+}
+/* --- Map Filters --- */
+.map-filter-bar {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    z-index: 10;
+    display: flex;
+    gap: 8px;
+    background-color: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    border-radius: 12px;
+    padding: 6px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: max-content;
+}
+.map-filter-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    padding: 8px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--icon-color, #4B5563);
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+.map-filter-btn svg {
+    flex-shrink: 0;
+    transition: color 0.3s ease;
+}
+.map-filter-btn .filter-text {
+    max-width: 0;
+    opacity: 0;
+    white-space: nowrap;
+    padding-left: 0;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.map-filter-btn:hover {
+    background: rgba(243, 244, 246, 0.8);
+}
+.map-filter-btn.active {
+    background: var(--icon-color);
+    color: white;
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+.map-filter-btn.active svg {
+    color: white;
+}
+.map-filter-btn.active .filter-text {
+    max-width: 100px;
+    opacity: 1;
+    padding-left: 6px;
+    padding-right: 4px;
 }
 .toggle-panel-btn:hover {
     filter: brightness(0.9);
@@ -706,9 +764,28 @@ body.map-fullscreen .profile-dropdown {
 body.map-fullscreen .nav-right {
     margin-right: 80px !important;
 }
+body.map-fullscreen .search-container {
+    width: 280px !important;
+}
 body.map-fullscreen .search-input {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25) !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+body.map-fullscreen .map-filter-bar {
+    position: static !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    gap: 4px !important;
+    padding: 4px !important;
+}
+body.map-fullscreen .map-filter-btn {
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+}
+body.map-fullscreen .badge-alarms {
+    display: none !important;
+}
+body.map-fullscreen .badge-status {
+    display: none !important;
 }
 body.map-fullscreen .top-badge {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
@@ -1506,5 +1583,69 @@ body.theme-light .forecast-day.active .day-temp {
         width: 300%;
         height: 300%;
         opacity: 0;
+    }
+}
+
+
+/* ==========================================================================
+   RESPONSIVE DESIGN (Mobile & Tablet)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        flex-direction: column;
+    }
+    .main-area {
+        width: 100vw;
+    }
+    .top-nav {
+        padding: 12px 16px;
+    }
+    .dashboard-content-area {
+        padding: 16px;
+        gap: 16px;
+    }
+    .dashboard-left-column {
+        gap: 16px;
+    }
+    .map-view-card {
+        min-height: 280px;
+        height: 280px;
+    }
+    /* Estilos para controles flotantes del mapa en móvil */
+    .map-style-switcher {
+        top: auto;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        right: auto;
+        padding: 4px;
+        flex-wrap: nowrap;
+        background: rgba(17, 24, 39, 0.9);
+    }
+    .style-btn {
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+    
+    .owm-card {
+        border-radius: 12px;
+    }
+    
+    .weather-photo-header {
+        height: 160px;
+        padding: 16px;
+    }
+    
+    .lifestyle-card {
+        padding: 16px;
+        gap: 12px;
+    }
+    
+    .ls-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        font-size: 24px;
+        border-radius: 12px;
     }
 }
