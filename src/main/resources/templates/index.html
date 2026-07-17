@@ -327,7 +327,50 @@ document.addEventListener("DOMContentLoaded", function() {
         if(splash) splash.style.perspective = "1200px";
 
         if (!sessionStorage.getItem('splashShown')) {
+            let startOverlay = document.createElement('div');
+            startOverlay.style.position = 'absolute';
+            startOverlay.style.inset = '0';
+            startOverlay.style.zIndex = '9999';
+            startOverlay.style.display = 'flex';
+            startOverlay.style.justifyContent = 'center';
+            startOverlay.style.alignItems = 'center';
+            startOverlay.style.background = 'rgba(10, 15, 30, 0.85)';
+            startOverlay.style.backdropFilter = 'blur(8px)';
+            startOverlay.style.cursor = 'pointer';
             
+            let startBtn = document.createElement('button');
+            startBtn.innerHTML = '⚡ Iniciar Estación';
+            startBtn.style.padding = '15px 40px';
+            startBtn.style.fontSize = '1.3rem';
+            startBtn.style.background = 'linear-gradient(135deg, #0ea5e9, #2563eb)';
+            startBtn.style.color = 'white';
+            startBtn.style.border = 'none';
+            startBtn.style.borderRadius = '30px';
+            startBtn.style.boxShadow = '0 0 25px rgba(14, 165, 233, 0.6)';
+            startBtn.style.cursor = 'pointer';
+            startBtn.style.fontWeight = 'bold';
+            
+            startOverlay.appendChild(startBtn);
+            if(splash) splash.appendChild(startOverlay);
+
+            startOverlay.addEventListener('click', function() {
+                startOverlay.style.opacity = '0';
+                startOverlay.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => startOverlay.remove(), 300);
+                
+                try {
+                    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (audioCtx.state === 'suspended') audioCtx.resume();
+                    thunderAudio.play().then(() => {
+                        thunderAudio.pause();
+                        thunderAudio.currentTime = 0;
+                    }).catch(e => {});
+                } catch(e) {}
+                
+                iniciarAnimacion();
+            });
+
+            function iniciarAnimacion() {
             // Animación del contador de porcentaje y barra sincronizados
             let pctElement = document.getElementById('loading-pct');
             let barElement = document.getElementById('loading-bar-inner');
@@ -560,9 +603,6 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         setTimeout(() => {
-            // Inicializar WebGL exactamente AHORA (4000ms).
-            // Esto causa un pico de CPU, pero como la animación de salida es CSS (GPU),
-            // el usuario no notará ningún tirón.
             if (window.loadDashboardGlobal) window.loadDashboardGlobal();
             
             splash.style.transform = 'scale(1.5)';
@@ -573,6 +613,9 @@ document.addEventListener("DOMContentLoaded", function() {
                 if(splash && splash.parentNode) splash.remove();
             }, 600);
         }, 4000); // 4 seconds so they can play with it
+        } // Fin de iniciarAnimacion()
+    } else {
+        if (window.loadDashboardGlobal) window.loadDashboardGlobal();
     }
 });
 </script>
