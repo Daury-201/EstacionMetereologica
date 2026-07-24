@@ -34,7 +34,7 @@ public class SecurityConfig {
             .headers(headers -> headers.frameOptions(org.springframework.security.config.annotation.web.configurers.HeadersConfigurer.FrameOptionsConfig::disable)) 
             .authorizeHttpRequests(authz -> authz
                 
-                .requestMatchers("/css/**", "/js/**", "/img/**", "/webjars/**", "/assets/**", "/registro", "/olvido-password").permitAll()
+                .requestMatchers("/css/**", "/js/**", "/img/**", "/webjars/**", "/assets/**", "/registro", "/verificar-codigo", "/olvido-password").permitAll()
                 
                 .requestMatchers("/api/lecturas/**").permitAll()
                 
