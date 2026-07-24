@@ -17,7 +17,7 @@
     </script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css' rel='stylesheet' />
 </head>
-<body class="theme-light">
+<body class="theme-light" th:data-sonido-activo="${usuarioGlobal != null ? usuarioGlobal.sonidoActivo : true}">
 
 <div id="splash-screen" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%); z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s ease, visibility 0.5s ease, transform 0.6s cubic-bezier(0.8, 0, 0.2, 1); color: white;">
 
@@ -512,12 +512,17 @@ document.addEventListener("DOMContentLoaded", function() {
                     bandpass.frequency.value = 400;
                     const vol = audioCtx.createGain();
                     vol.gain.setValueAtTime(0, audioCtx.currentTime);
-                    vol.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 1); // Volumen de viento suave
-                    vol.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 3);
+                    
+                    const sonidoActivoStr = document.body.getAttribute('data-sonido-activo');
+                    if (sonidoActivoStr !== 'false') {
+                        vol.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 1); // Volumen de viento suave
+                        vol.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 3);
+                    }
+                    
                     noise.connect(bandpass);
                     bandpass.connect(vol);
                     vol.connect(audioCtx.destination);
-                    noise.start();
+                    if (sonidoActivoStr !== 'false') noise.start();
                 } catch(e) {}
             }, 500);
             
@@ -548,10 +553,13 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
                 
                 try {
-                    thunderAudio.volume = 1.0;
-                    let playPromise = thunderAudio.play();
-                    if (playPromise !== undefined) {
-                        playPromise.catch(error => { console.log("Auto-play prevented", error); });
+                    const sonidoActivoStr = document.body.getAttribute('data-sonido-activo');
+                    if (sonidoActivoStr !== 'false') {
+                        thunderAudio.volume = 1.0;
+                        let playPromise = thunderAudio.play();
+                        if (playPromise !== undefined) {
+                            playPromise.catch(error => { console.log("Auto-play prevented", error); });
+                        }
                     }
                     if (navigator.vibrate) navigator.vibrate([100, 50, 150, 50, 200]);
                 } catch(e) { console.log(e); }

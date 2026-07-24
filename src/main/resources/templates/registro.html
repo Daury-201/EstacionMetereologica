@@ -273,11 +273,11 @@
                         </div>
                     </div>
                     <div style="display: flex; gap: 16px; width: 100%;">
-                        <input type="text" name="nombre" placeholder="Nombre completo" required="required" style="flex: 1;" th:value="${nombre}" />
-                        <input type="text" name="username" placeholder="Usuario" required="required" style="flex: 1;" th:value="${username}" />
+                        <input type="text" name="nombre" placeholder="Nombre completo" required="required" autocomplete="off" style="flex: 1;" th:value="${nombre}" />
+                        <input type="text" name="username" placeholder="Usuario" required="required" autocomplete="off" style="flex: 1;" th:value="${username}" />
                     </div>
-                    <input type="email" name="email" placeholder="Correo electrónico" required="required" th:value="${email}" />
-                    <div style="display: flex; gap: 16px; width: 100%;">
+                    <input type="email" name="email" placeholder="Correo electrónico" required="required" autocomplete="off" th:value="${email}" />
+                    <div th:if="${!isEdit}" style="display: flex; gap: 16px; width: 100%;">
                         <div class="password-wrapper" style="position: relative; flex: 1;">
                             <input type="password" id="reg-password" name="password" placeholder="Contraseña" required="required" autocomplete="new-password" oninput="document.getElementById('toggle-pwd-btn').style.display = this.value.length > 0 ? 'flex' : 'none';" style="width: 100%; padding-right: 36px; padding-left: 10px; font-size: 14px;" />
                             <span id="toggle-pwd-btn" onclick="togglePasswordVisibility('reg-password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94A3B8; display: none; align-items: center; transition: color 0.2s;">
@@ -297,7 +297,7 @@
                             </span>
                         </div>
                     </div>
-                    <button type="submit" class="login-btn" style="margin-top: 4px;">Registrarse</button>
+                    <button type="submit" class="login-btn" style="margin-top: 4px;" th:text="${isEdit ? 'Guardar cambios' : 'Registrarse'}">Registrarse</button>
                 </form>
                 <div class="divider"></div>
                 <p class="create-account">

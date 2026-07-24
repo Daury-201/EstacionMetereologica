@@ -896,7 +896,14 @@ function actualizarWidgetLifestyle(est) {
     lsIconWrapper.className = 'ls-icon-wrapper';
     
 
-    if (lluvia >= 15) { //
+    if (est.estado && est.estado !== 'En línea') {
+        lsIcon.textContent = '📡';
+        lsTitle.textContent = 'Estación Sin Señal';
+        lsDesc.textContent = 'No hay conexión con la estación. Mostrando los últimos datos registrados conocidos.';
+        lsIconWrapper.style.background = 'linear-gradient(135deg, #6B7280 0%, #374151 100%)';
+        lsIconWrapper.style.boxShadow = '0 10px 25px -5px rgba(75, 85, 99, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.2)';
+        lsIconWrapper.className = 'ls-icon-wrapper'; // Remove any previous animations
+    } else if (lluvia >= 15) { //
         lsIcon.textContent = '🌊';
         lsTitle.textContent = 'Alerta de Inundación';
         lsDesc.textContent = 'Lluvias torrenciales extremas. Alto riesgo de inundaciones repentinas. Busca terreno elevado.';

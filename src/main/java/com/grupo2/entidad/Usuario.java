@@ -41,6 +41,9 @@ public class Usuario {
     @Column(name = "reportes_diarios")
     private Boolean reportesDiarios = false;
 
+    @Column(name = "sonido_activo", columnDefinition = "boolean default true")
+    private Boolean sonidoActivo = true;
+
     public Usuario() {}
 
     @Transient
@@ -91,6 +94,8 @@ public class Usuario {
     public void setNotificarSyncFallida(Boolean notificarSyncFallida) { this.notificarSyncFallida = notificarSyncFallida; }
     public Boolean getReportesDiarios() { return reportesDiarios; }
     public void setReportesDiarios(Boolean reportesDiarios) { this.reportesDiarios = reportesDiarios; }
+    public Boolean getSonidoActivo() { return sonidoActivo; }
+    public void setSonidoActivo(Boolean sonidoActivo) { this.sonidoActivo = sonidoActivo; }
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }

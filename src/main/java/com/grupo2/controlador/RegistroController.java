@@ -30,7 +30,16 @@ public class RegistroController {
     }
 
     @GetMapping("/registro")
-    public String registro() {
+    public String registro(HttpSession session, Model model) {
+        VerificacionDatos datos = (VerificacionDatos) session.getAttribute("verificacionRegistro");
+        if (datos != null && datos.getUsuario() != null) {
+            model.addAttribute("nombre", datos.getUsuario().getNombre());
+            model.addAttribute("username", datos.getUsuario().getUsername());
+            model.addAttribute("email", datos.getUsuario().getEmail());
+            model.addAttribute("isEdit", true);
+        } else {
+            model.addAttribute("isEdit", false);
+        }
         return "registro";
     }
 
@@ -39,16 +48,19 @@ public class RegistroController {
             @RequestParam String nombre,
             @RequestParam String username,
             @RequestParam String email,
-            @RequestParam String password,
-            @RequestParam String confirmPassword,
+            @RequestParam(required = false) String password,
+            @RequestParam(required = false) String confirmPassword,
             HttpSession session,
             RedirectAttributes redirectAttributes) {
         
+        VerificacionDatos datosPrevios = (VerificacionDatos) session.getAttribute("verificacionRegistro");
+        boolean isEdit = datosPrevios != null;
+        boolean hasPassword = password != null && !password.isEmpty() && confirmPassword != null && !confirmPassword.isEmpty();
+
         if (nombre == null || nombre.trim().isEmpty() || 
             username == null || username.trim().isEmpty() || 
             email == null || email.trim().isEmpty() || 
-            password == null || password.isEmpty() || 
-            confirmPassword == null || confirmPassword.isEmpty()) {
+            (!hasPassword && !isEdit)) {
             
             redirectAttributes.addFlashAttribute("error", "Todos los campos son obligatorios");
             redirectAttributes.addFlashAttribute("nombre", nombre);
@@ -57,19 +69,22 @@ public class RegistroController {
             return "redirect:/registro";
         }
 
-        if (!password.equals(confirmPassword) || 
-            usuarioService.obtenerPorUsername(username) != null || 
-            usuarioService.obtenerPorEmail(email) != null) {
+        if ((hasPassword && !password.equals(confirmPassword)) || 
+            (usuarioService.obtenerPorUsername(username) != null && (!isEdit || !datosPrevios.getUsuario().getUsername().equals(username))) || 
+            (usuarioService.obtenerPorEmail(email) != null && (!isEdit || !datosPrevios.getUsuario().getEmail().equals(email))) ||
+            !email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
 
             redirectAttributes.addFlashAttribute("nombre", nombre);
             redirectAttributes.addFlashAttribute("username", username);
             redirectAttributes.addFlashAttribute("email", email);
 
-            if (!password.equals(confirmPassword)) {
+            if (!email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+                redirectAttributes.addFlashAttribute("error", "La dirección de correo no es válida");
+            } else if (hasPassword && !password.equals(confirmPassword)) {
                 redirectAttributes.addFlashAttribute("error", "Las contraseñas no coinciden");
-            } else if (usuarioService.obtenerPorUsername(username) != null) {
+            } else if (usuarioService.obtenerPorUsername(username) != null && (!isEdit || !datosPrevios.getUsuario().getUsername().equals(username))) {
                 redirectAttributes.addFlashAttribute("error", "El nombre de usuario ya está en uso");
-            } else if (usuarioService.obtenerPorEmail(email) != null) {
+            } else if (usuarioService.obtenerPorEmail(email) != null && (!isEdit || !datosPrevios.getUsuario().getEmail().equals(email))) {
                 redirectAttributes.addFlashAttribute("error", "El correo electrónico ya está registrado");
             }
             return "redirect:/registro";
@@ -79,16 +94,22 @@ public class RegistroController {
         nuevoUsuario.setNombre(nombre);
         nuevoUsuario.setUsername(username);
         nuevoUsuario.setEmail(email);
-        nuevoUsuario.setPassword(passwordEncoder.encode(password));
+        if (hasPassword) {
+            nuevoUsuario.setPassword(passwordEncoder.encode(password));
+        } else {
+            nuevoUsuario.setPassword(datosPrevios.getUsuario().getPassword());
+        }
         nuevoUsuario.setRol("VISOR"); 
 
-        // Generate 6 digit code
-        String codigo = String.format("%06d", new Random().nextInt(999999));
-        
-        VerificacionDatos datos = new VerificacionDatos(nuevoUsuario, codigo, 15);
-        session.setAttribute("verificacionRegistro", datos);
-        
-        emailService.enviarCorreoVerificacion(nuevoUsuario.getEmail(), nuevoUsuario.getNombre(), codigo);
+        if (isEdit && datosPrevios.getUsuario().getEmail().equals(email)) {
+            VerificacionDatos datos = new VerificacionDatos(nuevoUsuario, datosPrevios.getCodigo(), 15);
+            session.setAttribute("verificacionRegistro", datos);
+        } else {
+            String codigo = String.format("%06d", new Random().nextInt(999999));
+            VerificacionDatos datos = new VerificacionDatos(nuevoUsuario, codigo, 15);
+            session.setAttribute("verificacionRegistro", datos);
+            emailService.enviarCorreoVerificacion(nuevoUsuario.getEmail(), nuevoUsuario.getNombre(), codigo);
+        }
 
         return "redirect:/verificar-codigo";
     }

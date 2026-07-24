@@ -5,6 +5,9 @@ import com.grupo2.repositorio.UsuarioRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 @Service
@@ -48,6 +51,17 @@ public class UsuarioService {
         if (usuario != null && "admin".equals(usuario.getUsername())) {
             throw new IllegalArgumentException("No se puede eliminar el usuario administrador por defecto.");
         }
+        
+        if (usuario != null && usuario.getFotoUrl() != null && !usuario.getFotoUrl().isEmpty()) {
+            try {
+                String fileName = usuario.getFotoUrl().substring(usuario.getFotoUrl().lastIndexOf("/") + 1);
+                Path filePath = Paths.get("uploads", "avatars", fileName);
+                Files.deleteIfExists(filePath);
+            } catch (Exception e) {
+                System.err.println("No se pudo eliminar el avatar: " + e.getMessage());
+            }
+        }
+        
         usuarioRepository.deleteById(id);
     }
 }

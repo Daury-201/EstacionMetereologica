@@ -27,7 +27,7 @@ public class EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             
-            helper.setFrom(senderEmail);
+            helper.setFrom(senderEmail, "Estación Meteorológica");
             helper.setTo(email);
             helper.setSubject("Recuperación de Contraseña - Estación Meteorológica");
 
@@ -35,7 +35,8 @@ public class EmailService {
             context.setVariable("nuevaClave", nuevaClave);
             
             String html = templateEngine.process("emails/recuperacion-password", context);
-            helper.setText(html, true);
+            String text = "Tu nueva contraseña es: " + nuevaClave + "\n\nPor favor, cambia esta contraseña una vez ingreses al sistema.\n\nEstación Meteorológica";
+            helper.setText(text, html);
 
             mailSender.send(message);
             System.out.println("Correo de recuperación enviado a: " + email);
@@ -50,7 +51,7 @@ public class EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setFrom(senderEmail);
+            helper.setFrom(senderEmail, "Estación Meteorológica");
             helper.setTo(email);
             helper.setSubject("Código de Verificación - Estación Meteorológica");
 
@@ -59,7 +60,8 @@ public class EmailService {
             context.setVariable("codigo", codigo);
 
             String html = templateEngine.process("emails/verificacion-registro", context);
-            helper.setText(html, true);
+            String text = "Hola " + nombre + ",\n\nTu código de verificación es: " + codigo + "\n\nEste código expirará en 15 minutos.\n\nAtentamente,\nEquipo Estación Meteorológica";
+            helper.setText(text, html);
 
             mailSender.send(message);
             System.out.println("Correo de verificación enviado a: " + email);

@@ -165,6 +165,19 @@ public class ConfiguracionController {
         return "redirect:/configuracion?tab=notificaciones";
     }
 
+    @PostMapping("/sonido")
+    public String guardarSonido(@RequestParam(defaultValue = "true") boolean sonidoActivo,
+                                @AuthenticationPrincipal UserDetails userDetails,
+                                RedirectAttributes redirectAttributes) {
+        if (userDetails != null) {
+            Usuario usuario = usuarioService.obtenerPorUsername(userDetails.getUsername());
+            usuario.setSonidoActivo(sonidoActivo);
+            usuarioService.guardarUsuario(usuario);
+            redirectAttributes.addAttribute("success", "sistema");
+        }
+        return "redirect:/configuracion?tab=sistema";
+    }
+
     @PostMapping("/seguridad/password")
     public String cambiarPassword(@RequestParam("currentPassword") String currentPassword,
                                   @RequestParam("newPassword") String newPassword,
