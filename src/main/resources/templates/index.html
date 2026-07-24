@@ -487,168 +487,89 @@ document.addEventListener("DOMContentLoaded", function() {
         let audioCtx = null;
         
         if (splash) {
-            // Generar estilo para el pulso del botón
-            if (!document.getElementById('pulseStyle')) {
-                let style = document.createElement('style');
-                style.id = 'pulseStyle';
-                style.innerHTML = `@keyframes pulseBtn { 0% { opacity: 0.6; transform: translateX(-50%) scale(1); box-shadow: 0 0 0px rgba(255,255,255,0); } 50% { opacity: 1; transform: translateX(-50%) scale(1.05); box-shadow: 0 0 15px rgba(255,255,255,0.4); } 100% { opacity: 0.6; transform: translateX(-50%) scale(1); box-shadow: 0 0 0px rgba(255,255,255,0); } }`;
-                document.head.appendChild(style);
-            }
-
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
-
-            if (isMobile) {
-                // LÓGICA PARA TELÉFONOS (Requiere toque explícito)
-                setTimeout(() => {
-                    const startBtn = document.createElement('div');
-                    startBtn.innerText = "TOCAR PARA ENTRAR";
-                    startBtn.style.cssText = "position:absolute;bottom:12%;left:50%;transform:translateX(-50%);color:#fff;font-family:Inter,sans-serif;font-weight:600;font-size:14px;letter-spacing:3px;cursor:pointer;animation:pulseBtn 1.8s infinite ease-in-out;padding:12px 32px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.3);border-radius:30px;backdrop-filter:blur(8px);z-index:30;";
-                    splash.appendChild(startBtn);
-
-                    splash.addEventListener('click', function _startHandler(e) {
-                        splash.removeEventListener('click', _startHandler);
-                        startBtn.style.display = 'none';
-
-                        let ripple = document.createElement('div');
-                        ripple.className = 'splash-ripple';
-                        ripple.style.left = e.clientX + 'px';
-                        ripple.style.top = e.clientY + 'px';
-                        this.appendChild(ripple);
-                        setTimeout(() => { if(ripple && ripple.parentNode) ripple.remove() }, 800);
-
-                        try {
-                            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                            const bufferSize = audioCtx.sampleRate * 1.5; 
-                            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-                            const data = buffer.getChannelData(0);
-                            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-                            const noise = audioCtx.createBufferSource();
-                            noise.buffer = buffer;
-                            const bandpass = audioCtx.createBiquadFilter();
-                            bandpass.type = 'bandpass';
-                            bandpass.frequency.value = 400;
-                            const vol = audioCtx.createGain();
-                            vol.gain.setValueAtTime(0, audioCtx.currentTime);
-                            vol.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.2);
-                            vol.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.5);
-                            noise.connect(bandpass);
-                            bandpass.connect(vol);
-                            vol.connect(audioCtx.destination);
-                            noise.start();
-                        } catch(err) {}
-
-                        lightningPaths = generateLightning();
-                        lightningOpacity = 1.0;
-                        lightningActive = true;
-                        lightningPaths.forEach(path => {
-                            if(path[0].gen === 0 || Math.random() > 0.5) {
-                                let tip = path[path.length - 1];
-                                createSparks(tip.x, tip.y);
-                            }
-                        });
-                        drawExplosion();
-                        splash.style.animation = "screenFlash 0.6s ease-out forwards";
-                        
-                        const cloudIcon = document.getElementById('cloudIcon');
-                        if(cloudIcon) {
-                            cloudIcon.style.filter = "drop-shadow(0 0 50px #ffffff) brightness(2)";
-                            setTimeout(() => { if(cloudIcon) cloudIcon.style.filter = "none"; }, 500);
-                        }
-                        
-                        try {
-                            thunderAudio.volume = 1.0;
-                            let playPromise = thunderAudio.play();
-                            if (playPromise !== undefined) {
-                                playPromise.catch(error => { console.log("Auto-play prevented", error); });
-                            }
-                            if (navigator.vibrate) navigator.vibrate([100, 50, 150, 50, 200]);
-                        } catch(err) {}
-
-                        setTimeout(() => {
-                            if (window.loadDashboardGlobal) window.loadDashboardGlobal();
-                            splash.style.transform = 'scale(1.5)';
-                            splash.style.opacity = '0';
-                            splash.style.visibility = 'hidden';
-                            sessionStorage.setItem('splashShown', 'true');
-                            setTimeout(() => {
-                                if(splash && splash.parentNode) splash.remove();
-                            }, 600);
-                        }, 700);
-                    });
-                }, 3400);
-
-            } else {
-                // LÓGICA PARA COMPUTADORAS DE ESCRITORIO (Automático)
-                splash.addEventListener('click', function(e) {
-                    let ripple = document.createElement('div');
-                    ripple.className = 'splash-ripple';
-                    ripple.style.left = e.clientX + 'px';
-                    ripple.style.top = e.clientY + 'px';
-                    this.appendChild(ripple);
-                    setTimeout(() => { if(ripple && ripple.parentNode) ripple.remove() }, 800);
+            splash.addEventListener('click', function(e) {
+                let ripple = document.createElement('div');
+                ripple.className = 'splash-ripple';
+                ripple.style.left = e.clientX + 'px';
+                ripple.style.top = e.clientY + 'px';
+                this.appendChild(ripple);
+                setTimeout(() => { if(ripple && ripple.parentNode) ripple.remove() }, 800);
+            });
+            
+            // Sonido de fondo tipo "viento" anticipado
+            setTimeout(() => {
+                try {
+                    if (navigator.vibrate) navigator.vibrate(50);
+                    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const bufferSize = audioCtx.sampleRate * 3; 
+                    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+                    const noise = audioCtx.createBufferSource();
+                    noise.buffer = buffer;
+                    const bandpass = audioCtx.createBiquadFilter();
+                    bandpass.type = 'bandpass';
+                    bandpass.frequency.value = 400;
+                    const vol = audioCtx.createGain();
+                    vol.gain.setValueAtTime(0, audioCtx.currentTime);
+                    vol.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 1); // Volumen de viento suave
+                    vol.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 3);
+                    noise.connect(bandpass);
+                    bandpass.connect(vol);
+                    vol.connect(audioCtx.destination);
+                    noise.start();
+                } catch(e) {}
+            }, 500);
+            
+            // Tocar estruendo original y explosión Canvas sincronizado a los 3.4s
+            setTimeout(() => {
+                // Iniciar explosión visual
+                lightningPaths = generateLightning();
+                lightningOpacity = 1.0;
+                lightningActive = true;
+                
+                lightningPaths.forEach(path => {
+                    if(path[0].gen === 0 || Math.random() > 0.5) {
+                        let tip = path[path.length - 1];
+                        createSparks(tip.x, tip.y);
+                    }
                 });
                 
-                setTimeout(() => {
-                    try {
-                        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                        const bufferSize = audioCtx.sampleRate * 3; 
-                        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-                        const data = buffer.getChannelData(0);
-                        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-                        const noise = audioCtx.createBufferSource();
-                        noise.buffer = buffer;
-                        const bandpass = audioCtx.createBiquadFilter();
-                        bandpass.type = 'bandpass';
-                        bandpass.frequency.value = 400;
-                        const vol = audioCtx.createGain();
-                        vol.gain.setValueAtTime(0, audioCtx.currentTime);
-                        vol.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 1);
-                        vol.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 3);
-                        noise.connect(bandpass);
-                        bandpass.connect(vol);
-                        vol.connect(audioCtx.destination);
-                        noise.start();
-                    } catch(e) {}
-                }, 500);
-                
-                setTimeout(() => {
-                    lightningPaths = generateLightning();
-                    lightningOpacity = 1.0;
-                    lightningActive = true;
-                    lightningPaths.forEach(path => {
-                        if(path[0].gen === 0 || Math.random() > 0.5) {
-                            let tip = path[path.length - 1];
-                            createSparks(tip.x, tip.y);
-                        }
-                    });
-                    drawExplosion();
-                    splash.style.animation = "screenFlash 0.6s ease-out forwards";
-                    
-                    const cloudIcon = document.getElementById('cloudIcon');
-                    if(cloudIcon) {
-                        cloudIcon.style.filter = "drop-shadow(0 0 50px #ffffff) brightness(2)";
-                        setTimeout(() => { cloudIcon.style.filter = "none"; }, 500);
-                    }
-                    
-                    try {
-                        thunderAudio.volume = 1.0;
-                        let playPromise = thunderAudio.play();
-                        if (playPromise !== undefined) playPromise.catch(e => {});
-                    } catch(e) {}
-                }, 3400);
+                drawExplosion();
 
-                setTimeout(() => {
-                    if (window.loadDashboardGlobal) window.loadDashboardGlobal();
-                    splash.style.transform = 'scale(1.5)';
-                    splash.style.opacity = '0';
-                    splash.style.visibility = 'hidden';
-                    sessionStorage.setItem('splashShown', 'true');
+                splash.style.animation = "screenFlash 0.6s ease-out forwards";
+                
+                const cloudIcon = document.getElementById('cloudIcon');
+                if(cloudIcon) {
+                    cloudIcon.style.filter = "drop-shadow(0 0 50px #ffffff) brightness(2)";
                     setTimeout(() => {
-                        if(splash && splash.parentNode) splash.remove();
-                    }, 600);
-                }, 4000);
-            }
+                        cloudIcon.style.filter = "none";
+                    }, 500);
+                }
+                
+                try {
+                    thunderAudio.volume = 1.0;
+                    let playPromise = thunderAudio.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(error => { console.log("Auto-play prevented", error); });
+                    }
+                    if (navigator.vibrate) navigator.vibrate([100, 50, 150, 50, 200]);
+                } catch(e) { console.log(e); }
+                
+            }, 3400);
         }
+
+        setTimeout(() => {
+            if (window.loadDashboardGlobal) window.loadDashboardGlobal();
+            
+            splash.style.transform = 'scale(1.5)';
+            splash.style.opacity = '0';
+            splash.style.visibility = 'hidden';
+            sessionStorage.setItem('splashShown', 'true');
+            setTimeout(() => {
+                if(splash && splash.parentNode) splash.remove();
+            }, 600);
+        }, 4000); // 4 seconds so they can play with it
     }
 });
 </script>

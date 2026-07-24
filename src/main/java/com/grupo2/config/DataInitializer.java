@@ -34,14 +34,14 @@ public class DataInitializer implements CommandLineRunner {
             Usuario admin = new Usuario();
             admin.setNombre("Grupo 2");
             admin.setUsername("admin"); 
-            admin.setEmail("dauryrodriguez2005@gmail.com"); 
-            admin.setPassword(passwordEncoder.encode("admin123")); 
+            admin.setEmail("ittgrupo2@gmail.com");
+            admin.setPassword(passwordEncoder.encode("Grupo2014"));
             admin.setRol("ADMIN");
-            admin.setFotoUrl("G2");
+            admin.setFotoUrl(null);
             usuarioRepository.save(admin);
 
             System.out.println("Username: admin");
-            System.out.println("Password: admin123");
+            System.out.println("Password: Grupo2014");
 
         }
     }

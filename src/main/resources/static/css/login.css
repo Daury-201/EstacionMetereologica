@@ -12,13 +12,19 @@
 }
 body {
     font-family: 'Inter', sans-serif;
-    height: 100vh;
-    overflow: hidden;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin: 0;
+    display: flex;
+    background-color: var(--bg-color);
 }
 .login-container {
     display: flex;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    min-height: 100%;
+    flex: 1;
 }
 .login-left {
     flex: 1;
@@ -209,13 +215,18 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 20px;
+    position: relative;
+    min-height: 100%;
 }
 .login-card {
     background-color: var(--card-bg);
-    width: 380px;
+    width: 100%;
+    max-width: 380px;
     border-radius: 16px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0,0,0,0.05);
     overflow: hidden;
+    margin: auto; /* Bulletproof centering */
 }
 .login-card-top {
     height: 4px;
@@ -729,4 +740,67 @@ body {
 .password-toggle:focus {
     outline: none;
     box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
+}
+
+/* ------------------------------------- */
+/* RESPONSIVE DESIGN                     */
+/* ------------------------------------- */
+@media screen and (max-width: 960px) {
+    .login-container {
+        flex-direction: column;
+    }
+    .login-left {
+        display: none; /* Hide heavy 3D graphics on tablets/mobiles */
+    }
+    .login-right {
+        width: 100%;
+        min-height: 100vh;
+        min-height: 100dvh;
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.05) 0%, rgba(79, 70, 229, 0.05) 100%), var(--bg-color);
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .login-card {
+        width: 100%;
+        max-width: 400px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        margin: auto;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .login-right {
+        padding: 16px;
+    }
+    .login-card-content {
+        padding: 32px 24px;
+    }
+    .login-icon {
+        width: 100px;
+        height: 72px;
+        margin-bottom: 20px;
+    }
+    .login-title {
+        font-size: 22px;
+    }
+    .login-subtitle {
+        font-size: 13px;
+        margin-bottom: 20px;
+    }
+    .login-form input {
+        padding: 12px 14px;
+        font-size: 14px;
+    }
+    .login-btn {
+        padding: 12px;
+        font-size: 15px;
+    }
+    .alert-box {
+        width: calc(100% - 32px);
+        left: 16px;
+        right: 16px;
+        top: 16px;
+    }
 }

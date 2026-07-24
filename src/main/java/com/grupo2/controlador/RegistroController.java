@@ -11,7 +11,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import jakarta.servlet.http.HttpSession;
+import com.grupo2.modelo.VerificacionDatos;
 import java.util.UUID;
+import java.util.Random;
 
 @Controller
 public class RegistroController {
@@ -38,6 +41,7 @@ public class RegistroController {
             @RequestParam String email,
             @RequestParam String password,
             @RequestParam String confirmPassword,
+            HttpSession session,
             RedirectAttributes redirectAttributes) {
         
         if (nombre == null || nombre.trim().isEmpty() || 
@@ -78,8 +82,50 @@ public class RegistroController {
         nuevoUsuario.setPassword(passwordEncoder.encode(password));
         nuevoUsuario.setRol("VISOR"); 
 
-        usuarioService.guardarUsuario(nuevoUsuario);
+        // Generate 6 digit code
+        String codigo = String.format("%06d", new Random().nextInt(999999));
+        
+        VerificacionDatos datos = new VerificacionDatos(nuevoUsuario, codigo, 15);
+        session.setAttribute("verificacionRegistro", datos);
+        
+        emailService.enviarCorreoVerificacion(nuevoUsuario.getEmail(), nuevoUsuario.getNombre(), codigo);
 
+        return "redirect:/verificar-codigo";
+    }
+
+    @GetMapping("/verificar-codigo")
+    public String verificarCodigo(HttpSession session) {
+        VerificacionDatos datos = (VerificacionDatos) session.getAttribute("verificacionRegistro");
+        if (datos == null || datos.isExpirado()) {
+            session.removeAttribute("verificacionRegistro");
+            return "redirect:/registro";
+        }
+        return "verificar-codigo";
+    }
+
+    @PostMapping("/verificar-codigo")
+    public String procesarVerificarCodigo(@RequestParam String codigo, HttpSession session, RedirectAttributes redirectAttributes) {
+        VerificacionDatos datos = (VerificacionDatos) session.getAttribute("verificacionRegistro");
+        
+        if (datos == null) {
+            redirectAttributes.addFlashAttribute("error", "Sesión de verificación inválida o no iniciada.");
+            return "redirect:/registro";
+        }
+        
+        if (datos.isExpirado()) {
+            session.removeAttribute("verificacionRegistro");
+            redirectAttributes.addFlashAttribute("error", "El código ha expirado. Por favor, regístrate de nuevo.");
+            return "redirect:/registro";
+        }
+        
+        if (!datos.getCodigo().equals(codigo)) {
+            redirectAttributes.addFlashAttribute("error", "Código incorrecto.");
+            return "redirect:/verificar-codigo";
+        }
+        
+        usuarioService.guardarUsuario(datos.getUsuario());
+        session.removeAttribute("verificacionRegistro");
+        
         redirectAttributes.addFlashAttribute("exito", "Cuenta creada exitosamente. Ahora puedes iniciar sesión.");
         return "redirect:/login";
     }

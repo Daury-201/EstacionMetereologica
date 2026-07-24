@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Verificación de Código</title>
+    <link rel="stylesheet" th:href="@{/css/login.css}" href="../static/css/login.css" />
+    <script th:src="@{/js/login.js}" src="../static/js/login.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+    
+    <meta th:if="${_csrf != null}" name="_csrf" th:content="${_csrf.token}"/>
+    <meta th:if="${_csrf != null}" name="_csrf_header" th:content="${_csrf.headerName}"/>
+</head>
+<body>
+<div class="login-container">
+    <div class="login-left">
+            <div class="bg-shape blob-1"></div>
+            <div class="bg-shape blob-2"></div>
+            <div class="bg-shape blob-3"></div>
+            <div class="bg-shape blob-4"></div>
+            <div class="bg-shape blob-5"></div>
+        <div class="login-left-content">
+            <div class="slider-container">
+                <div class="slide active">
+                    <div class="hero-animation">
+                        <svg class="wifi-waves wifi-left" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <path class="wave wave1" d="M 100,70 A 30,30 0 0,0 70,100" />
+                            <path class="wave wave2" d="M 100,45 A 55,55 0 0,0 45,100" />
+                            <path class="wave wave3" d="M 100,20 A 80,80 0 0,0 20,100" />
+                        </svg>
+                        <svg class="wifi-waves wifi-right" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <path class="wave wave1" d="M 0,70 A 30,30 0 0,1 30,100" />
+                            <path class="wave wave2" d="M 0,45 A 55,55 0 0,1 55,100" />
+                            <path class="wave wave3" d="M 0,20 A 80,80 0 0,1 80,100" />
+                        </svg>
+                        <img src="../static/assets/Veleta.gif" th:src="@{/assets/Veleta.gif}" alt="Veleta animada" />
+                    </div>
+                    <h1 class="hero-title">Seguridad y Privacidad</h1>
+                    <p class="hero-subtitle">Protegemos tu información con validaciones de seguridad de grado industrial.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="login-right">
+        <div class="login-card">
+            <div class="login-card-top"></div>
+            <div class="login-card-content">
+                <div class="login-icon-wrapper" style="padding: 30px; margin: -30px -30px -6px -30px; cursor: pointer; display: flex; justify-content: center; align-items: center; position: relative; z-index: 10; overflow: visible;">
+                    <div class="login-icon" style="overflow: hidden; position: relative; margin-bottom: 0; background: linear-gradient(135deg, #10B981 0%, #059669 100%);">
+                        <svg viewBox="0 0 24 24" width="48" height="48" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                    </div>
+                </div>
+                <h1 class="login-title">Verifica tu Correo</h1>
+                <p class="login-subtitle">Ingresa el código de 6 dígitos enviado a tu correo.</p>
+                <form class="login-form" th:action="@{/verificar-codigo}" method="POST" novalidate>
+                    <div th:if="${error}" class="alert-box error-alert slide-in-down">
+                        <div class="alert-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                        </div>
+                        <div class="alert-content">
+                            <span class="alert-title">Error</span>
+                            <span class="alert-msg" th:text="${error}">Ha ocurrido un error</span>
+                        </div>
+                    </div>
+                    
+                    <div style="width: 100%; margin-bottom: 8px;">
+                        <input type="text" name="codigo" placeholder="Ej: 123456" required="required" maxlength="6" style="text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px;" autocomplete="off" />
+                    </div>
+                    
+                    <button type="submit" class="login-btn" style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">Verificar Código</button>
+                </form>
+                <div class="divider"></div>
+                <p class="create-account">
+                    <a th:href="@{/registro}" style="color: #6B7280; font-weight: normal; text-decoration: underline;">Volver al registro</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .login-icon { border-radius: 12px; }
+</style>
+</body>
+</html>
