@@ -552,16 +552,64 @@
 @media (max-width: 768px) {
     .sidebar {
         position: fixed;
-        top: 0;
-        left: -280px;
-        height: 100vh;
-        width: 270px;
-        z-index: 20;
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 64px;
+        flex-direction: row;
+        padding: 0;
+        border-right: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        z-index: 1000;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
+        justify-content: space-around;
+        align-items: center;
+        background-color: rgba(27, 27, 41, 0.95);
+        backdrop-filter: blur(10px);
     }
     
-    .sidebar.mobile-open {
-        transform: translateX(280px);
+    .sidebar-header, .brand-info, .sidebar-bottom {
+        display: none !important;
+    }
+    
+    .nav-menu {
+        flex-direction: row;
+        justify-content: space-around;
+        align-items: center;
+        width: 100%;
+        padding: 0 10px;
+        margin: 0;
+        gap: 0;
+    }
+    
+    .nav-item {
+        flex-direction: column;
+        padding: 6px 0;
+        gap: 4px;
+        border-radius: 8px;
+        font-size: 10px;
+        justify-content: center;
+        flex: 1;
+        text-align: center;
+    }
+    
+    .nav-item svg {
+        margin: 0 auto;
+        width: 22px;
+        height: 22px;
+    }
+    
+    .nav-item.active {
+        background-color: transparent;
+        color: var(--primary);
+    }
+    
+    .nav-item.active svg {
+        fill: rgba(124, 58, 237, 0.2);
+    }
+    
+    .nav-item:hover {
+        background-color: transparent;
     }
     
     .sidebar-toggle-btn {
@@ -569,7 +617,7 @@
     }
     
     #mobileMenuBtn {
-        display: block !important;
+        display: none !important; /* Menu is always visible at bottom */
     }
 
     .nav-left {

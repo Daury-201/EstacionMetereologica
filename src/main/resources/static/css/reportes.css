@@ -329,5 +329,78 @@ input:checked + .slider:before { transform: translateX(20px); }
     background: #F8FAFC; border-radius: 0 0 16px 16px;
     flex-shrink: 0;
 }
-.btn-outline { background: #ffffff; border: 1px solid #CBD5E1; color: #475569; }
 .btn-outline:hover { background: #F1F5F9; color: #0F172A; }
+
+/* ==========================================================================
+   LAYOUT BASE REEMPLAZO DE ESTILOS INLINE
+   ========================================================================== */
+.management-charts-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN (Mobile & Tablet)
+   ========================================================================== */
+@media (max-width: 768px) {
+    /* Ajustes para la barra de navegación inferior en móviles (agregado en dashboard.css pero reforzado aquí por si acaso) */
+    .dashboard-content-area {
+        padding: 12px;
+        padding-bottom: 80px; /* Espacio para barra inferior */
+    }
+
+    /* Formulario de filtros */
+    #report-filter-form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .filter-group {
+        width: 100%;
+        min-width: unset;
+    }
+    .filter-actions {
+        width: 100%;
+        flex-direction: column;
+        margin-left: 0;
+        margin-top: 8px;
+    }
+    .filter-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Grilla de resumen (cards arriba) */
+    .reports-summary {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    /* Gráficos colapsados a 1 columna */
+    .management-charts-container {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    /* Tabla responsiva */
+    .table-card {
+        padding: 12px;
+    }
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0;
+        border-radius: 8px;
+    }
+    .report-table {
+        min-width: 700px; /* Fuerza el scroll horizontal interno para no romper la pantalla */
+    }
+    .table-header-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+}

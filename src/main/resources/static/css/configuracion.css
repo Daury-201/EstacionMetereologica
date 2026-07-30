@@ -398,6 +398,201 @@ select.form-input {
     font-size: 20px;
 }
 
+    flex-shrink: 0;
+}
+
+.avatar-info p {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1A1A2E;
+    margin: 0 0 4px 0;
+}
+
+.avatar-info span {
+    font-size: 13px;
+    color: #6B7280;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.btn-outline {
+    padding: 8px 16px;
+    border: 1px solid #D1D5DB;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-outline:hover {
+    background: #F3F4F6;
+    border-color: #9CA3AF;
+}
+
+.btn-primary {
+    padding: 10px 20px;
+    background: var(--primary);
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+
+.btn-danger {
+    padding: 10px 20px;
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #DC2626;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-danger:hover {
+    background: #FEE2E2;
+}
+
+.toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0;
+    border-bottom: 1px solid #F3F4F6;
+}
+
+.toggle-row:last-child {
+    border-bottom: none;
+}
+
+.toggle-info p {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1A1A2E;
+    margin: 0 0 4px 0;
+}
+
+.toggle-info span {
+    font-size: 13px;
+    color: #6B7280;
+}
+
+.toggle {
+    width: 44px;
+    height: 24px;
+    border-radius: 12px;
+    background: var(--primary);
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s;
+    flex-shrink: 0;
+}
+
+.toggle::after {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    top: 3px;
+    right: 3px;
+    transition: all 0.3s;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.toggle.off {
+    background: #E5E7EB;
+}
+
+.toggle.off::after {
+    left: 3px;
+    right: auto;
+}
+
+.divider {
+    height: 1px;
+    background: #E5E7EB;
+    margin: 16px 0;
+}
+
+.badge-role {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    background: #F5F3FF;
+    border-radius: 16px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.section-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #6B7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 16px;
+}
+
+.footer-btns {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 16px;
+    padding-top: 20px;
+    border-top: 1px solid #F3F4F6;
+}
+
+.btn-cancel {
+    padding: 10px 20px;
+    border: 1px solid #D1D5DB;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-cancel:hover {
+    background: #F9FAFB;
+}
+
+.alert-success {
+    background: #ECFDF5;
+    border: 1px solid #A7F3D0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #065F46;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 24px;
+    animation: fadeIn 0.3s ease;
+}
+.alert-success i {
+    color: #10B981;
+    font-size: 20px;
+}
+
 /* ==========================================================================
    RESPONSIVE DESIGN (Mobile & Tablet)
    ========================================================================== */
@@ -405,15 +600,46 @@ select.form-input {
 @media (max-width: 768px) {
     .config-layout {
         flex-direction: column;
+        gap: 16px;
     }
     .left-col {
         width: 100%;
     }
+    
+    /* Transformar menú lateral en pestañas horizontales deslizables */
+    .section-nav {
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+        border-radius: 8px;
+    }
+    
+    .section-nav-header {
+        display: none; /* Ocultar título para ahorrar espacio */
+    }
+    
+    .nav-section-item {
+        border-bottom: 3px solid transparent;
+        border-right: 1px solid #F3F4F6;
+        padding: 12px 16px;
+        flex: 1;
+        justify-content: center;
+        border-left: none !important;
+    }
+    
+    .nav-section-item.active {
+        border-bottom: 3px solid var(--primary);
+        background: #F5F3FF;
+    }
+    
     .form-row {
         grid-template-columns: 1fr;
     }
     .config-content {
-        padding: 16px;
+        padding: 12px;
+        padding-bottom: 80px; /* Espacio para barra inferior */
     }
     .card {
         padding: 16px;

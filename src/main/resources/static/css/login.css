@@ -804,3 +804,26 @@ body {
         top: 16px;
     }
 }
+
+/* Optimización para altura reducida (ej. teclados móviles abiertos) */
+@media screen and (max-height: 700px) and (max-width: 480px) {
+    .login-right {
+        align-items: flex-start;
+        padding-top: 20px;
+    }
+    .login-icon {
+        display: none; /* Ocultar el logo para dar espacio al teclado */
+    }
+    .login-subtitle {
+        display: none; /* Ocultar el texto de 'Bienvenido' */
+    }
+    .login-card-content {
+        padding: 20px 16px;
+    }
+    .login-header {
+        margin-bottom: 16px;
+    }
+    .form-group {
+        margin-bottom: 14px;
+    }
+}
