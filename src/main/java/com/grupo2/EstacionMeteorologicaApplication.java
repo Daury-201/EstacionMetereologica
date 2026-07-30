@@ -8,11 +8,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableAsync
 public class EstacionMeteorologicaApplication {
 	public static void main(String[] args) {
-		SpringApplication.run(EstacionMeteorologicaApplication.class, args);
-	}
-
-	@jakarta.annotation.PostConstruct
-	public void init() {
 		java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("America/Santo_Domingo"));
+		SpringApplication.run(EstacionMeteorologicaApplication.class, args);
 	}
 }
