@@ -2,6 +2,7 @@ package com.grupo2;
 import com.grupo2.controlador.LecturaController;
 import com.grupo2.modelo.LecturaSensor;
 import com.grupo2.servicio.AlarmaService;
+import com.grupo2.servicio.PucmmHubService;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
@@ -24,12 +25,16 @@ public class LectorEstacion {
     private final JdbcTemplate jdbcTemplate;
     private final LecturaController lecturaController;
     private final AlarmaService alarmaService;
+    private final PucmmHubService pucmmHubService;
+
     public LectorEstacion(JdbcTemplate jdbcTemplate,
                           LecturaController lecturaController,
-                          AlarmaService alarmaService) {
+                          AlarmaService alarmaService,
+                          PucmmHubService pucmmHubService) {
         this.jdbcTemplate = jdbcTemplate;
         this.lecturaController = lecturaController;
         this.alarmaService = alarmaService;
+        this.pucmmHubService = pucmmHubService;
     }
     private static final DateTimeFormatter FORMATO_ENTRADA =
             DateTimeFormatter.ISO_LOCAL_DATE_TIME;
@@ -129,14 +134,16 @@ public class LectorEstacion {
                                     l.setDireccionViento(rs.getString("direccion_viento"));
                                     v = rs.getDouble("lluvia");
                                     l.setLluvia(rs.wasNull() ? null : v);
+                                    v = rs.getDouble("humedad_suelo");
                                     l.setHumedadSuelo(rs.wasNull() ? null : v);
                                     l.setOrigen(rs.getString("origen"));
                                     return l;
                                 },
                                 estacionId
                         );
-                        if (!resultado.isEmpty() && sensor.equals("humedad_suelo")) {
+                        if (!resultado.isEmpty() && sensor.equals("direccion_viento")) {
                             lecturaController.enviarNuevaLectura(resultado.get(0));
+                            pucmmHubService.enviarLectura(resultado.get(0));
                         }
                         String unidad = switch (sensor) {
                             case "temperatura" -> "°C";
