@@ -491,10 +491,50 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.removeChild(form);
         closeModal();
     });
+    function initWebSocket() {
+        if (typeof SockJS === 'undefined' || typeof Stomp === 'undefined') return;
+        const socket = new SockJS('/ws');
+        const stompClient = Stomp.over(socket);
+        stompClient.debug = null;
+        stompClient.connect({}, function (frame) {
+            stompClient.subscribe('/topic/lecturas', function (mensaje) {
+                const lectura = JSON.parse(mensaje.body);
+                const currentEst = parseInt(estacionIdSelect.value);
+                if (currentEst !== 0 && lectura.estacionId !== currentEst) return;
+                
+                // Check if date is within selected range (optional, but good practice)
+                const readingDate = lectura.fechaHora.split('T')[0];
+                if (readingDate < fechaInicioInput.value || readingDate > fechaFinInput.value) return;
+
+                lecturasGlobales.push(lectura);
+                if (valRegistros) {
+                    valRegistros.textContent = lecturasGlobales.length;
+                }
+                sortLecturas();
+                currentPage = 1;
+                renderTablePage();
+                
+                // Resaltar la primera fila
+                setTimeout(() => {
+                    const firstRow = tbody.querySelector('tr');
+                    if (firstRow) {
+                        firstRow.style.backgroundColor = '#e0f2fe';
+                        firstRow.style.transition = 'background-color 2s';
+                        setTimeout(() => firstRow.style.backgroundColor = '', 2000);
+                    }
+                }, 100);
+            });
+        }, function(error) {
+            setTimeout(initWebSocket, 5000);
+        });
+    }
+
     document.getElementById('btn-exportar-csv').addEventListener('click', () => {
         const url = `/reportes/csv?estacionId=${estacionIdSelect.value}&inicio=${fechaInicioInput.value}&fin=${fechaFinInput.value}`;
         window.location.href = url;
     });
+    
+    initWebSocket();
     initSortHeaders();
     initEstacionesActivasBadge();
     cargarDatos();
