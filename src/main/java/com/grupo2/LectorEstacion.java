@@ -100,14 +100,17 @@ public class LectorEstacion {
                         }
 
                         Object valorDb = sensor.equals("direccion_viento") ? valor : Double.parseDouble(valor);
-                        String checkSql = "SELECT count(*) FROM lecturas_sensores WHERE estacion_id = ? AND fecha_hora = CAST(? AS TIMESTAMP)";
-                        int count = jdbcTemplate.queryForObject(checkSql, Integer.class, estacionId, timestamp);
-                        if (count > 0) {
-                            String updateSql = "UPDATE lecturas_sensores SET " + sensor + " = ?, origen = 'ARDUINO' WHERE estacion_id = ? AND fecha_hora = CAST(? AS TIMESTAMP)";
-                            jdbcTemplate.update(updateSql, valorDb, estacionId, timestamp);
-                        } else {
-                            String insertSql = "INSERT INTO lecturas_sensores (estacion_id, fecha_hora, origen, " + sensor + ") VALUES (?, CAST(? AS TIMESTAMP), 'ARDUINO', ?)";
-                            jdbcTemplate.update(insertSql, estacionId, timestamp, valorDb);
+                        
+                        synchronized (this) {
+                            String checkSql = "SELECT count(*) FROM lecturas_sensores WHERE estacion_id = ? AND fecha_hora = CAST(? AS TIMESTAMP)";
+                            int count = jdbcTemplate.queryForObject(checkSql, Integer.class, estacionId, timestamp);
+                            if (count > 0) {
+                                String updateSql = "UPDATE lecturas_sensores SET " + sensor + " = ?, origen = 'ARDUINO' WHERE estacion_id = ? AND fecha_hora = CAST(? AS TIMESTAMP)";
+                                jdbcTemplate.update(updateSql, valorDb, estacionId, timestamp);
+                            } else {
+                                String insertSql = "INSERT INTO lecturas_sensores (estacion_id, fecha_hora, origen, " + sensor + ") VALUES (?, CAST(? AS TIMESTAMP), 'ARDUINO', ?)";
+                                jdbcTemplate.update(insertSql, estacionId, timestamp, valorDb);
+                            }
                         }
                         if (!sensor.equals("direccion_viento")) {
                             alarmaService.evaluarSensor(estacionId, sensor, (Double) valorDb);
@@ -141,9 +144,11 @@ public class LectorEstacion {
                                 },
                                 estacionId
                         );
-                        if (!resultado.isEmpty() && sensor.equals("direccion_viento")) {
+                        if (!resultado.isEmpty()) {
                             lecturaController.enviarNuevaLectura(resultado.get(0));
-                            pucmmHubService.enviarLectura(resultado.get(0));
+                            if (sensor.equals("direccion_viento")) {
+                                pucmmHubService.enviarLectura(resultado.get(0));
+                            }
                         }
                         String unidad = switch (sensor) {
                             case "temperatura" -> "°C";

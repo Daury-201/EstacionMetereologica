@@ -506,23 +506,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 const readingDate = lectura.fechaHora.split('T')[0];
                 if (readingDate < fechaInicioInput.value || readingDate > fechaFinInput.value) return;
 
-                lecturasGlobales.push(lectura);
-                if (valRegistros) {
-                    valRegistros.textContent = lecturasGlobales.length;
-                }
-                sortLecturas();
-                currentPage = 1;
-                renderTablePage();
-                
-                // Resaltar la primera fila
-                setTimeout(() => {
-                    const firstRow = tbody.querySelector('tr');
-                    if (firstRow) {
-                        firstRow.style.backgroundColor = '#e0f2fe';
-                        firstRow.style.transition = 'background-color 2s';
-                        setTimeout(() => firstRow.style.backgroundColor = '', 2000);
+                // Buscar si ya existe para actualizarla
+                const index = lecturasGlobales.findIndex(l => l.fechaHora === lectura.fechaHora && l.estacionId === lectura.estacionId);
+                if (index >= 0) {
+                    lecturasGlobales[index] = lectura;
+                } else {
+                    lecturasGlobales.push(lectura);
+                    if (valRegistros) {
+                        valRegistros.textContent = lecturasGlobales.length;
                     }
-                }, 100);
+                }
+                
+                // Agrupar los renders si llegan muy rápido
+                if (window.renderTimeout) clearTimeout(window.renderTimeout);
+                window.renderTimeout = setTimeout(() => {
+                    sortLecturas();
+                    currentPage = 1;
+                    renderTablePage();
+                    
+                    // Resaltar la primera fila
+                    setTimeout(() => {
+                        const firstRow = tbody.querySelector('tr');
+                        if (firstRow) {
+                            firstRow.style.backgroundColor = '#e0f2fe';
+                            firstRow.style.transition = 'background-color 2s';
+                            setTimeout(() => firstRow.style.backgroundColor = '', 2000);
+                        }
+                    }, 100);
+                }, 300);
             });
         }, function(error) {
             setTimeout(initWebSocket, 5000);
