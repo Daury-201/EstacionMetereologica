@@ -45,11 +45,6 @@ public class LectorEstacion {
         try {
             System.out.println("Base de datos conectada.");
             String clientId = "LectorG2-" + System.currentTimeMillis();
-            MqttClient cliente = new MqttClient(
-                    broker,
-                    clientId,
-                    new MemoryPersistence()
-            );
             MqttConnectOptions opciones = new MqttConnectOptions();
             if (usuario != null && !usuario.isEmpty()) {
                 opciones.setUserName(usuario);
@@ -59,7 +54,21 @@ public class LectorEstacion {
             }
             opciones.setAutomaticReconnect(true);
             opciones.setCleanSession(true);
-            cliente.setCallback(new MqttCallback() {
+
+            String[] brokers = {
+                broker,
+                "ws://broker.hivemq.com:8000/mqtt",
+                "wss://broker.hivemq.com:8884/mqtt"
+            };
+            
+            MqttClient clienteFinal = null;
+            
+            for (String b : brokers) {
+                try {
+                    System.out.println("Intentando conectar MQTT a: " + b);
+                    MqttClient cliente = new MqttClient(b, clientId, new MemoryPersistence());
+                    
+                    cliente.setCallback(new MqttCallback() {
                 @Override
                 public void connectionLost(Throwable cause) {
                     System.out.println("Conexión MQTT perdida.");
@@ -170,10 +179,22 @@ public class LectorEstacion {
                 public void deliveryComplete(IMqttDeliveryToken token) {
                 }
             });
-            cliente.connect(opciones);
-            cliente.subscribe(topicGlobal, 1);
-            System.out.println("MQTT conectado.");
-            System.out.println("Escuchando: " + topicGlobal);
+            
+                    cliente.connect(opciones);
+                    cliente.subscribe(topicGlobal, 1);
+                    System.out.println("MQTT conectado exitosamente a: " + b);
+                    System.out.println("Escuchando: " + topicGlobal);
+                    clienteFinal = cliente;
+                    break;
+                } catch (Exception e) {
+                    System.err.println("Error conectando a " + b + ": " + e.getMessage());
+                }
+            }
+            
+            if (clienteFinal == null || !clienteFinal.isConnected()) {
+                System.err.println("CRITICO: No se pudo conectar a ningun broker MQTT. Revisa el firewall de la red.");
+            }
+            
         } catch (Exception e) {
             System.err.println("Error iniciando LectorEstacion:");
             e.printStackTrace();
