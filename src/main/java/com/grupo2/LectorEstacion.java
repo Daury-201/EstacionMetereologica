@@ -80,8 +80,20 @@ public class LectorEstacion {
                         }
                         String estacion = partesTopic[2];
                         String sensor = partesTopic[4];
-                        int estacionId = Integer.parseInt(
-                                estacion.replace("estacion-", ""));
+                        
+                        // Convertir "estacion-1" a "EST-001"
+                        int numeroEstacion = Integer.parseInt(estacion.replace("estacion-", ""));
+                        String estacionCodigo = String.format("EST-%03d", numeroEstacion);
+                        
+                        // Buscar el ID real de la base de datos usando el código
+                        Integer estacionId;
+                        try {
+                            estacionId = jdbcTemplate.queryForObject("SELECT id FROM estaciones WHERE codigo = ?", Integer.class, estacionCodigo);
+                        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+                            System.err.println("Estación no encontrada en la BD con el código: " + estacionCodigo);
+                            return;
+                        }
+
                         Object valorDb = sensor.equals("direccion_viento") ? valor : Double.parseDouble(valor);
                         String checkSql = "SELECT count(*) FROM lecturas_sensores WHERE estacion_id = ? AND fecha_hora = CAST(? AS TIMESTAMP)";
                         int count = jdbcTemplate.queryForObject(checkSql, Integer.class, estacionId, timestamp);
