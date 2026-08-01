@@ -45,6 +45,11 @@ public class LectorEstacion {
         try {
             System.out.println("Base de datos conectada.");
             String clientId = "LectorG2-" + System.currentTimeMillis();
+            MqttClient cliente = new MqttClient(
+                    broker,
+                    clientId,
+                    new MemoryPersistence()
+            );
             MqttConnectOptions opciones = new MqttConnectOptions();
             if (usuario != null && !usuario.isEmpty()) {
                 opciones.setUserName(usuario);
@@ -54,21 +59,7 @@ public class LectorEstacion {
             }
             opciones.setAutomaticReconnect(true);
             opciones.setCleanSession(true);
-
-            String[] brokers = {
-                broker,
-                "ws://broker.hivemq.com:8000/mqtt",
-                "wss://broker.hivemq.com:8884/mqtt"
-            };
-            
-            MqttClient clienteFinal = null;
-            
-            for (String b : brokers) {
-                try {
-                    System.out.println("Intentando conectar MQTT a: " + b);
-                    MqttClient cliente = new MqttClient(b, clientId, new MemoryPersistence());
-                    
-                    cliente.setCallback(new MqttCallback() {
+            cliente.setCallback(new MqttCallback() {
                 @Override
                 public void connectionLost(Throwable cause) {
                     System.out.println("Conexión MQTT perdida.");
@@ -94,11 +85,11 @@ public class LectorEstacion {
                         }
                         String estacion = partesTopic[2];
                         String sensor = partesTopic[4];
-                        
+
                         // Convertir "estacion-1" a "EST-001"
                         int numeroEstacion = Integer.parseInt(estacion.replace("estacion-", ""));
                         String estacionCodigo = String.format("EST-%03d", numeroEstacion);
-                        
+
                         // Buscar el ID real de la base de datos usando el código
                         Integer estacionId;
                         try {
@@ -109,17 +100,14 @@ public class LectorEstacion {
                         }
 
                         Object valorDb = sensor.equals("direccion_viento") ? valor : Double.parseDouble(valor);
-                        
-                        synchronized (this) {
-                            String checkSql = "SELECT count(*) FROM lecturas_sensores WHERE estacion_id = ? AND fecha_hora = CAST(? AS TIMESTAMP)";
-                            int count = jdbcTemplate.queryForObject(checkSql, Integer.class, estacionId, timestamp);
-                            if (count > 0) {
-                                String updateSql = "UPDATE lecturas_sensores SET " + sensor + " = ?, origen = 'ARDUINO' WHERE estacion_id = ? AND fecha_hora = CAST(? AS TIMESTAMP)";
-                                jdbcTemplate.update(updateSql, valorDb, estacionId, timestamp);
-                            } else {
-                                String insertSql = "INSERT INTO lecturas_sensores (estacion_id, fecha_hora, origen, " + sensor + ") VALUES (?, CAST(? AS TIMESTAMP), 'ARDUINO', ?)";
-                                jdbcTemplate.update(insertSql, estacionId, timestamp, valorDb);
-                            }
+                        String checkSql = "SELECT count(*) FROM lecturas_sensores WHERE estacion_id = ? AND fecha_hora = CAST(? AS TIMESTAMP)";
+                        int count = jdbcTemplate.queryForObject(checkSql, Integer.class, estacionId, timestamp);
+                        if (count > 0) {
+                            String updateSql = "UPDATE lecturas_sensores SET " + sensor + " = ?, origen = 'ARDUINO' WHERE estacion_id = ? AND fecha_hora = CAST(? AS TIMESTAMP)";
+                            jdbcTemplate.update(updateSql, valorDb, estacionId, timestamp);
+                        } else {
+                            String insertSql = "INSERT INTO lecturas_sensores (estacion_id, fecha_hora, origen, " + sensor + ") VALUES (?, CAST(? AS TIMESTAMP), 'ARDUINO', ?)";
+                            jdbcTemplate.update(insertSql, estacionId, timestamp, valorDb);
                         }
                         if (!sensor.equals("direccion_viento")) {
                             alarmaService.evaluarSensor(estacionId, sensor, (Double) valorDb);
@@ -154,9 +142,24 @@ public class LectorEstacion {
                                 estacionId
                         );
                         if (!resultado.isEmpty()) {
-                            lecturaController.enviarNuevaLectura(resultado.get(0));
-                            if (sensor.equals("direccion_viento")) {
-                                pucmmHubService.enviarLectura(resultado.get(0));
+                            LecturaSensor lecturaActual = resultado.get(0);
+                            // Actualizar la interfaz (WebSocket) con cada cambio
+                            lecturaController.enviarNuevaLectura(lecturaActual);
+
+                            // Enviar al Hub externo solo cuando la lectura esté completa (todos los sensores presentes)
+                            boolean estaCompleta = lecturaActual.getTemperatura() != null &&
+                                                   lecturaActual.getHumedadAire() != null &&
+                                                   lecturaActual.getPresion() != null &&
+                                                   lecturaActual.getVelocidadViento() != null &&
+                                                   lecturaActual.getDireccionViento() != null &&
+                                                   lecturaActual.getLluvia() != null &&
+                                                   lecturaActual.getHumedadSuelo() != null;
+                            
+                            if (estaCompleta && sensor.equals("direccion_viento")) {
+                                pucmmHubService.enviarLectura(lecturaActual);
+                            } else if (estaCompleta && !sensor.equals("direccion_viento")) {
+                                // Alternativamente, puedes enviarla en cuanto esté completa sin importar qué sensor llegó último
+                                // pucmmHubService.enviarLectura(lecturaActual);
                             }
                         }
                         String unidad = switch (sensor) {
@@ -179,22 +182,10 @@ public class LectorEstacion {
                 public void deliveryComplete(IMqttDeliveryToken token) {
                 }
             });
-            
-                    cliente.connect(opciones);
-                    cliente.subscribe(topicGlobal, 1);
-                    System.out.println("MQTT conectado exitosamente a: " + b);
-                    System.out.println("Escuchando: " + topicGlobal);
-                    clienteFinal = cliente;
-                    break;
-                } catch (Exception e) {
-                    System.err.println("Error conectando a " + b + ": " + e.getMessage());
-                }
-            }
-            
-            if (clienteFinal == null || !clienteFinal.isConnected()) {
-                System.err.println("CRITICO: No se pudo conectar a ningun broker MQTT. Revisa el firewall de la red.");
-            }
-            
+            cliente.connect(opciones);
+            cliente.subscribe(topicGlobal, 1);
+            System.out.println("MQTT conectado.");
+            System.out.println("Escuchando: " + topicGlobal);
         } catch (Exception e) {
             System.err.println("Error iniciando LectorEstacion:");
             e.printStackTrace();
