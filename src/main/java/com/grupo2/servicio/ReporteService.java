@@ -50,6 +50,8 @@ public class ReporteService {
         }
         Map<String, Object> datos = new HashMap<>();
         datos.put("lecturas", lecturas);
+        List<LecturaSensor> lecturasTabla = lecturas.size() > 100 ? lecturas.subList(0, 100) : lecturas;
+        datos.put("lecturasTabla", lecturasTabla);
         datos.put("tempPromedio", countTemp > 0 ? sumaTemp / countTemp : 0.0);
         datos.put("humedadPromedio", countHum > 0 ? sumaHum / countHum : 0.0);
         datos.put("presionPromedio", countPres > 0 ? sumaPres / countPres : 0.0);
