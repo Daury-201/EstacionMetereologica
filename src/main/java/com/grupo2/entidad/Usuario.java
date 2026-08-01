@@ -41,6 +41,9 @@ public class Usuario {
     @Column(name = "reportes_diarios")
     private Boolean reportesDiarios = false;
 
+    @Column(name = "reportes_semanales")
+    private Boolean reportesSemanales = false;
+
     @Column(name = "sonido_activo", columnDefinition = "boolean default true")
     private Boolean sonidoActivo = true;
 
@@ -86,15 +89,17 @@ public class Usuario {
     public void setRol(String rol) { this.rol = rol; }
     public String getFotoUrl() { return fotoUrl; }
     public void setFotoUrl(String fotoUrl) { this.fotoUrl = fotoUrl; }
-    public Boolean getNotificarAlarmas() { return notificarAlarmas; }
+    public Boolean getNotificarAlarmas() { return notificarAlarmas != null ? notificarAlarmas : false; }
     public void setNotificarAlarmas(Boolean notificarAlarmas) { this.notificarAlarmas = notificarAlarmas; }
-    public Boolean getNotificarDesconexion() { return notificarDesconexion; }
+    public Boolean getNotificarDesconexion() { return notificarDesconexion != null ? notificarDesconexion : false; }
     public void setNotificarDesconexion(Boolean notificarDesconexion) { this.notificarDesconexion = notificarDesconexion; }
-    public Boolean getNotificarSyncFallida() { return notificarSyncFallida; }
+    public Boolean getNotificarSyncFallida() { return notificarSyncFallida != null ? notificarSyncFallida : false; }
     public void setNotificarSyncFallida(Boolean notificarSyncFallida) { this.notificarSyncFallida = notificarSyncFallida; }
-    public Boolean getReportesDiarios() { return reportesDiarios; }
+    public Boolean getReportesDiarios() { return reportesDiarios != null ? reportesDiarios : false; }
     public void setReportesDiarios(Boolean reportesDiarios) { this.reportesDiarios = reportesDiarios; }
-    public Boolean getSonidoActivo() { return sonidoActivo; }
+    public Boolean getReportesSemanales() { return reportesSemanales != null ? reportesSemanales : false; }
+    public void setReportesSemanales(Boolean reportesSemanales) { this.reportesSemanales = reportesSemanales; }
+    public Boolean getSonidoActivo() { return sonidoActivo != null ? sonidoActivo : true; }
     public void setSonidoActivo(Boolean sonidoActivo) { this.sonidoActivo = sonidoActivo; }
 
     public String getEmail() { return email; }

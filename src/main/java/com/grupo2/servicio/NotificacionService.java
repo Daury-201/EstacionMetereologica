@@ -16,10 +16,12 @@ public class NotificacionService {
 
     private final UsuarioRepository usuarioRepository;
     private final EmailService emailService;
+    private final ReporteService reporteService;
 
-    public NotificacionService(UsuarioRepository usuarioRepository, EmailService emailService) {
+    public NotificacionService(UsuarioRepository usuarioRepository, EmailService emailService, ReporteService reporteService) {
         this.usuarioRepository = usuarioRepository;
         this.emailService = emailService;
+        this.reporteService = reporteService;
     }
 
     @Async
@@ -80,6 +82,47 @@ public class NotificacionService {
                         "Atentamente,\nEquipo Estación Meteorológica";
                 emailService.enviarCorreoSimple(u.getEmail(), asunto, mensaje);
             }
+        }
+    }
+
+    // Reporte semanal los Lunes a las 8:00 AM
+    @Scheduled(cron = "0 0 8 ? * MON")
+    public void enviarReporteSemanal() {
+        List<Usuario> usuarios = usuarioRepository.findAll();
+        boolean generarPdf = usuarios.stream().anyMatch(u -> Boolean.TRUE.equals(u.getReportesSemanales()) && u.getEmail() != null);
+        
+        if (!generarPdf) return;
+        
+        try {
+            LocalDateTime fin = LocalDateTime.now();
+            LocalDateTime inicio = fin.minusDays(7);
+            
+            // 0 = Todas las estaciones
+            java.util.Map<String, Object> datos = reporteService.getDatosReporte(0, inicio, fin);
+            String rango = inicio.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) + " - " + 
+                           fin.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            
+            // Incluir las tablas y graficos lógicos para que Thymeleaf pueda renderizar si lo requiere (aunque los de imagen base64 no los podemos inyectar aquí tan fácil, dejaremos los de texto y tablas).
+            datos.put("incluirMeteorologia", false); // Sin gráficos visuales generados por frontend
+            datos.put("incluirGestion", false);
+            datos.put("incluirTablaLecturas", true);
+            datos.put("variableFiltro", "all");
+            
+            byte[] pdfBytes = reporteService.generarPdfReporte(datos, "Todas las Estaciones", rango);
+            String filename = "Reporte_Semanal_" + java.time.LocalDate.now().toString() + ".pdf";
+            
+            for (Usuario u : usuarios) {
+                if (Boolean.TRUE.equals(u.getReportesSemanales()) && u.getEmail() != null) {
+                    String asunto = "Reporte Ejecutivo Semanal - Estación Meteorológica";
+                    String mensaje = "Hola " + u.getNombre() + ",\n\n" +
+                            "Adjunto encontrarás el reporte ejecutivo semanal de nuestra red de estaciones correspondiente a la semana del " + rango + ".\n\n" +
+                            "Atentamente,\nEquipo Estación Meteorológica";
+                    
+                    emailService.enviarCorreoConAdjuntoPdf(u.getEmail(), asunto, mensaje, filename, pdfBytes);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al generar y enviar el reporte semanal: " + e.getMessage());
         }
     }
 }

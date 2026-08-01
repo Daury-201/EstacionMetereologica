@@ -84,4 +84,24 @@ public class EmailService {
             System.err.println("Error al enviar correo a " + email + ": " + e.getMessage());
         }
     }
+
+    public void enviarCorreoConAdjuntoPdf(String email, String asunto, String texto, String filename, byte[] attachment) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            
+            helper.setFrom(senderEmail, "Estación Meteorológica");
+            helper.setTo(email);
+            helper.setSubject(asunto);
+            helper.setText(texto, false); // false = not html, just plain text
+            
+            org.springframework.core.io.ByteArrayResource resource = new org.springframework.core.io.ByteArrayResource(attachment);
+            helper.addAttachment(filename, resource);
+            
+            mailSender.send(message);
+            System.out.println("Correo con PDF enviado a: " + email + " con asunto: " + asunto);
+        } catch (Exception e) {
+            System.err.println("Error al enviar correo con adjunto a " + email + ": " + e.getMessage());
+        }
+    }
 }

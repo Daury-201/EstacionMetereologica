@@ -117,6 +117,7 @@
                             <input type="hidden" name="notificarDesconexion" id="val-notificarDesconexion" th:value="${usuarioActual != null ? usuarioActual.notificarDesconexion : false}">
                             <input type="hidden" name="notificarSyncFallida" id="val-notificarSyncFallida" th:value="${usuarioActual != null ? usuarioActual.notificarSyncFallida : false}">
                             <input type="hidden" name="reportesDiarios" id="val-reportesDiarios" th:value="${usuarioActual != null ? usuarioActual.reportesDiarios : false}">
+                            <input type="hidden" name="reportesSemanales" id="val-reportesSemanales" th:value="${usuarioActual != null ? usuarioActual.reportesSemanales : false}">
 
                             <div class="toggle-row">
                                 <div class="toggle-info">
@@ -142,13 +143,20 @@
                                 <div class="toggle" th:classappend="${usuarioActual != null and usuarioActual.notificarSyncFallida} ? 'active' : 'off'"
                                      onclick="this.classList.toggle('active'); this.classList.toggle('off'); document.getElementById('val-notificarSyncFallida').value = this.classList.contains('active');"></div>
                             </div>
-                            <div class="toggle-row">
-                                <div class="toggle-info">
-                                    <p>Reportes autom&aacute;ticos</p>
-                                    <span>Enviar reporte diario por correo</span>
+                            <div class="toggle-row" style="display: block; align-items: flex-start;">
+                                <div class="toggle-info" style="margin-bottom: 10px;">
+                                    <p>Frecuencia de Reportes Autom&aacute;ticos</p>
+                                    <span>Elija cu&aacute;ndo desea recibir los reportes en su correo</span>
                                 </div>
-                                <div class="toggle" th:classappend="${usuarioActual != null and usuarioActual.reportesDiarios} ? 'active' : 'off'"
-                                     onclick="this.classList.toggle('active'); this.classList.toggle('off'); document.getElementById('val-reportesDiarios').value = this.classList.contains('active');"></div>
+                                <select class="form-input" style="width: 100%; cursor: pointer;" onchange="
+                                    document.getElementById('val-reportesDiarios').value = (this.value === 'diario' || this.value === 'ambos');
+                                    document.getElementById('val-reportesSemanales').value = (this.value === 'semanal' || this.value === 'ambos');
+                                ">
+                                    <option value="ninguno" th:selected="${usuarioActual != null and !usuarioActual.reportesDiarios and !usuarioActual.reportesSemanales}">No enviar reportes</option>
+                                    <option value="diario" th:selected="${usuarioActual != null and usuarioActual.reportesDiarios and !usuarioActual.reportesSemanales}">Reporte Diario (Resumen simple)</option>
+                                    <option value="semanal" th:selected="${usuarioActual != null and !usuarioActual.reportesDiarios and usuarioActual.reportesSemanales}">Reporte Semanal (PDF Ejecutivo)</option>
+                                    <option value="ambos" th:selected="${usuarioActual != null and usuarioActual.reportesDiarios and usuarioActual.reportesSemanales}">Ambos (Diario y Semanal)</option>
+                                </select>
                             </div>
                             <div class="footer-btns" style="margin-top: 20px;">
                                 <button type="submit" class="btn-primary">Actualizar preferencias</button>
@@ -363,11 +371,11 @@
                                             <img th:if="${u.fotoUrl != null and !u.fotoUrl.isEmpty()}"
                                                  th:src="${u.fotoUrl}"
                                                  alt="Avatar"
-                                                 style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid #F3F4F6; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                                                 style="width: 32px; height: 32px; min-width: 32px; min-height: 32px; flex-shrink: 0; border-radius: 50%; object-fit: cover; border: 2px solid #F3F4F6; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
 
                                             
                                             <div th:unless="${u.fotoUrl != null and !u.fotoUrl.isEmpty()}"
-                                                 th:style="'width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: white; border: 2px solid #FFFFFF; box-shadow: 0 2px 4px rgba(0,0,0,0.05); background-color: ' + ${u.avatarColor}"
+                                                 th:style="'width: 32px; height: 32px; min-width: 32px; min-height: 32px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: white; border: 2px solid #FFFFFF; box-shadow: 0 2px 4px rgba(0,0,0,0.05); background-color: ' + ${u.avatarColor}"
                                                  th:text="${u.avatarInitials}">
                                             </div>
 

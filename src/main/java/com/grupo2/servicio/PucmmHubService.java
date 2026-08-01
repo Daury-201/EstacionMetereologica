@@ -2,7 +2,9 @@ package com.grupo2.servicio;
 
 import com.grupo2.modelo.LecturaSensor;
 import com.grupo2.entidad.IntegracionConfig;
+import com.grupo2.entidad.IntegracionSyncLog;
 import com.grupo2.repositorio.IntegracionRepository;
+import com.grupo2.repositorio.IntegracionSyncLogRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -12,6 +14,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -33,13 +36,20 @@ public class PucmmHubService {
 
     private final RestTemplate restTemplate;
     private final IntegracionRepository integracionRepository;
+    private final IntegracionSyncLogRepository syncLogRepository;
     private final JdbcTemplate jdbcTemplate;
+    private final SimpMessagingTemplate messagingTemplate;
     private static final DateTimeFormatter FORMATO_FECHA_API = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
-    public PucmmHubService(IntegracionRepository integracionRepository, JdbcTemplate jdbcTemplate) {
+    public PucmmHubService(IntegracionRepository integracionRepository, 
+                           IntegracionSyncLogRepository syncLogRepository,
+                           JdbcTemplate jdbcTemplate,
+                           SimpMessagingTemplate messagingTemplate) {
         this.restTemplate = new RestTemplate();
         this.integracionRepository = integracionRepository;
+        this.syncLogRepository = syncLogRepository;
         this.jdbcTemplate = jdbcTemplate;
+        this.messagingTemplate = messagingTemplate;
     }
 
     @Scheduled(fixedDelay = 60000) // Check every minute
@@ -100,6 +110,39 @@ public class PucmmHubService {
         System.out.println("[API PUCMM] Batch completado. Lecturas enviadas: " + enviados);
         config.setUltimaSincronizacion(hasta);
         integracionRepository.save(config);
+
+        IntegracionSyncLog log = new IntegracionSyncLog();
+        log.setFechaHora(hasta);
+        log.setPlataforma("PUCMM");
+        log.setEstacionNombre(estaciones != null && !estaciones.isEmpty() ? "Estaciones " + estaciones.toString() : "Todas las estaciones");
+        log.setRegistrosEnviados(enviados);
+        if (enviados > 0) {
+            log.setEstado("EXITOSO");
+            log.setMensaje("Sincronización completa con Hub PUCMM");
+        } else if (!lecturas.isEmpty()) {
+            log.setEstado("ERROR");
+            log.setMensaje("Fallo al enviar lecturas al Hub PUCMM");
+        } else {
+            log.setEstado("EXITOSO");
+            log.setMensaje("No hay datos nuevos para enviar");
+        }
+        syncLogRepository.save(log);
+
+        try {
+            java.util.Map<String, Object> wsPayload = new java.util.HashMap<>();
+            wsPayload.put("fechaHora", log.getFechaHora().toString());
+            wsPayload.put("plataforma", log.getPlataforma());
+            wsPayload.put("estacionNombre", log.getEstacionNombre());
+            wsPayload.put("registrosEnviados", log.getRegistrosEnviados());
+            wsPayload.put("estado", log.getEstado());
+            wsPayload.put("mensaje", log.getMensaje());
+            wsPayload.put("syncsHoy", syncLogRepository.countByFechaHoraAfter(hasta.toLocalDate().atStartOfDay()));
+            wsPayload.put("plataformasConectadas", integracionRepository.findByActivaTrue().size());
+            wsPayload.put("ultimaSincronizacion", hasta.toString());
+            messagingTemplate.convertAndSend("/topic/integracion", (Object) wsPayload);
+        } catch (Exception e) {
+            System.err.println("Error al enviar WebSocket de integración: " + e.getMessage());
+        }
     }
 
     public boolean enviarLectura(LecturaSensor lectura, String endpoint, String auth) {

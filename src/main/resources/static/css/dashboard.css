@@ -1596,11 +1596,11 @@ body.theme-light .forecast-day.active .day-temp {
         flex-direction: column;
     }
     .main-area {
-        width: 100vw;
+        width: 100%; /* Changed from 100vw to avoid scrollbar horizontal overflow */
     }
     .dashboard-content-area {
         padding: 12px;
-        padding-bottom: 80px; /* Space for the bottom navigation bar */
+        padding-bottom: 100px; /* Space for the bottom navigation bar */
         gap: 16px;
     }
     
