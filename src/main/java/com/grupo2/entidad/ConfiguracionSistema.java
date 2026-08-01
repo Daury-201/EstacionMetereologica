@@ -19,6 +19,12 @@ public class ConfiguracionSistema {
     @Column(name = "timeout_senal_min")
     private Integer timeoutSenalMin = 10;
 
+    @Column(name = "timeout_senal_valor")
+    private Integer timeoutSenalValor;
+
+    @Column(name = "timeout_senal_unidad", length = 20)
+    private String timeoutSenalUnidad;
+
     @Column(name = "formato_numerico", length = 20)
     private String formatoNumerico = "es-DO";
 
@@ -34,4 +40,18 @@ public class ConfiguracionSistema {
     public void setFormatoNumerico(String formatoNumerico) { this.formatoNumerico = formatoNumerico; }
     public Integer getTimeoutSenalMin() { return timeoutSenalMin; }
     public void setTimeoutSenalMin(Integer timeoutSenalMin) { this.timeoutSenalMin = timeoutSenalMin; }
+
+    public Integer getTimeoutSenalValor() { 
+        if (timeoutSenalValor != null) return timeoutSenalValor;
+        if (timeoutSenalMin != null) return timeoutSenalMin; // Fallback to old minutes value
+        return 30; // Default 30
+    }
+    public void setTimeoutSenalValor(Integer timeoutSenalValor) { this.timeoutSenalValor = timeoutSenalValor; }
+
+    public String getTimeoutSenalUnidad() {
+        if (timeoutSenalUnidad != null) return timeoutSenalUnidad;
+        if (timeoutSenalMin != null) return "minutos"; // If old value exists, it was in minutes
+        return "segundos"; // Default seconds
+    }
+    public void setTimeoutSenalUnidad(String timeoutSenalUnidad) { this.timeoutSenalUnidad = timeoutSenalUnidad; }
 }

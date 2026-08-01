@@ -435,7 +435,7 @@
                                 </div>
                                 <div style="padding-top: 12px; border-top: 1px solid #E5E7EB;">
                                     <label style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; color: #9CA3AF; display: block; margin-bottom: 6px;">Timeout sin se&ntilde;al global</label>
-                                    <div style="font-size: 15px; color: #1A1A2E; font-weight: 600;" th:text="${configSistema != null ? configSistema.timeoutSenalMin + ' min' : 'No definido'}">61 min</div>
+                                    <div style="font-size: 15px; color: #1A1A2E; font-weight: 600;" th:text="${configSistema != null ? configSistema.timeoutSenalValor + ' ' + configSistema.timeoutSenalUnidad : 'No definido'}">30 segundos</div>
                                 </div>
                             </div>
                         </div>
@@ -472,8 +472,14 @@
                                     </select>
                                 </div>
                                 <div class="form-group" th:if="${usuarioGlobal != null and usuarioGlobal.rol != 'VISOR'}">
-                                    <label>Timeout sin se&ntilde;al global (min)</label>
-                                    <input class="form-input" type="number" name="timeoutSenalMin" th:value="${configSistema != null ? configSistema.timeoutSenalMin : 10}" required>
+                                    <label>Timeout sin se&ntilde;al global</label>
+                                    <div style="display: flex; gap: 10px;">
+                                        <input class="form-input" type="number" name="timeoutSenalValor" th:value="${configSistema != null ? configSistema.timeoutSenalValor : 30}" required style="width: 100px;">
+                                        <select class="form-input" name="timeoutSenalUnidad" style="flex: 1;">
+                                            <option value="segundos" th:selected="${configSistema != null && configSistema.timeoutSenalUnidad == 'segundos'}">Segundos</option>
+                                            <option value="minutos" th:selected="${configSistema != null && configSistema.timeoutSenalUnidad == 'minutos'}">Minutos</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
 

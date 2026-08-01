@@ -114,7 +114,11 @@ public class EstacionService {
                 .ifPresentOrElse(lectura -> {
                     long segundos = ChronoUnit.SECONDS.between(lectura.getFechaHora(), LocalDateTime.now());
                     
-                    if (segundos >= 30L) {
+                    Integer valor = configuracionService.obtenerConfiguracionActual().getTimeoutSenalValor();
+                    String unidad = configuracionService.obtenerConfiguracionActual().getTimeoutSenalUnidad();
+                    long timeoutSegundos = "minutos".equalsIgnoreCase(unidad) ? (valor * 60L) : valor.longValue();
+                    
+                    if (segundos >= timeoutSegundos) {
                         if (!"Sin señal".equals(est.getEstado())) {
                             est.setEstado("Sin señal");
                             estacionRepository.save(est);

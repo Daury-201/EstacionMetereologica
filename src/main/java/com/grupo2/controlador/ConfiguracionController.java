@@ -121,13 +121,15 @@ public class ConfiguracionController {
     public String guardarSistema(@RequestParam("zonaHoraria") String zonaHoraria,
                                  @RequestParam("formatoFecha") String formatoFecha,
                                  @RequestParam("formatoNumerico") String formatoNumerico,
-                                 @RequestParam(value = "timeoutSenalMin", required = false) Integer timeout) {
+                                 @RequestParam(value = "timeoutSenalValor", required = false) Integer timeoutValor,
+                                 @RequestParam(value = "timeoutSenalUnidad", required = false) String timeoutUnidad) {
         ConfiguracionSistema config = configuracionService.obtenerConfiguracionActual();
         config.setZonaHoraria(zonaHoraria);
         config.setFormatoFecha(formatoFecha);
         config.setFormatoNumerico(formatoNumerico);
-        if (timeout != null) {
-            config.setTimeoutSenalMin(timeout);
+        if (timeoutValor != null) {
+            config.setTimeoutSenalValor(timeoutValor);
+            config.setTimeoutSenalUnidad(timeoutUnidad != null ? timeoutUnidad : "minutos");
         }
         configuracionService.guardarConfiguracion(config);
         
