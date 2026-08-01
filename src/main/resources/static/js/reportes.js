@@ -547,51 +547,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     initWebSocket();
     initSortHeaders();
-    initEstacionesActivasBadge();
     cargarDatos();
 });
-function initEstacionesActivasBadge() {
-    const estaciones = window.estacionesData || [];
-    const activas = estaciones.filter(e => e.estado === 'En línea').length;
-    const badgeSpan = document.querySelector('#status-badge-btn span');
-    if (badgeSpan) {
-        badgeSpan.textContent = `${activas}/${estaciones.length} Estaciones Activas`;
-    }
-    const summaryDropdown = document.getElementById('summary-dropdown');
-    const badgeBtn = document.getElementById('status-badge-btn');
-    if (!summaryDropdown || !badgeBtn) return;
-    let summaryHTML = `<div class="summary-dropdown-header">Resumen de Red (${activas} activas de ${estaciones.length})</div>`;
-    const estacionesOrdenadas = [...estaciones].sort((a, b) => {
-        if (a.estado === 'En línea' && b.estado !== 'En línea') return -1;
-        if (a.estado !== 'En línea' && b.estado === 'En línea') return 1;
-        return 0;
-    });
-    estacionesOrdenadas.forEach(est => {
-        const isOnline = est.estado === 'En línea';
-        const statusClass = isOnline ? 'status-online' : 'status-offline';
-        summaryHTML += `
-            <div class="summary-item">
-                <div class="summary-info">
-                    <h4>${est.nombre}</h4>
-                    <p>${est.codigo}</p>
-                </div>
-                <div class="summary-status ${statusClass}">${est.estado}</div>
-            </div>
-        `;
-    });
-    summaryDropdown.innerHTML = summaryHTML;
-    badgeBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const alarmsDropdown = document.getElementById('alarms-dropdown');
-        if (alarmsDropdown) alarmsDropdown.style.display = 'none';
-        const isVisible = summaryDropdown.style.display === 'flex';
-        summaryDropdown.style.display = isVisible ? 'none' : 'flex';
-        badgeBtn.style.transform = 'scale(0.97)';
-        setTimeout(() => badgeBtn.style.transform = 'scale(1)', 100);
-    });
-    document.addEventListener('click', (e) => {
-        if (!badgeBtn.contains(e.target)) {
-            summaryDropdown.style.display = 'none';
-        }
-    });
-}
+
