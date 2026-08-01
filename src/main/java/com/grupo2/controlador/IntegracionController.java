@@ -131,6 +131,9 @@ public class IntegracionController {
         if ("pucmm".equalsIgnoreCase(plataforma)) {
             String url = request.getOrDefault("webhookUrl", "https://itt363-hub.eict.ce.pucmm.edu.do/api/");
             String token = request.getOrDefault("token", "bDYmf63tj6v2");
+            if (token == null || token.isEmpty()) {
+                token = "bDYmf63tj6v2";
+            }
             com.grupo2.modelo.LecturaSensor dummy = new com.grupo2.modelo.LecturaSensor();
             dummy.setEstacionId(1);
             dummy.setFechaHora(LocalDateTime.now());

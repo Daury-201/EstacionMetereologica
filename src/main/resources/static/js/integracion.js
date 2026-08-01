@@ -182,16 +182,11 @@ function cargarEstadoPlataforma(plataforma) {
                 document.getElementById('webhookUrl').readOnly = true;
                 const label = document.querySelector('label[for="webhookUrl"]');
                 if(label) label.innerText = 'API Endpoint';
-                
-                document.getElementById('token-group').style.display = 'none';
             } else if (plataforma === 'pucmm') {
                 document.getElementById('webhookUrl').value = data.webhookUrl || 'https://itt363-hub.eict.ce.pucmm.edu.do/api/';
                 document.getElementById('webhookUrl').readOnly = false;
                 const label = document.querySelector('label[for="webhookUrl"]');
                 if(label) label.innerText = 'URL Webhook';
-                
-                document.getElementById('token-group').style.display = 'block';
-                document.getElementById('token').value = data.token || '';
             }
             document.getElementById('toggle-activa').checked = data.activa || false;
             inicializarChips();
@@ -217,7 +212,7 @@ function guardarConfiguracion() {
         intervaloMin: parseInt(document.getElementById('intervalo').value),
         estacionesIds: document.getElementById('estacionesIds').value,
         webhookUrl: document.getElementById('webhookUrl').value,
-        token: document.getElementById('token') ? document.getElementById('token').value : '',
+        token: '',
         activa: document.getElementById('toggle-activa').checked
     };
     const btn = document.getElementById('btn-save-config');
@@ -360,7 +355,7 @@ function testConnectionInteractive() {
     
     const plataforma = document.getElementById('plataformaSeleccionada').value;
     const webhookUrl = document.getElementById('webhookUrl').value;
-    const token = document.getElementById('token') ? document.getElementById('token').value : '';
+    const token = '';
 
     const lines = [
         `> Inicializando test de conexión...`,
