@@ -640,9 +640,16 @@ select.form-input {
     }
     .config-content {
         padding: 12px;
-        padding-bottom: 80px; /* Espacio para barra inferior */
+        padding-bottom: 100px; /* Espacio para barra inferior flotante */
     }
     .card {
         padding: 16px;
+    }
+    
+    /* Áreas táctiles más grandes */
+    .btn, .btn-primary, .btn-outline, .btn-danger, .form-input, select.form-input {
+        min-height: 48px;
+        font-size: 14px;
+        justify-content: center;
     }
 }

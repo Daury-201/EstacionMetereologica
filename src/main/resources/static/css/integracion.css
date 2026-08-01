@@ -643,4 +643,20 @@
     table {
         min-width: 600px;
     }
+
+    /* Tap targets más grandes */
+    .btn, .btn-primary, .form-control {
+        min-height: 48px;
+        font-size: 14px;
+        justify-content: center;
+    }
+    
+    .interval-chip {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        min-width: 100px;
+    }
 }
