@@ -252,7 +252,7 @@ function initCharts() {
         annotations: {
             yaxis: [
                 { y: 35, borderColor: '#EF4444', label: { borderColor: '#EF4444', style: { color: '#fff', background: '#EF4444' }, text: 'Peligro Calor' } },
-                { y: 15, borderColor: '#3B82F6', label: { borderColor: '#3B82F6', style: { color: '#fff', background: '#3B82F6' }, text: 'FrÃ­o Extremo' } }
+                { y: 15, borderColor: '#3B82F6', label: { borderColor: '#3B82F6', style: { color: '#fff', background: '#3B82F6' }, text: 'Frío Extremo' } }
             ]
         }
     };
@@ -284,7 +284,7 @@ function initCharts() {
     const optionsPresion = {
         ...baseOpts,
         chart: { ...baseOpts.chart, type: 'area', height: 280, id: 'chartP' },
-        series: [{ name: 'PresiÃ³n (hPa)', data: [] }],
+        series: [{ name: 'Presión (hPa)', data: [] }],
         colors: ['#6366F1'],
         fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 90, 100] } }
     };
@@ -302,7 +302,7 @@ function initCharts() {
     const optionsLluvia = {
         ...baseOpts,
         chart: { ...baseOpts.chart, type: 'bar', height: 280, id: 'chartL' },
-        series: [{ name: 'PrecipitaciÃ³n (mm)', data: [] }],
+        series: [{ name: 'Precipitación (mm)', data: [] }],
         colors: ['#0EA5E9'],
         plotOptions: { bar: { columnWidth: '40%', borderRadius: 4 } }
     };
@@ -344,12 +344,12 @@ function loadHistoricalData(estId) {
                 const dateObj = parseServerDate(lectura.fechaHora);
                 const timestamp = dateObj.getTime();
                 const origin = lectura.origen || 'OWM';
-                rawData.temp.push({ x: timestamp, y: lectura.temperatura, origen: origin });
-                rawData.hum.push({ x: timestamp, y: lectura.humedadAire, origen: origin });
-                rawData.viento.push({ x: timestamp, y: lectura.velocidadViento, origen: origin });
-                rawData.presion.push({ x: timestamp, y: lectura.presion, origen: origin });
-                rawData.suelo.push({ x: timestamp, y: lectura.humedadSuelo, origen: origin });
-                rawData.lluvia.push({ x: timestamp, y: lectura.lluvia, origen: origin });
+                if (lectura.temperatura != null) rawData.temp.push({ x: timestamp, y: lectura.temperatura, origen: origin });
+                if (lectura.humedadAire != null) rawData.hum.push({ x: timestamp, y: lectura.humedadAire, origen: origin });
+                if (lectura.velocidadViento != null) rawData.viento.push({ x: timestamp, y: lectura.velocidadViento, origen: origin });
+                if (lectura.presion != null) rawData.presion.push({ x: timestamp, y: lectura.presion, origen: origin });
+                if (lectura.humedadSuelo != null) rawData.suelo.push({ x: timestamp, y: lectura.humedadSuelo, origen: origin });
+                if (lectura.lluvia != null) rawData.lluvia.push({ x: timestamp, y: lectura.lluvia, origen: origin });
                 if(lectura.temperatura > maxTemp) maxTemp = lectura.temperatura;
                 if(lectura.temperatura < minTemp) minTemp = lectura.temperatura;
                 if(lectura.velocidadViento > maxViento) maxViento = lectura.velocidadViento;
@@ -410,12 +410,12 @@ function connectWebSocket() {
 function appendDataToCharts(lectura) {
     const dateObj = parseServerDate(lectura.fechaHora);
     const timestamp = dateObj.getTime();
-    rawData.temp.push({ x: timestamp, y: lectura.temperatura });
-    rawData.hum.push({ x: timestamp, y: lectura.humedadAire });
-    rawData.viento.push({ x: timestamp, y: lectura.velocidadViento });
-    rawData.presion.push({ x: timestamp, y: lectura.presion });
-    rawData.suelo.push({ x: timestamp, y: lectura.humedadSuelo });
-    rawData.lluvia.push({ x: timestamp, y: lectura.lluvia });
+    if (lectura.temperatura != null) rawData.temp.push({ x: timestamp, y: lectura.temperatura, origen: 'ARDUINO' });
+    if (lectura.humedadAire != null) rawData.hum.push({ x: timestamp, y: lectura.humedadAire, origen: 'ARDUINO' });
+    if (lectura.velocidadViento != null) rawData.viento.push({ x: timestamp, y: lectura.velocidadViento, origen: 'ARDUINO' });
+    if (lectura.presion != null) rawData.presion.push({ x: timestamp, y: lectura.presion, origen: 'ARDUINO' });
+    if (lectura.humedadSuelo != null) rawData.suelo.push({ x: timestamp, y: lectura.humedadSuelo, origen: 'ARDUINO' });
+    if (lectura.lluvia != null) rawData.lluvia.push({ x: timestamp, y: lectura.lluvia, origen: 'ARDUINO' });
     Object.keys(rawData).forEach(key => {
         if (rawData[key].length > MAX_RAW_POINTS) {
             rawData[key] = rawData[key].slice(rawData[key].length - MAX_RAW_POINTS);
@@ -486,8 +486,9 @@ async function loadWindRose(estacionId) {
         const response = await fetch('/api/analisis/estacion/' + estacionId + '/wind-rose');
         const data = await response.json();
         
-        const series = Object.values(data);
-        const labels = Object.keys(data);
+        const compassPoints = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+        const series = compassPoints.map(pt => data[pt] || 0);
+        const labels = compassPoints;
         
         const options = {
             ...getCommonOptions(),
