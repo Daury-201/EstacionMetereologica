@@ -166,22 +166,21 @@ public class IntegracionService {
                     }
                     lectura.setHumedadSuelo(null);
                     
-                    // DESACTIVADO PARA QUE NO SOBREESCRIBA AL ARDUINO
-                    // lecturaRepository.save(lectura);
-                    // try {
-                    //     messagingTemplate.convertAndSend("/topic/lecturas", lectura);
-                    // } catch (Exception e) {
-                    //     System.err.println("Error enviando WebSocket de lectura OWM: " + e.getMessage());
-                    // }
-                    // try {
-                    //     alarmaService.evaluarSensor(lectura.getEstacionId(), "temperatura", lectura.getTemperatura());
-                    //     alarmaService.evaluarSensor(lectura.getEstacionId(), "humedad_aire", lectura.getHumedadAire());
-                    //     alarmaService.evaluarSensor(lectura.getEstacionId(), "presion", lectura.getPresion());
-                    //     alarmaService.evaluarSensor(lectura.getEstacionId(), "velocidad_viento", lectura.getVelocidadViento());
-                    //     alarmaService.evaluarSensor(lectura.getEstacionId(), "lluvia", lectura.getLluvia());
-                    // } catch (Exception e) {
-                    //     System.err.println("Error al evaluar alarmas de lectura OWM: " + e.getMessage());
-                    // }
+                    lecturaRepository.save(lectura);
+                    try {
+                        messagingTemplate.convertAndSend("/topic/lecturas", lectura);
+                    } catch (Exception e) {
+                        System.err.println("Error enviando WebSocket de lectura OWM: " + e.getMessage());
+                    }
+                    try {
+                        alarmaService.evaluarSensor(lectura.getEstacionId(), "temperatura", lectura.getTemperatura());
+                        alarmaService.evaluarSensor(lectura.getEstacionId(), "humedad_aire", lectura.getHumedadAire());
+                        alarmaService.evaluarSensor(lectura.getEstacionId(), "presion", lectura.getPresion());
+                        alarmaService.evaluarSensor(lectura.getEstacionId(), "velocidad_viento", lectura.getVelocidadViento());
+                        alarmaService.evaluarSensor(lectura.getEstacionId(), "lluvia", lectura.getLluvia());
+                    } catch (Exception e) {
+                        System.err.println("Error al evaluar alarmas de lectura OWM: " + e.getMessage());
+                    }
                     
                     exitosos++;
                 } else {
