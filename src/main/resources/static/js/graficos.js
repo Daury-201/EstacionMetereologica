@@ -34,7 +34,7 @@ function aggregateDataSequential(rawPoints, targetCount = 100) {
         const avgY = chunk.reduce((sum, p) => sum + p.y, 0) / chunk.length;
         const midIndex = Math.floor(chunk.length / 2);
         const dateObj = new Date(chunk[midIndex].x);
-        aggregatedData.push({ x: aggregatedData.length, y: avgY });
+        aggregatedData.push({ x: aggregatedData.length, y: avgY, timestamp: chunk[midIndex].x });
         labels.push(formatLabel(dateObj));
     }
     return { data: aggregatedData, labels: labels };
@@ -490,11 +490,17 @@ async function loadWindRose(estacionId) {
         const series = compassPoints.map(pt => data[pt] || 0);
         const labels = compassPoints;
         
+        const colors16 = [
+            '#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#10b981', '#14b8a6',
+            '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899'
+        ];
+        
         const options = {
             ...getCommonOptions(),
             chart: { type: 'polarArea', height: 350, id: 'chartWindRose' },
             series: series,
             labels: labels,
+            colors: colors16,
             stroke: { colors: ['#fff'] },
             fill: { opacity: 0.8 },
             yaxis: { show: false },
@@ -546,8 +552,12 @@ async function loadOWMPrediction(estacionId) {
             };
         });
         
-        const pastTemps = realArduinoData.slice(-15).map(p => ({
-            x: new Date(p.x).getTime(),
+        const oneDayAgo = Date.now() - 24 * 3600 * 1000;
+        const recentArduino = realArduinoData.filter(p => p.x >= oneDayAgo);
+        const aggregatedArduino = aggregateDataSequential(recentArduino, 20).data;
+        
+        const pastTemps = aggregatedArduino.map(p => ({
+            x: p.timestamp,
             y: p.y
         }));
 
@@ -570,7 +580,7 @@ async function loadOWMPrediction(estacionId) {
             ...getCommonOptions(),
             chart: { type: 'line', height: 350, id: 'chartPredictivo' },
             series: [
-                { name: 'Realidad (Arduino)', data: pastTemps },
+                { name: 'Realidad (Esp32)', data: pastTemps },
                 { name: 'Predicción OWM', data: owmTemps }
             ],
             stroke: { curve: 'smooth', width: [3, 3], dashArray: [0, 5] },
