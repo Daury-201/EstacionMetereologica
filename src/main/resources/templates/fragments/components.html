@@ -115,7 +115,7 @@
                     <path d="M5 10.5V20a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V10.5"/>
                     <path d="M9 22v-7a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v7"/>
                 </svg>
-                Inicio
+                <span>Inicio</span>
             </a>
         </li>
         <li>
@@ -129,7 +129,7 @@
                     <path d="M18 7c2 2 2 6 0 8" />
                     <path d="M21 4c4 4 4 12 0 16" />
                 </svg>
-                Estaciones
+                <span>Estaciones</span>
             </a>
         </li>
         <li>
@@ -140,7 +140,7 @@
                     <line x1="18" y1="20" x2="18" y2="4"/>
                     <polyline points="2 16 8 8 13 12 22 2"/>
                 </svg>
-                Gráficos y Análisis
+                <span>Gráficos y Análisis</span>
             </a>
         </li>
         <li>
@@ -150,7 +150,7 @@
                     <line x1="12" y1="9" x2="12" y2="14"/>
                     <line x1="12" y1="18" x2="12.01" y2="18"/>
                 </svg>
-                Alarmas
+                <span>Alarmas</span>
             </a>
         </li>
         <li>
@@ -161,7 +161,7 @@
                     <line x1="9" y1="8" x2="15" y2="8" />
                     <line x1="9" y1="12" x2="15" y2="12" />
                 </svg>
-                Reportes
+                <span>Reportes</span>
             </a>
         </li>
         <li th:if="${usuarioGlobal != null and (usuarioGlobal.rol == 'ADMIN' or usuarioGlobal.rol == 'TECNICO')}">
@@ -174,7 +174,7 @@
                         <path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/>
                     </g>
                 </svg>
-                Integración
+                <span>Integración</span>
             </a>
         </li>
         <li th:if="${usuarioGlobal != null}">
@@ -183,7 +183,7 @@
                     <circle cx="12" cy="12" r="3" />
                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
                 </svg>
-                Configuración
+                <span>Configuración</span>
             </a>
         </li>
     </ul>
