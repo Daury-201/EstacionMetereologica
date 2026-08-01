@@ -2,30 +2,18 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <title>Reporte Ejecutivo</title>
+    <title>Reporte Meteorológico</title>
     <style>
         @page {
             size: A4 portrait;
-            margin: 20mm 15mm;
-            @top-center {
-                content: "Reporte Ejecutivo Meteorológico - GRUPO 2";
-                font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-                font-size: 8pt;
-                color: #94a3b8;
-                border-bottom: 1px solid #e2e8f0;
-                padding-bottom: 5px;
-            }
+            margin: 0;
             @bottom-center {
                 content: "Página " counter(page) " de " counter(pages);
                 font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
                 font-size: 9pt;
                 color: #64748b;
+                padding-bottom: 10mm;
             }
-        }
-        @page cover {
-            margin: 0;
-            @top-center { content: none; }
-            @bottom-center { content: none; }
         }
         body {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -34,341 +22,411 @@
             padding: 0;
             font-size: 12px;
             line-height: 1.5;
+            background-color: #f1f5f9;
         }
         .page-break {
             page-break-after: always;
         }
-        /* --- Cover Page --- */
-        .cover-page {
-            page: cover;
+        .page-container {
+            background-color: #ffffff;
+            width: 100%;
             height: 100%;
-            background-color: #f8fafc;
-            text-align: center;
-            padding-top: 150px;
-        }
-        .cover-brand {
-            font-size: 18px;
-            font-weight: 800;
-            letter-spacing: 2px;
-            color: #4f46e5;
-            text-transform: uppercase;
-            margin-bottom: 40px;
-        }
-        .cover-title {
-            font-size: 36px;
-            font-weight: 800;
-            color: #0f172a;
-            margin: 0 0 20px 0;
-        }
-        .cover-subtitle {
-            font-size: 16px;
-            color: #475569;
-            margin-bottom: 80px;
-        }
-        .cover-details {
-            width: 60%;
-            margin: 0 auto;
-            background: #ffffff;
-            border-radius: 12px;
-            border: 1px solid #cbd5e1;
-            padding: 30px;
-            text-align: left;
-        }
-        .cover-row {
-            margin-bottom: 15px;
-        }
-        .cover-label {
-            font-size: 11px;
-            text-transform: uppercase;
-            color: #64748b;
-            font-weight: bold;
-            display: block;
-            margin-bottom: 5px;
-        }
-        .cover-value {
-            font-size: 16px;
-            color: #0f172a;
-            font-weight: 600;
-            display: block;
-        }
-        
-        /* --- General Layout --- */
-        .section-header {
-            margin-top: 30px;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #e2e8f0;
-        }
-        .section-title {
-            font-size: 20px;
-            font-weight: bold;
-            color: #1e293b;
-            margin: 0;
-        }
-        .section-subtitle {
-            font-size: 12px;
-            color: #64748b;
-            margin-top: 4px;
+            position: relative;
         }
 
-        /* --- Dashboard KPIs --- */
-        .kpi-container {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 15px;
-            margin: 0 -15px;
+        /* --- Header Gradient --- */
+        .header-bg {
+            background: linear-gradient(135deg, #a855f7 0%, #3b82f6 100%);
+            padding: 60px 40px 80px 40px;
+            color: #ffffff;
+            border-bottom-right-radius: 150px;
+            margin-bottom: 40px;
         }
-        .kpi-card {
-            background-color: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 15px;
-            text-align: center;
-            width: 25%;
+        .header-year {
+            font-size: 20px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+            opacity: 0.9;
         }
-        .kpi-card-temp { border-top: 4px solid #ef4444; }
-        .kpi-card-hum { border-top: 4px solid #3b82f6; }
-        .kpi-card-pres { border-top: 4px solid #8b5cf6; }
-        .kpi-card-lluvia { border-top: 4px solid #10b981; }
-        .kpi-label {
-            display: block;
-            font-size: 11px;
-            color: #64748b;
+        .header-title {
+            font-size: 42px;
+            font-weight: 900;
+            line-height: 1.1;
+            margin: 0 0 15px 0;
             text-transform: uppercase;
-            font-weight: bold;
-            margin-bottom: 8px;
         }
-        .kpi-value {
-            display: block;
-            font-size: 24px;
+        .header-pill {
+            display: inline-block;
+            background-color: #1e1b4b;
+            color: #ffffff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* --- Two Column Layout --- */
+        .content-table {
+            width: 100%;
+            border-collapse: collapse;
+            padding: 0 40px;
+        }
+        .col-left {
+            width: 50%;
+            vertical-align: top;
+            padding-right: 30px;
+        }
+        .col-right {
+            width: 50%;
+            vertical-align: top;
+            padding-left: 20px;
+        }
+
+        /* --- Left Column Elements --- */
+        .summary-text {
+            font-size: 11px;
+            color: #475569;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+        .progress-section {
+            margin-top: 30px;
+        }
+        .progress-item {
+            margin-bottom: 15px;
+        }
+        .progress-label {
+            font-size: 10px;
+            font-weight: 800;
+            color: #0f172a;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            display: inline-block;
+            width: 60px;
+        }
+        .progress-value {
+            font-size: 10px;
+            font-weight: bold;
+            color: #64748b;
+            display: inline-block;
+            float: right;
+        }
+        .progress-bar-bg {
+            background-color: #e2e8f0;
+            height: 6px;
+            border-radius: 3px;
+            width: 100%;
+            margin-top: 4px;
+        }
+        .progress-bar-fill {
+            background: linear-gradient(90deg, #c084fc, #3b82f6);
+            height: 100%;
+            border-radius: 3px;
+        }
+
+        /* --- Right Column Elements --- */
+        .metric-block {
+            margin-bottom: 40px;
+            position: relative;
+        }
+        .metric-number {
+            font-size: 32px;
+            font-weight: 900;
+            color: #0f172a;
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+        .metric-title {
+            background-color: #3b82f6;
+            color: #ffffff;
+            display: inline-block;
+            padding: 5px 15px;
+            font-weight: 800;
+            font-size: 14px;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            /* Pointy right edge effect */
+            border-top-right-radius: 15px;
+            border-bottom-right-radius: 15px;
+        }
+        .metric-desc {
+            font-size: 10px;
+            color: #475569;
+            line-height: 1.5;
+            margin-left: 60px;
+        }
+        .metric-circle {
+            position: absolute;
+            left: 0;
+            top: 40px;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: 4px solid #e2e8f0;
+            border-top-color: #a855f7;
+            text-align: center;
+            line-height: 45px;
+            font-size: 12px;
             font-weight: bold;
             color: #0f172a;
         }
-        
-        /* --- Charts Grid --- */
+
+        /* --- Gradient Box (Alarms) --- */
+        .gradient-box {
+            background: linear-gradient(135deg, #f472b6 0%, #3b82f6 100%);
+            border-radius: 12px;
+            border-top-left-radius: 0;
+            padding: 25px;
+            color: #ffffff;
+            margin-top: 20px;
+        }
+        .gradient-box-title {
+            font-size: 18px;
+            font-weight: 900;
+            margin: 0 0 10px 0;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .gradient-box-icon {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            background-color: #ffffff;
+            color: #3b82f6;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            font-weight: bold;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        .gradient-box-desc {
+            font-size: 10px;
+            opacity: 0.9;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        /* --- Charts Grid Page --- */
+        .charts-page {
+            padding: 40px;
+        }
+        .charts-header {
+            font-size: 24px;
+            font-weight: 900;
+            color: #0f172a;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #3b82f6;
+            padding-bottom: 10px;
+            display: inline-block;
+        }
         .charts-grid {
             width: 100%;
             table-layout: fixed;
             border-collapse: separate;
-            border-spacing: 20px;
-            margin: 0 -20px;
+            border-spacing: 15px;
+            margin: 0 -15px;
         }
         .chart-box {
             background: #ffffff;
             border: 1px solid #e2e8f0;
-            border-radius: 12px;
+            border-radius: 8px;
             padding: 15px;
             text-align: center;
             vertical-align: top;
         }
         .chart-title {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: bold;
             color: #334155;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
         .chart-img {
             max-width: 100%;
             height: auto;
-            max-height: 200px;
+            max-height: 180px;
         }
 
         /* --- Data Table --- */
         .data-table-wrapper {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            overflow: hidden;
+            margin-top: 20px;
         }
         .data-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 10px;
+            font-size: 9px;
         }
         .data-table th {
-            background-color: #f1f5f9;
-            color: #475569;
-            padding: 12px 10px;
+            background-color: #3b82f6;
+            color: #ffffff;
+            padding: 8px;
             font-weight: bold;
             text-transform: uppercase;
             text-align: right;
-            border-bottom: 2px solid #e2e8f0;
         }
         .data-table th:first-child { text-align: left; }
         .data-table td {
-            padding: 10px;
-            border-bottom: 1px solid #f1f5f9;
+            padding: 8px;
+            border-bottom: 1px solid #e2e8f0;
             text-align: right;
             color: #334155;
         }
         .data-table td:first-child { text-align: left; font-weight: 600; color: #0f172a; }
         .data-table tr:nth-child(even) { background-color: #f8fafc; }
-        
-        .alert-box {
-            background-color: #fffbeb;
-            border-left: 4px solid #f59e0b;
-            padding: 10px 15px;
-            margin-bottom: 15px;
-            font-size: 11px;
-            color: #b45309;
-        }
+
     </style>
 </head>
 <body>
 
-    <!-- PORTADA -->
-    <div class="cover-page page-break">
-        <div class="cover-brand">PUCMM - Arquitectura de Software</div>
-        <h1 class="cover-title">Reporte Ejecutivo Meteorológico</h1>
-        <div class="cover-subtitle">Análisis de Datos, Alarmas y Predicciones Climáticas</div>
+    <!-- PAGE 1: EXECUTIVE SUMMARY (REDESIGN) -->
+    <div class="page-container page-break">
         
-        <div class="cover-details">
-            <div class="cover-row">
-                <span class="cover-label">Estación / Nodo Analizado</span>
-                <span class="cover-value" th:text="${estacionNombre}">Todas las Estaciones</span>
-            </div>
-            <div class="cover-row">
-                <span class="cover-label">Período de Análisis</span>
-                <span class="cover-value" th:text="${rangoFechas}">--</span>
-            </div>
-            <div class="cover-row">
-                <span class="cover-label">Fecha de Emisión</span>
-                <span class="cover-value" th:text="${#dates.format(#dates.createNow(), 'dd/MM/yyyy HH:mm')}">--</span>
-            </div>
-            <div class="cover-row">
-                <span class="cover-label">Registros Procesados</span>
-                <span class="cover-value" th:text="${#lists.size(lecturas)}">0</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- RESUMEN EJECUTIVO -->
-    <div class="page-break">
-        <div class="section-header">
-            <h2 class="section-title">Resumen Ejecutivo</h2>
-            <div class="section-subtitle">Promedios generales y estado de la estación en el período</div>
+        <div class="header-bg">
+            <div class="header-year" th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2026</div>
+            <h1 class="header-title">REPORTE<br/>METEOROLÓGICO</h1>
+            <div class="header-pill" th:text="${estacionNombre}">ESTACIÓN XXX</div>
         </div>
 
-        <table class="kpi-container">
+        <table class="content-table">
             <tr>
-                <td class="kpi-card kpi-card-temp">
-                    <span class="kpi-label">Temp. Promedio</span>
-                    <span class="kpi-value" th:text="${#numbers.formatDecimal(tempPromedio, 1, 1)} + ' °C'">0.0 °C</span>
+                <!-- LEFT COLUMN -->
+                <td class="col-left">
+                    <div class="summary-text">
+                        Este documento presenta un resumen ejecutivo de las condiciones ambientales registradas por nuestra red de sensores meteorológicos. Los datos analizados comprenden el período <strong th:text="${rangoFechas}">--</strong>. Se han procesado un total de <strong th:text="${#lists.size(lecturas)}">0</strong> registros para generar las métricas, promedios y visualizaciones expuestas a continuación.
+                    </div>
+                    
+                    <div class="summary-text" th:if="${incluirGestion}">
+                        Además de las variables climáticas, este reporte incluye información vital sobre la gestión operativa, tiempo de actividad de los nodos (uptime), e incidencias técnicas reportadas por los sensores de IoT.
+                    </div>
+
+                    <div class="progress-section">
+                        <!-- Viento -->
+                        <div class="progress-item">
+                            <div>
+                                <span class="progress-label">VIENTO</span>
+                                <span class="progress-value" th:text="${chartVientoImg != null ? 'ACTIVO' : 'N/A'}"></span>
+                            </div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill" style="width: 80%;"></div>
+                            </div>
+                        </div>
+                        <!-- Presión -->
+                        <div class="progress-item">
+                            <div>
+                                <span class="progress-label">PRESIÓN</span>
+                                <span class="progress-value" th:text="${formatter.formatNumber(presionPromedio, 1)} + ' hPa'">1013 hPa</span>
+                            </div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill" style="width: 65%; background: linear-gradient(90deg, #3b82f6, #06b6d4);"></div>
+                            </div>
+                        </div>
+                        <!-- Lluvia -->
+                        <div class="progress-item">
+                            <div>
+                                <span class="progress-label">LLUVIA</span>
+                                <span class="progress-value" th:text="${#numbers.formatDecimal(lluviaAcumulada, 1, 1)} + ' mm'">0.0 mm</span>
+                            </div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill" style="width: 40%; background: linear-gradient(90deg, #06b6d4, #10b981);"></div>
+                            </div>
+                        </div>
+                    </div>
                 </td>
-                <td class="kpi-card kpi-card-hum">
-                    <span class="kpi-label">Humedad Promedio</span>
-                    <span class="kpi-value" th:text="${formatter.formatNumber(humedadPromedio, 1)} + ' %'">0 %</span>
-                </td>
-                <td class="kpi-card kpi-card-pres">
-                    <span class="kpi-label">Presión Media</span>
-                    <span class="kpi-value" th:text="${formatter.formatNumber(presionPromedio, 1)} + ' hPa'">0 hPa</span>
-                </td>
-                <td class="kpi-card kpi-card-lluvia">
-                    <span class="kpi-label">Lluvia Total</span>
-                    <span class="kpi-value" th:text="${#numbers.formatDecimal(lluviaAcumulada, 1, 1)} + ' mm'">0.0 mm</span>
+
+                <!-- RIGHT COLUMN -->
+                <td class="col-right">
+                    
+                    <!-- Metric 01 -->
+                    <div class="metric-block">
+                        <div class="metric-number">01</div>
+                        <div class="metric-title">TEMPERATURA PROM.</div>
+                        <div class="metric-circle">
+                            <span th:text="${#numbers.formatDecimal(tempPromedio, 1, 1)} + '°'">0°</span>
+                        </div>
+                        <div class="metric-desc">
+                            La temperatura promedio registrada durante el período analizado. Este indicador es fundamental para identificar tendencias de calentamiento local y fluctuaciones extremas.
+                        </div>
+                    </div>
+
+                    <!-- Metric 02 -->
+                    <div class="metric-block">
+                        <div class="metric-number">02</div>
+                        <div class="metric-title" style="background-color: #a855f7;">HUMEDAD RELATIVA</div>
+                        <div class="metric-circle" style="border-top-color: #3b82f6;">
+                            <span th:text="${formatter.formatNumber(humedadPromedio, 1)} + '%'">0%</span>
+                        </div>
+                        <div class="metric-desc">
+                            El porcentaje de humedad media relativa. Valores consistentemente altos pueden indicar probabilidad de precipitaciones y afectan la sensación térmica.
+                        </div>
+                    </div>
+
+                    <!-- Gradient Box -->
+                    <div class="gradient-box">
+                        <div class="gradient-box-icon">!</div>
+                        <h3 class="gradient-box-title">ESTADO DE ALARMAS</h3>
+                        <p class="gradient-box-desc">
+                            <span th:if="${incluirGestion}">Se ha activado el monitoreo de gestión. Consulte la página siguiente para ver gráficos detallados de disponibilidad de sensores y fallos operativos reportados en este periodo.</span>
+                            <span th:unless="${incluirGestion}">Sistema operando con normalidad. No se ha requerido adjuntar métricas adicionales de gestión de errores para este nodo.</span>
+                        </p>
+                    </div>
+
                 </td>
             </tr>
         </table>
-
-        <!-- Si hay gráficos de gestión / alarmas -->
-        <div th:if="${incluirGestion}">
-            <div class="section-header" style="margin-top: 40px;">
-                <h2 class="section-title">Métricas de Gestión y Alarmas</h2>
-                <div class="section-subtitle">Evaluación de salud operativa de la estación</div>
-            </div>
-            <table class="charts-grid">
-                <tr>
-                    <td class="chart-box">
-                        <div class="chart-title">Disponibilidad de Lecturas</div>
-                        <img th:if="${chartUptime != null and chartUptime != ''}" th:src="${chartUptime}" class="chart-img" />
-                        <div th:unless="${chartUptime != null and chartUptime != ''}" style="color: #94a3b8;">Sin datos suficientes</div>
-                    </td>
-                    <td class="chart-box">
-                        <div class="chart-title">Distribución de Alarmas</div>
-                        <img th:if="${chartDonut != null and chartDonut != ''}" th:src="${chartDonut}" class="chart-img" />
-                        <div th:unless="${chartDonut != null and chartDonut != ''}" style="color: #94a3b8;">Sin alertas registradas</div>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="chart-box">
-                        <div class="chart-title">Alarmas Críticas por Día</div>
-                        <img th:if="${chartBarDia != null and chartBarDia != ''}" th:src="${chartBarDia}" class="chart-img" />
-                        <div th:unless="${chartBarDia != null and chartBarDia != ''}" style="color: #94a3b8;">Sin incidentes</div>
-                    </td>
-                    <td class="chart-box">
-                        <div class="chart-title">Fallos por Tipo de Sensor</div>
-                        <img th:if="${chartBarSensor != null and chartBarSensor != ''}" th:src="${chartBarSensor}" class="chart-img" />
-                        <div th:unless="${chartBarSensor != null and chartBarSensor != ''}" style="color: #94a3b8;">Sin fallos</div>
-                    </td>
-                </tr>
-            </table>
-        </div>
     </div>
 
-    <!-- ANÁLISIS METEOROLÓGICO VISUAL -->
-    <div class="page-break" th:if="${incluirMeteorologia}">
-        <div class="section-header">
-            <h2 class="section-title">Análisis Meteorológico</h2>
-            <div class="section-subtitle">Evolución gráfica de las variables ambientales</div>
-        </div>
+    <!-- PAGE 2: CHARTS & DATA -->
+    <div class="page-container charts-page" th:if="${incluirMeteorologia or incluirGestion or incluirTablaLecturas}">
+        
+        <h2 class="charts-header">ANÁLISIS GRÁFICO Y DATOS</h2>
 
-        <div th:if="${variableFiltro != 'all' and chartImage != null and chartImage != ''}">
-            <div class="chart-box" style="margin-bottom: 20px;">
-                <div class="chart-title" th:text="${'Evolución: ' + (variableFiltro == 'temp' ? 'Temperatura' : (variableFiltro == 'hum' ? 'Humedad' : (variableFiltro == 'pres' ? 'Presión' : (variableFiltro == 'lluvia' ? 'Lluvia' : 'Variable'))))}">Gráfico</div>
-                <img th:src="${chartImage}" style="max-width: 100%; width: 600px; height: auto;" />
+        <!-- Gráficos Meteorológicos -->
+        <div th:if="${incluirMeteorologia}">
+            <div th:if="${variableFiltro != 'all' and chartImage != null and chartImage != ''}" style="margin-bottom: 20px;">
+                <img th:src="${chartImage}" style="max-width: 100%; border-radius: 8px; border: 1px solid #e2e8f0;" />
+            </div>
+
+            <div th:if="${variableFiltro == 'all'}">
+                <table class="charts-grid">
+                    <tr>
+                        <td class="chart-box">
+                            <div class="chart-title">Comportamiento Térmico (°C)</div>
+                            <img th:if="${chartImage != null and chartImage != ''}" th:src="${chartImage}" class="chart-img" />
+                        </td>
+                        <td class="chart-box">
+                            <div class="chart-title">Humedad Relativa (%)</div>
+                            <img th:if="${chartImageHum != null and chartImageHum != ''}" th:src="${chartImageHum}" class="chart-img" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="chart-box">
+                            <div class="chart-title">Presión Atmosférica (hPa)</div>
+                            <img th:if="${chartImagePres != null and chartImagePres != ''}" th:src="${chartImagePres}" class="chart-img" />
+                        </td>
+                        <td class="chart-box">
+                            <div class="chart-title">Precipitaciones (mm)</div>
+                            <img th:if="${chartImageLluvia != null and chartImageLluvia != ''}" th:src="${chartImageLluvia}" class="chart-img" />
+                        </td>
+                    </tr>
+                </table>
             </div>
         </div>
 
-        <div th:if="${variableFiltro == 'all'}">
-            <table class="charts-grid">
-                <tr>
-                    <td class="chart-box">
-                        <div class="chart-title">Comportamiento Térmico (°C)</div>
-                        <img th:if="${chartImage != null and chartImage != ''}" th:src="${chartImage}" class="chart-img" />
-                    </td>
-                    <td class="chart-box">
-                        <div class="chart-title">Humedad Relativa (%)</div>
-                        <img th:if="${chartImageHum != null and chartImageHum != ''}" th:src="${chartImageHum}" class="chart-img" />
-                    </td>
-                </tr>
-                <tr>
-                    <td class="chart-box">
-                        <div class="chart-title">Presión Atmosférica (hPa)</div>
-                        <img th:if="${chartImagePres != null and chartImagePres != ''}" th:src="${chartImagePres}" class="chart-img" />
-                    </td>
-                    <td class="chart-box">
-                        <div class="chart-title">Precipitaciones Acumuladas (mm)</div>
-                        <img th:if="${chartImageLluvia != null and chartImageLluvia != ''}" th:src="${chartImageLluvia}" class="chart-img" />
-                    </td>
-                </tr>
-            </table>
-        </div>
-    </div>
-
-    <!-- REGISTROS DETALLADOS (TRUNCADO) -->
-    <div th:if="${incluirTablaLecturas}">
-        <div class="section-header">
-            <h2 class="section-title">Registro Detallado de Mediciones</h2>
-            <div class="section-subtitle">Vista tabular de los últimos eventos registrados</div>
-        </div>
-
-        <div class="alert-box">
-            <strong>Nota de Optimización:</strong> Para mantener la agilidad del reporte ejecutivo y facilitar su lectura, esta tabla muestra únicamente las últimas <strong th:text="${#lists.size(lecturasTabla)}"></strong> mediciones. Si requieres analizar el conjunto completo de datos, por favor utiliza la opción de <b>Exportar a CSV</b>.
-        </div>
-
-        <div class="data-table-wrapper">
+        <!-- Tabla de Datos -->
+        <div th:if="${incluirTablaLecturas}" class="data-table-wrapper">
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>Fecha / Hora</th>
-                        <th th:if="${estacionNombre == 'Todas las Estaciones'}">Estación</th>
-                        <th th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'temp'}">Temp (°C)</th>
-                        <th th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'hum'}">Hum (%)</th>
-                        <th th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'pres'}">Pres (hPa)</th>
-                        <th th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'viento'}">Viento (km/h)</th>
-                        <th th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'viento'}">Dir.</th>
-                        <th th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'lluvia'}">Lluvia (mm)</th>
-                        <th th:if="${variableFiltro == null or variableFiltro == 'all'}">Suelo (%)</th>
+                        <th>FECHA / HORA</th>
+                        <th th:if="${estacionNombre == 'Todas las Estaciones'}">ESTACIÓN</th>
+                        <th th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'temp'}">TEMP (°C)</th>
+                        <th th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'hum'}">HUM (%)</th>
+                        <th th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'pres'}">PRES (hPa)</th>
+                        <th th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'viento'}">VIENTO (km/h)</th>
+                        <th th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'lluvia'}">LLUVIA (mm)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -379,18 +437,17 @@
                         <td th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'hum'}" th:text="${formatter.formatNumber(l.humedadAire)}"></td>
                         <td th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'pres'}" th:text="${formatter.formatNumber(l.presion)}"></td>
                         <td th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'viento'}" th:text="${formatter.formatNumber(l.velocidadViento)}"></td>
-                        <td th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'viento'}" th:text="${l.direccionViento}"></td>
                         <td th:if="${variableFiltro == null or variableFiltro == 'all' or variableFiltro == 'lluvia'}" th:text="${formatter.formatNumber(l.lluvia)}"></td>
-                        <td th:if="${variableFiltro == null or variableFiltro == 'all'}" th:text="${formatter.formatNumber(l.humedadSuelo)}"></td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(lecturasTabla)}">
-                        <td th:colspan="${estacionNombre == 'Todas las Estaciones' ? 9 : 8}" style="text-align: center; color: #94a3b8; padding: 20px;">
+                        <td th:colspan="${estacionNombre == 'Todas las Estaciones' ? 7 : 6}" style="text-align: center; color: #94a3b8; padding: 20px;">
                             No se encontraron registros para el período seleccionado.
                         </td>
                     </tr>
                 </tbody>
             </table>
         </div>
+
     </div>
 
 </body>
