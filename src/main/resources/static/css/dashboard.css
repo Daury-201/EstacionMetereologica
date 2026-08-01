@@ -1651,6 +1651,25 @@ body.theme-light .forecast-day.active .day-temp {
     .map-style-switcher {
         display: none; /* Ocultar controles del mapa que tapan espacio útil */
     }
+    .map-filter-bar {
+        display: flex;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        width: calc(100% - 24px);
+        scrollbar-width: none;
+        padding-bottom: 2px;
+        top: auto;
+        bottom: 12px;
+        left: 12px;
+        transform: scale(0.85);
+        transform-origin: left bottom;
+    }
+    .map-filter-bar::-webkit-scrollbar {
+        display: none;
+    }
+    .map-filter-btn {
+        flex-shrink: 0;
+    }
     
     /* Tap targets más grandes para botones y selectores */
     .btn, .btn-primary, .temp-toggle button {
