@@ -474,6 +474,12 @@
                     if (estacionesGlobal) {
                         for (var i = 0; i < estacionesGlobal.length; i++) {
                             if (estacionesGlobal[i].id === update.id) {
+                                // Show toast if state changed to 'Sin señal'
+                                if (estacionesGlobal[i].estado !== 'Sin señal' && update.estado === 'Sin señal') {
+                                    if (typeof Utils !== 'undefined' && typeof Utils.showToast === 'function') {
+                                        Utils.showToast('¡ALERTA! Se ha perdido la conexión con la Estación ' + update.id, 'error');
+                                    }
+                                }
                                 estacionesGlobal[i].estado = update.estado;
                                 break;
                             }
