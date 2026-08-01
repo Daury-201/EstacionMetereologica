@@ -477,7 +477,7 @@
                                 // Show toast if state changed to 'Sin señal'
                                 if (estacionesGlobal[i].estado !== 'Sin señal' && update.estado === 'Sin señal') {
                                     if (typeof Utils !== 'undefined' && typeof Utils.showToast === 'function') {
-                                        Utils.showToast('¡ALERTA! Se ha perdido la conexión con la Estación ' + update.id, 'error');
+                                        Utils.showToast('¡ALERTA! Se ha perdido la conexión con ' + estacionesGlobal[i].nombre, 'error');
                                     }
                                 }
                                 estacionesGlobal[i].estado = update.estado;
