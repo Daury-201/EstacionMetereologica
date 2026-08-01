@@ -104,8 +104,14 @@ public class LectorEstacion {
                         try {
                             estacionId = jdbcTemplate.queryForObject("SELECT id FROM estaciones WHERE codigo = ?", Integer.class, estacionCodigo);
                         } catch (org.springframework.dao.EmptyResultDataAccessException e) {
-                            System.err.println("Estación no encontrada en la BD con el código: " + estacionCodigo);
-                            return;
+                            try {
+                                estacionId = jdbcTemplate.queryForObject("SELECT id FROM estaciones WHERE id = ?", Integer.class, numeroEstacion);
+                                jdbcTemplate.update("UPDATE estaciones SET codigo = ? WHERE id = ?", estacionCodigo, estacionId);
+                                System.out.println("Migrado código de estación " + estacionId + " a " + estacionCodigo);
+                            } catch (Exception ex) {
+                                System.err.println("Estación no encontrada en la BD con el código: " + estacionCodigo + " ni ID: " + numeroEstacion);
+                                return;
+                            }
                         }
 
                         Object valorDb = sensor.equals("direccion_viento") ? valor : Double.parseDouble(valor);
