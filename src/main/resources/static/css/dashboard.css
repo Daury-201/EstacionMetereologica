@@ -16,12 +16,14 @@
 body {
     font-family: 'Inter', sans-serif;
     height: 100vh;
+    height: 100dvh;
     overflow: hidden;
     background-color: #171821;
 }
 .dashboard-container {
     display: flex;
     height: 100vh;
+    height: 100dvh;
     width: 100vw;
 }
 .main-area {
@@ -29,6 +31,7 @@ body {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    height: 100dvh;
     overflow: hidden;
     position: relative;
     min-width: 0;
@@ -731,6 +734,7 @@ body.map-fullscreen .map-view-card {
     bottom: 0 !important;
     width: auto !important;
     height: 100vh !important;
+    height: 100dvh !important;
     z-index: 99999 !important;
     border-radius: 0 !important;
     border: none !important;
@@ -1680,5 +1684,16 @@ body.theme-light .forecast-day.active .day-temp {
         height: 48px;
         font-size: 24px;
         border-radius: 12px;
+    }
+    
+    /* Map Fullscreen Fix for Mobile */
+    body.map-fullscreen .map-view-card {
+        left: 0 !important;
+        height: 100dvh !important;
+        z-index: 99999 !important;
+    }
+    body.map-fullscreen .top-nav {
+        left: 0 !important;
+        width: 100% !important;
     }
 }
