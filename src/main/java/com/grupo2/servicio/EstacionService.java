@@ -31,6 +31,7 @@ public class EstacionService {
 
     private List<EstacionDTO> cachedEstaciones = null;
     private long lastEstacionesTime = 0;
+    private final java.util.Set<Long> estacionesNotificadasDesconexion = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     public synchronized List<EstacionDTO> obtenerTodasConUltimaLectura() {
         if (System.currentTimeMillis() - lastEstacionesTime > 2000) {
@@ -119,17 +120,21 @@ public class EstacionService {
                     long timeoutSegundos = "minutos".equalsIgnoreCase(unidad) ? (valor * 60L) : valor.longValue();
                     
                     if (segundos >= timeoutSegundos) {
-                        if (!"Sin señal".equals(est.getEstado())) {
+                        if (!estacionesNotificadasDesconexion.contains(est.getId()) || !"Sin señal".equals(est.getEstado())) {
+                            if (!estacionesNotificadasDesconexion.contains(est.getId())) {
+                                notificacionService.notificarDesconexion(est);
+                                estacionesNotificadasDesconexion.add(est.getId());
+                            }
                             est.setEstado("Sin señal");
                             estacionRepository.save(est);
                             EstacionDTO dto = new EstacionDTO();
                             dto.setId(est.getId());
                             dto.setEstado("Sin señal");
                             messagingTemplate.convertAndSend("/topic/estaciones-estado", dto);
-                            notificacionService.notificarDesconexion(est);
                         }
                     } else {
-                        if (!"En línea".equals(est.getEstado())) {
+                        if (estacionesNotificadasDesconexion.contains(est.getId()) || !"En línea".equals(est.getEstado())) {
+                            estacionesNotificadasDesconexion.remove(est.getId());
                             est.setEstado("En línea");
                             estacionRepository.save(est);
                             EstacionDTO dto = new EstacionDTO();
@@ -139,8 +144,11 @@ public class EstacionService {
                         }
                     }
                 }, () -> {
-                    
-                    if (!"Sin señal".equals(est.getEstado())) {
+                    if (!estacionesNotificadasDesconexion.contains(est.getId()) || !"Sin señal".equals(est.getEstado())) {
+                        if (!estacionesNotificadasDesconexion.contains(est.getId())) {
+                            notificacionService.notificarDesconexion(est);
+                            estacionesNotificadasDesconexion.add(est.getId());
+                        }
                         est.setEstado("Sin señal");
                         estacionRepository.save(est);
                         EstacionDTO dto = new EstacionDTO();
