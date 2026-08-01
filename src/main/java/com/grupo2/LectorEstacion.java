@@ -184,7 +184,7 @@ public class LectorEstacion {
                                                    lecturaActual.getHumedadSuelo() != null;
                             
                             if (estaCompleta && sensor.equals("direccion_viento")) {
-                                pucmmHubService.enviarLectura(lecturaActual);
+                                java.util.concurrent.CompletableFuture.runAsync(() -> pucmmHubService.enviarLectura(lecturaActual));
                             } else if (estaCompleta && !sensor.equals("direccion_viento")) {
                                 // Alternativamente, puedes enviarla en cuanto esté completa sin importar qué sensor llegó último
                                 // pucmmHubService.enviarLectura(lecturaActual);
