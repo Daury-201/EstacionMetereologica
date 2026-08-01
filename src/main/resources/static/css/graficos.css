@@ -153,3 +153,59 @@ body.dark-mode #btnDarkMode {
     color: #F3F4F6;
 }
 body.dark-mode .summary-icon { background: #374151; }
+
+/* =========================================
+   RESPONSIVE & TOUCH UX
+   ========================================= */
+.d3-container svg {
+    touch-action: pan-y; /* Permitir scroll vertical natural sobre los gráficos */
+}
+
+@media (max-width: 768px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+    .chart-full {
+        grid-column: span 1;
+    }
+    
+    /* Arreglar formulario de filtros que se rompe */
+    .station-selector-container {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 16px !important;
+        padding: 16px !important;
+    }
+    
+    .station-selector-container > div {
+        width: 100%;
+    }
+    
+    /* Selector de fechas colapsado */
+    #dateFilters {
+        flex-direction: column;
+        align-items: flex-start !important;
+        width: 100%;
+        gap: 12px !important;
+    }
+    
+    #dateFilters > div {
+        width: 100%;
+    }
+    
+    .station-selector-container > div[style*="margin-left: auto"] {
+        margin-left: 0 !important;
+    }
+    
+    /* Áreas táctiles más grandes */
+    .station-selector-container select, 
+    .station-selector-container input, 
+    .station-selector-container button {
+        width: 100%;
+        min-height: 48px;
+    }
+    
+    #btnFiltrarFechas {
+        margin-top: 8px;
+    }
+}
