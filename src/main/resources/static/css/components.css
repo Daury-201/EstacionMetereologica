@@ -570,7 +570,7 @@
         -webkit-backdrop-filter: blur(12px);
     }
     
-    .sidebar-header, .brand-info, .sidebar-bottom {
+    .sidebar-header, .brand-info, .sidebar-bottom, .sidebar-footer {
         display: none !important;
     }
     
