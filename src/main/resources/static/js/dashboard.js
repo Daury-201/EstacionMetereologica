@@ -1158,6 +1158,20 @@ window.mostrarEstadoVacio = function(filtro) {
         photoHeader.style.backgroundImage = 'linear-gradient(135deg, #4B5563 0%, #1F2937 100%)';
     }
     
+    const lsIcon = document.getElementById('lsIcon');
+    const lsTitle = document.getElementById('lsTitle');
+    const lsDesc = document.getElementById('lsDesc');
+    const lsIconWrapper = document.getElementById('lsIconWrapper');
+    
+    if (lsIcon) lsIcon.textContent = '⏸️';
+    if (lsTitle) lsTitle.textContent = 'Sin estaciones';
+    if (lsDesc) lsDesc.textContent = 'No hay estaciones disponibles para el filtro seleccionado.';
+    if (lsIconWrapper) {
+        lsIconWrapper.style.background = '#4B5563';
+        lsIconWrapper.style.boxShadow = 'none';
+        lsIconWrapper.className = 'ls-icon-wrapper';
+    }
+    
     document.querySelectorAll('.nav-arrow').forEach(btn => btn.style.display = 'none');
     
     // Update charts to empty state
