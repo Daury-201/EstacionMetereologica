@@ -4,7 +4,6 @@ import com.grupo2.entidad.IntegracionConfig;
 import com.grupo2.modelo.LecturaSensor;
 import com.grupo2.repositorio.IntegracionRepository;
 import com.grupo2.servicio.AlarmaService;
-import com.grupo2.servicio.PucmmHubService;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
@@ -27,18 +26,15 @@ public class LectorEstacion {
     private final JdbcTemplate jdbcTemplate;
     private final LecturaController lecturaController;
     private final AlarmaService alarmaService;
-    private final PucmmHubService pucmmHubService;
     private final IntegracionRepository integracionRepository;
 
     public LectorEstacion(JdbcTemplate jdbcTemplate,
                           LecturaController lecturaController,
                           AlarmaService alarmaService,
-                          PucmmHubService pucmmHubService,
                           IntegracionRepository integracionRepository) {
         this.jdbcTemplate = jdbcTemplate;
         this.lecturaController = lecturaController;
         this.alarmaService = alarmaService;
-        this.pucmmHubService = pucmmHubService;
         this.integracionRepository = integracionRepository;
     }
     private static final DateTimeFormatter FORMATO_ENTRADA =
@@ -180,26 +176,6 @@ public class LectorEstacion {
                             lecturaController.enviarNuevaLectura(lecturaActual);
 
                             // Enviar al Hub externo solo cuando la lectura esté completa (todos los sensores presentes)
-                            boolean estaCompleta = lecturaActual.getTemperatura() != null &&
-                                                   lecturaActual.getHumedadAire() != null &&
-                                                   lecturaActual.getPresion() != null &&
-                                                   lecturaActual.getVelocidadViento() != null &&
-                                                   lecturaActual.getDireccionViento() != null &&
-                                                   lecturaActual.getLluvia() != null &&
-                                                   lecturaActual.getHumedadSuelo() != null;
-                            
-                            if (estaCompleta && sensor.equals("direccion_viento")) {
-                                boolean pucmmActiva = integracionRepository.findByPlataformaIgnoreCase("pucmm")
-                                        .map(cfg -> cfg.getActiva() != null && cfg.getActiva())
-                                        .orElse(true); // Default to true if not configured
-
-                                if (pucmmActiva) {
-                                    java.util.concurrent.CompletableFuture.runAsync(() -> pucmmHubService.enviarLectura(lecturaActual));
-                                }
-                            } else if (estaCompleta && !sensor.equals("direccion_viento")) {
-                                // Alternativamente, puedes enviarla en cuanto esté completa sin importar qué sensor llegó último
-                                // pucmmHubService.enviarLectura(lecturaActual);
-                            }
                         }
                         String unidad = switch (sensor) {
                             case "temperatura" -> "°C";

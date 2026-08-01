@@ -40,6 +40,9 @@ public class IntegracionService {
     @Value("${api.openweathermap.key}")
     private String openWeatherMapApiKey;
 
+    @Autowired
+    private PucmmHubService pucmmHubService;
+
     private final RestTemplate restTemplate = new RestTemplate();
     
     public String obtenerPronosticoOWM(Long estacionId) {
@@ -92,6 +95,19 @@ public class IntegracionService {
         if (configOpt.isPresent() && configOpt.get().getActiva()) {
             sincronizarOpenWeatherMap(configOpt.get());
         }
+    }
+    @Transactional
+    public void forzarSincronizacionPucmm() {
+        Optional<IntegracionConfig> configOpt = integracionRepository.findByPlataformaIgnoreCase("pucmm");
+        if (configOpt.isPresent() && configOpt.get().getActiva()) {
+            pucmmHubService.enviarBatchAhora(configOpt.get());
+        }
+    }
+    public boolean testPucmmConnection(LecturaSensores dummy, String url, String token) {
+        return pucmmHubService.enviarLectura(new com.grupo2.modelo.LecturaSensor(), url, token);
+    }
+    public boolean testPucmmConnection(com.grupo2.modelo.LecturaSensor dummy, String url, String token) {
+        return pucmmHubService.enviarLectura(dummy, url, token);
     }
     public Map<String, Object> testConnection(String apiKey) {
         Map<String, Object> resultado = new java.util.HashMap<>();

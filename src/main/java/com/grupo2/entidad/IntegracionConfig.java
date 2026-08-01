@@ -15,6 +15,10 @@ public class IntegracionConfig {
     private String estacionesIds;
     @Column(name = "activa")
     private Boolean activa = false;
+    @Column(name = "webhook_url")
+    private String webhookUrl;
+    @Column(name = "token")
+    private String token;
     @Column(name = "ultima_sincronizacion")
     private LocalDateTime ultimaSincronizacion;
     public Long getId() { return id; }
@@ -27,6 +31,10 @@ public class IntegracionConfig {
     public void setEstacionesIds(String estacionesIds) { this.estacionesIds = estacionesIds; }
     public Boolean getActiva() { return activa; }
     public void setActiva(Boolean activa) { this.activa = activa; }
+    public String getWebhookUrl() { return webhookUrl; }
+    public void setWebhookUrl(String webhookUrl) { this.webhookUrl = webhookUrl; }
+    public String getToken() { return token; }
+    public void setToken(String token) { this.token = token; }
     public LocalDateTime getUltimaSincronizacion() { return ultimaSincronizacion; }
     public void setUltimaSincronizacion(LocalDateTime ultimaSincronizacion) { this.ultimaSincronizacion = ultimaSincronizacion; }
 }

@@ -62,9 +62,15 @@ public class IntegracionController {
             IntegracionConfig cfg = pucmmConfig.get();
             model.addAttribute("pucmmActiva", cfg.getActiva() != null && cfg.getActiva());
             model.addAttribute("pucmmIntervalo", cfg.getIntervaloMin() != null ? cfg.getIntervaloMin() : 10);
+            model.addAttribute("pucmmEstacionesIds", cfg.getEstacionesIds());
+            model.addAttribute("pucmmUrl", cfg.getWebhookUrl() != null ? cfg.getWebhookUrl() : "https://itt363-hub.eict.ce.pucmm.edu.do/api/");
+            model.addAttribute("pucmmToken", cfg.getToken() != null ? cfg.getToken() : "bDYmf63tj6v2");
         } else {
             model.addAttribute("pucmmActiva", true); // Default to true as it's a core requirement
             model.addAttribute("pucmmIntervalo", 10);
+            model.addAttribute("pucmmEstacionesIds", null);
+            model.addAttribute("pucmmUrl", "https://itt363-hub.eict.ce.pucmm.edu.do/api/");
+            model.addAttribute("pucmmToken", "bDYmf63tj6v2");
         }
 
         return "integracion";
@@ -81,12 +87,18 @@ public class IntegracionController {
             resp.put("activa", cfg.getActiva());
             resp.put("intervaloMin", cfg.getIntervaloMin());
             resp.put("estacionesIds", cfg.getEstacionesIds());
+            resp.put("webhookUrl", cfg.getWebhookUrl() != null ? cfg.getWebhookUrl() : "pucmm".equalsIgnoreCase(plataforma) ? "https://itt363-hub.eict.ce.pucmm.edu.do/api/" : "");
+            resp.put("token", cfg.getToken() != null ? cfg.getToken() : "pucmm".equalsIgnoreCase(plataforma) ? "bDYmf63tj6v2" : "");
             resp.put("apiKey", "••••••••••••••••");
             return ResponseEntity.ok(resp);
         } else {
             IntegracionConfig vacio = new IntegracionConfig();
             vacio.setPlataforma(plataforma);
             vacio.setActiva("pucmm".equalsIgnoreCase(plataforma)); // Default to true for pucmm
+            if ("pucmm".equalsIgnoreCase(plataforma)) {
+                vacio.setWebhookUrl("https://itt363-hub.eict.ce.pucmm.edu.do/api/");
+                vacio.setToken("bDYmf63tj6v2");
+            }
             return ResponseEntity.ok(vacio);
         }
     }
@@ -104,6 +116,8 @@ public class IntegracionController {
         config.setIntervaloMin(request.getIntervaloMin());
         config.setEstacionesIds(request.getEstacionesIds());
         config.setActiva(request.getActiva());
+        if (request.getWebhookUrl() != null && !request.getWebhookUrl().isEmpty()) config.setWebhookUrl(request.getWebhookUrl());
+        if (request.getToken() != null && !request.getToken().isEmpty()) config.setToken(request.getToken());
         integracionRepository.save(config);
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
@@ -113,16 +127,36 @@ public class IntegracionController {
     @PostMapping("/api/integracion/test")
     @ResponseBody
     public ResponseEntity<?> probarConexion(@RequestBody Map<String, String> request) {
-        String apiKey = request.get("apiKey");
-        Map<String, Object> result = integracionService.testConnection(apiKey);
-        return ResponseEntity.ok(result);
+        String plataforma = request.getOrDefault("plataforma", "openweathermap");
+        if ("pucmm".equalsIgnoreCase(plataforma)) {
+            String url = request.getOrDefault("webhookUrl", "https://itt363-hub.eict.ce.pucmm.edu.do/api/");
+            String token = request.getOrDefault("token", "bDYmf63tj6v2");
+            com.grupo2.modelo.LecturaSensor dummy = new com.grupo2.modelo.LecturaSensor();
+            dummy.setEstacionId(1);
+            dummy.setFechaHora(LocalDateTime.now());
+            dummy.setTemperatura(25.0);
+            dummy.setHumedadAire(50.0);
+            boolean ok = integracionService.testPucmmConnection(dummy, url, token);
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", ok);
+            result.put("message", ok ? "Conexión exitosa" : "Fallo al conectar");
+            return ResponseEntity.ok(result);
+        } else {
+            String apiKey = request.get("apiKey");
+            Map<String, Object> result = integracionService.testConnection(apiKey);
+            return ResponseEntity.ok(result);
+        }
     }
     @PostMapping("/api/integracion/sync-now")
     @ResponseBody
     public ResponseEntity<?> sincronizarAhora(@RequestBody Map<String, String> request) {
         String plataforma = request.get("plataforma");
         try {
-            integracionService.forzarSincronizacion(plataforma);
+            if ("pucmm".equalsIgnoreCase(plataforma)) {
+                integracionService.forzarSincronizacionPucmm();
+            } else {
+                integracionService.forzarSincronizacion(plataforma);
+            }
             return ResponseEntity.ok(Map.of("success", true, "message", "Sincronización manual iniciada"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));

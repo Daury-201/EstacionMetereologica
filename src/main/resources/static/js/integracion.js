@@ -177,6 +177,13 @@ function cargarEstadoPlataforma(plataforma) {
                 }
             });
             document.getElementById('estacionesIds').value = data.estacionesIds || '';
+            document.getElementById('webhookUrl').value = data.webhookUrl || '';
+            if (plataforma === 'pucmm') {
+                document.getElementById('token-group').style.display = 'block';
+                document.getElementById('token').value = data.token || '';
+            } else {
+                document.getElementById('token-group').style.display = 'none';
+            }
             document.getElementById('toggle-activa').checked = data.activa || false;
             inicializarChips();
             document.getElementById('config-subtitle').innerText = `${names[plataforma] || plataforma} ${data.activa ? 'activa' : 'inactiva'}`;
@@ -200,6 +207,8 @@ function guardarConfiguracion() {
         plataforma: document.getElementById('plataformaSeleccionada').value,
         intervaloMin: parseInt(document.getElementById('intervalo').value),
         estacionesIds: document.getElementById('estacionesIds').value,
+        webhookUrl: document.getElementById('webhookUrl').value,
+        token: document.getElementById('token') ? document.getElementById('token').value : '',
         activa: document.getElementById('toggle-activa').checked
     };
     const btn = document.getElementById('btn-save-config');
@@ -339,10 +348,15 @@ function testConnectionInteractive() {
     const output = document.getElementById('terminal-output');
     terminal.style.display = 'block';
     output.innerHTML = '';
+    
+    const plataforma = document.getElementById('plataformaSeleccionada').value;
+    const webhookUrl = document.getElementById('webhookUrl').value;
+    const token = document.getElementById('token') ? document.getElementById('token').value : '';
+
     const lines = [
         `> Inicializando test de conexión...`,
-        `> Configuración segura detectada [OK]`,
-        `> Haciendo ping a api.openweathermap.org...`,
+        `> Plataforma detectada: ${plataforma === 'pucmm' ? 'Hub PUCMM' : 'OpenWeatherMap'}`,
+        `> Haciendo ping a ${plataforma === 'pucmm' ? webhookUrl : 'api.openweathermap.org'}...`,
     ];
     let delay = 0;
     lines.forEach((line) => {
@@ -357,7 +371,12 @@ function testConnectionInteractive() {
         fetch('/api/integracion/test', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({})
+            body: JSON.stringify({ 
+                plataforma: plataforma,
+                webhookUrl: webhookUrl,
+                token: token,
+                apiKey: 'dummy'
+            })
         })
         .then(res => res.json())
         .then(data => {
@@ -366,13 +385,15 @@ function testConnectionInteractive() {
                 resultDiv.innerHTML = `> <span style="color: #22C55E; font-weight: bold;">Autenticando... [Éxito - 200 OK]</span>`;
                 resultDiv.innerHTML += `<br>> <span style="color: #22C55E;">Conexión establecida correctamente.</span>`;
                 btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" width="16" height="16" style="margin-right: 6px; display: inline-block; vertical-align: middle;"><polyline points="20 6 9 17 4 12"></polyline></svg> Conexión Exitosa';
-                btn.style.borderColor = '#10B981';
                 btn.style.color = '#10B981';
-                btn.style.backgroundColor = '#D1FAE5';
+                btn.style.backgroundColor = '#ECFDF5';
+                btn.style.borderColor = '#10B981';
             } else {
-                resultDiv.innerHTML = `> <span style="color: #EF4444; font-weight: bold;">Error: 401 Unauthorized</span>`;
-                resultDiv.innerHTML += `<br>> <span style="color: #EF4444;">Fallo en la conexión. Revisa tu API Key.</span>`;
-                btn.innerHTML = originalText;
+                resultDiv.innerHTML = `> <span style="color: #EF4444; font-weight: bold;">[Error]</span> Autenticación fallida o endpoint inalcanzable.`;
+                btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" width="16" height="16" style="margin-right: 6px; display: inline-block; vertical-align: middle;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg> Falló la Conexión';
+                btn.style.color = '#EF4444';
+                btn.style.backgroundColor = '#FEF2F2';
+                btn.style.borderColor = '#EF4444';
             }
             output.appendChild(resultDiv);
         })
