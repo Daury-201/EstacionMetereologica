@@ -538,9 +538,12 @@ async function loadOWMPrediction(estacionId) {
         const chartDiv = document.getElementById('chartPredictivo');
         const noDataDiv = document.getElementById('predictiveNoData');
 
-        // Check if Arduino has REAL physical data for this station/variable
+        // Check if Arduino has REAL physical data for this station/variable in the last 24h
         const realArduinoData = rawData[variable] ? rawData[variable].filter(p => p.origen === 'ARDUINO') : [];
-        if (realArduinoData.length === 0) {
+        const oneDayAgo = Date.now() - 24 * 3600 * 1000;
+        const recentArduino = realArduinoData.filter(p => p.x >= oneDayAgo);
+
+        if (recentArduino.length === 0) {
             if (chartDiv) chartDiv.style.display = 'none';
             if (noDataDiv) noDataDiv.style.display = 'block';
             if (chartPredictivo) { chartPredictivo.destroy(); chartPredictivo = null; }
@@ -562,8 +565,6 @@ async function loadOWMPrediction(estacionId) {
             };
         });
         
-        const oneDayAgo = Date.now() - 24 * 3600 * 1000;
-        const recentArduino = realArduinoData.filter(p => p.x >= oneDayAgo);
         const aggregatedArduino = aggregateDataSequential(recentArduino, 20).data;
         
         const pastTemps = aggregatedArduino.map(p => ({
