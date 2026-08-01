@@ -7,6 +7,23 @@
     --primary-hover: #6D28D9;
     --danger: #EF4444;
 }
+
+/* =========================================
+   GLOBAL TOUCH UX ENHANCEMENTS
+   ========================================= */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+button:active, .btn-primary:active, .btn-secondary:active, a:active {
+    transform: scale(0.96);
+    transition: transform 0.1s ease-out;
+}
+/* Exclude scaling from some items if needed, e.g., sidebar items */
+.sidebar .nav-item:active {
+    transform: none;
+}
+
 .sidebar {
     width: 270px;
     background-color: var(--sidebar-bg);
