@@ -1104,7 +1104,11 @@ window.navigateStation = function(direction, event, isAuto = false) {
         return e.estado === window.currentMapFilter;
     });
     
-    if (validStations.length === 0) return;
+    if (validStations.length === 0) {
+        mostrarEstadoVacio(window.currentMapFilter);
+        return;
+    }
+    document.querySelectorAll('.nav-arrow').forEach(btn => btn.style.display = 'flex');
     
     let idx = validStations.findIndex(e => e.id === currentStationId);
     if (idx === -1 && direction === 0) idx = 0;
@@ -1123,11 +1127,48 @@ if (estaciones.length > 0) {
         if (validStations.length > 0) {
             seleccionarEstacion(validStations[0], true);
         } else {
-            seleccionarEstacion(estaciones[0], true);
+            mostrarEstadoVacio(window.currentMapFilter);
         }
         window.startSlideshow();
     }, 500);
 }
+
+window.mostrarEstadoVacio = function(filtro) {
+    document.getElementById('activeStationName').textContent = "No hay estaciones";
+    let textoFiltro = filtro;
+    if (filtro === 'Con alarmas') textoFiltro = 'con alarmas';
+    else if (filtro === 'En línea') textoFiltro = 'en línea';
+    else if (filtro === 'Sin señal') textoFiltro = 'inactivas';
+    document.getElementById('activeStationCode').textContent = "- " + textoFiltro;
+    
+    document.getElementById('activeTemp').textContent = "--";
+    document.getElementById('activeFeels').textContent = "";
+    document.getElementById('activeStatusText').textContent = "";
+    document.getElementById('activeTime').textContent = "--:--";
+    
+    document.getElementById('activeWind').textContent = "--";
+    document.getElementById('activeHum').textContent = "--";
+    document.getElementById('activeSoil').textContent = "--";
+    document.getElementById('activePressure').textContent = "--";
+    document.getElementById('activeRain').textContent = "--";
+    document.getElementById('activeWindDir').textContent = "--";
+    
+    const photoHeader = document.getElementById('weatherPhotoHeader');
+    if (photoHeader) {
+        photoHeader.style.backgroundImage = 'linear-gradient(135deg, #4B5563 0%, #1F2937 100%)';
+    }
+    
+    document.querySelectorAll('.nav-arrow').forEach(btn => btn.style.display = 'none');
+    
+    // Update charts to empty state
+    if (window.tempChart) {
+        window.tempChart.updateSeries([{ name: 'Temperatura', data: [] }]);
+    }
+    if (window.humChart) {
+        window.humChart.updateSeries([{ name: 'Humedad', data: [] }]);
+    }
+};
+
 async function initForecastBar() {
     const container = document.getElementById('forecastDaysContainer');
     if (!container) return;
