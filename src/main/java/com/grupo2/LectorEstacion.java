@@ -68,7 +68,20 @@ public class LectorEstacion {
             }
             opciones.setAutomaticReconnect(true);
             opciones.setCleanSession(true);
-            cliente.setCallback(new MqttCallback() {
+            cliente.setCallback(new MqttCallbackExtended() {
+                @Override
+                public void connectComplete(boolean reconnect, String serverURI) {
+                    if (reconnect) {
+                        System.out.println("MQTT reconectado a " + serverURI + ". Resuscribiendo...");
+                        try {
+                            cliente.subscribe(topicGlobal, 1);
+                            System.out.println("Suscripción restaurada con éxito.");
+                        } catch (Exception e) {
+                            System.err.println("Error resuscribiendo tras reconexión: " + e.getMessage());
+                        }
+                    }
+                }
+
                 @Override
                 public void connectionLost(Throwable cause) {
                     System.out.println("Conexión MQTT perdida.");
