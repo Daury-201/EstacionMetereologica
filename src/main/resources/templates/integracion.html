@@ -234,6 +234,23 @@
                                 <span th:unless="${owmActiva}" class="status-badge bg-gray">No conectado</span>
                             </div>
                         </div>
+
+                        <div class="platform-item" data-platform="pucmm" onclick="selectPlatform('pucmm', this)">
+                            <div class="platform-icon" style="background: #F0F4FF;">
+                                <img th:src="@{/img/pucmm_hub.png}" alt="PUCMM Hub" style="width: 28px; height: 28px; object-fit: contain;">
+                            </div>
+                            <div class="platform-info">
+                                <h4>Hub PUCMM</h4>
+                                <p>Plataforma centralizada de la universidad</p>
+                            </div>
+                            <div class="platform-status" id="badge-pucmm">
+                                <span th:if="${pucmmActiva}" class="status-badge bg-success">
+                                    <div style="width: 6px; height: 6px; border-radius: 50%; background: #10B981;"></div>
+                                    Conectado
+                                </span>
+                                <span th:unless="${pucmmActiva}" class="status-badge bg-gray">No conectado</span>
+                            </div>
+                        </div>
                     </div>
                     <button id="btn-sync-now" class="btn btn-primary rebound-effect" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 16px; padding: 12px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; box-shadow: 0 4px 15px rgba(124, 58, 237, 0.2);" onclick="forceSync()">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/></svg>

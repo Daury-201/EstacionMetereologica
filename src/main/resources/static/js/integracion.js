@@ -161,7 +161,8 @@ function selectPlatform(platformId, element) {
 }
 function cargarEstadoPlataforma(plataforma) {
     const names = {
-        'openweathermap': 'OpenWeatherMap'
+        'openweathermap': 'OpenWeatherMap',
+        'pucmm': 'Hub PUCMM'
     };
     fetch(`/api/integracion/estado/${plataforma}`)
         .then(res => res.json())

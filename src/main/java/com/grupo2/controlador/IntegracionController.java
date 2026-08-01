@@ -56,6 +56,17 @@ public class IntegracionController {
             model.addAttribute("owmIntervalo", 10);
             model.addAttribute("owmEstacionesIds", null);
         }
+
+        Optional<IntegracionConfig> pucmmConfig = integracionRepository.findByPlataformaIgnoreCase("pucmm");
+        if (pucmmConfig.isPresent()) {
+            IntegracionConfig cfg = pucmmConfig.get();
+            model.addAttribute("pucmmActiva", cfg.getActiva() != null && cfg.getActiva());
+            model.addAttribute("pucmmIntervalo", cfg.getIntervaloMin() != null ? cfg.getIntervaloMin() : 10);
+        } else {
+            model.addAttribute("pucmmActiva", true); // Default to true as it's a core requirement
+            model.addAttribute("pucmmIntervalo", 10);
+        }
+
         return "integracion";
     }
     @GetMapping("/api/integracion/estado/{plataforma}")
@@ -75,7 +86,7 @@ public class IntegracionController {
         } else {
             IntegracionConfig vacio = new IntegracionConfig();
             vacio.setPlataforma(plataforma);
-            vacio.setActiva(false);
+            vacio.setActiva("pucmm".equalsIgnoreCase(plataforma)); // Default to true for pucmm
             return ResponseEntity.ok(vacio);
         }
     }
