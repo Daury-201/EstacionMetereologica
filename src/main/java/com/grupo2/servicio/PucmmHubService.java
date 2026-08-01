@@ -73,7 +73,7 @@ public class PucmmHubService {
                     .collect(Collectors.toList());
         }
 
-        String sql = "SELECT * FROM lecturas WHERE fecha_hora > ? AND fecha_hora <= ? " +
+        String sql = "SELECT * FROM lecturas_sensores WHERE fecha_hora > ? AND fecha_hora <= ? " +
                      (estaciones != null && !estaciones.isEmpty() ? "AND estacion_id IN (" + estaciones.stream().map(String::valueOf).collect(Collectors.joining(",")) + ") " : "") +
                      "ORDER BY fecha_hora ASC";
 
