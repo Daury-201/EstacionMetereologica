@@ -1655,19 +1655,28 @@ body.theme-light .forecast-day.active .day-temp {
     .map-style-switcher {
         display: none; /* Ocultar controles del mapa que tapan espacio útil */
     }
-    .map-filter-bar {
-        display: flex;
+    .map-filter-bar, body.map-fullscreen .map-filter-bar {
+        display: flex !important;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
-        width: max-content;
-        max-width: calc(100% - 60px);
+        width: max-content !important;
+        max-width: calc(100% - 60px) !important;
         scrollbar-width: none;
-        padding-bottom: 2px;
-        top: auto;
-        bottom: 12px;
-        left: 12px;
+        padding-bottom: 2px !important;
+        position: fixed !important;
+        top: auto !important;
+        bottom: 80px !important;
+        left: 12px !important;
         transform: scale(0.85);
         transform-origin: left bottom;
+        z-index: 100000 !important; /* Ensure it's above the map fullscreen */
+        background-color: rgba(255, 255, 255, 0.95) !important;
+    }
+    
+    /* When not fullscreen, adjust bottom so it fits the card */
+    body:not(.map-fullscreen) .map-filter-bar {
+        position: absolute !important;
+        bottom: 12px !important;
     }
     .map-filter-bar::-webkit-scrollbar {
         display: none;
