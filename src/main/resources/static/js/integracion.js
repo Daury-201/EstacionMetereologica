@@ -177,12 +177,21 @@ function cargarEstadoPlataforma(plataforma) {
                 }
             });
             document.getElementById('estacionesIds').value = data.estacionesIds || '';
-            document.getElementById('webhookUrl').value = data.webhookUrl || '';
-            if (plataforma === 'pucmm') {
+            if (plataforma === 'openweathermap') {
+                document.getElementById('webhookUrl').value = data.webhookUrl || 'https://api.openweathermap.org/data/2.5/weather';
+                document.getElementById('webhookUrl').readOnly = true;
+                const label = document.querySelector('label[for="webhookUrl"]');
+                if(label) label.innerText = 'API Endpoint';
+                
+                document.getElementById('token-group').style.display = 'none';
+            } else if (plataforma === 'pucmm') {
+                document.getElementById('webhookUrl').value = data.webhookUrl || 'https://itt363-hub.eict.ce.pucmm.edu.do/api/';
+                document.getElementById('webhookUrl').readOnly = false;
+                const label = document.querySelector('label[for="webhookUrl"]');
+                if(label) label.innerText = 'URL Webhook';
+                
                 document.getElementById('token-group').style.display = 'block';
                 document.getElementById('token').value = data.token || '';
-            } else {
-                document.getElementById('token-group').style.display = 'none';
             }
             document.getElementById('toggle-activa').checked = data.activa || false;
             inicializarChips();
