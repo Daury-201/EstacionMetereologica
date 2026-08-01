@@ -600,7 +600,11 @@ async function loadOWMPrediction(estacionId) {
                 labels: { style: { colors: isDarkMode ? '#9CA3AF' : '#6B7280' } }
             },
             yaxis: {
-                title: { text: varNames[variable] }
+                title: { text: varNames[variable], style: { color: isDarkMode ? '#9CA3AF' : '#4B5563' } },
+                labels: {
+                    formatter: val => val != null ? val.toFixed(1) : '',
+                    style: { colors: isDarkMode ? '#9CA3AF' : '#6B7280' }
+                }
             },
             dataLabels: { enabled: false }
         };
