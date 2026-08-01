@@ -350,17 +350,26 @@ function loadHistoricalData(estId) {
                 if (lectura.presion != null) rawData.presion.push({ x: timestamp, y: lectura.presion, origen: origin });
                 if (lectura.humedadSuelo != null) rawData.suelo.push({ x: timestamp, y: lectura.humedadSuelo, origen: origin });
                 if (lectura.lluvia != null) rawData.lluvia.push({ x: timestamp, y: lectura.lluvia, origen: origin });
-                if(lectura.temperatura > maxTemp) maxTemp = lectura.temperatura;
-                if(lectura.temperatura < minTemp) minTemp = lectura.temperatura;
-                if(lectura.velocidadViento > maxViento) maxViento = lectura.velocidadViento;
-                sumHumTotal += lectura.humedadAire;
+                if (lectura.temperatura != null) {
+                    if (lectura.temperatura > maxTemp) maxTemp = lectura.temperatura;
+                    if (lectura.temperatura < minTemp) minTemp = lectura.temperatura;
+                }
+                if (lectura.velocidadViento != null) {
+                    if (lectura.velocidadViento > maxViento) maxViento = lectura.velocidadViento;
+                }
+                if (lectura.humedadAire != null) {
+                    sumHumTotal += lectura.humedadAire;
+                }
             });
             if (totalRecords > 0) {
                 const latestLluvia2h = calculateLast2hPrecipitation();
-                document.getElementById('sumTemp').innerText = `${maxTemp.toFixed(1)} / ${minTemp.toFixed(1)} \u00B0C`;
-                document.getElementById('sumViento').innerText = `${maxViento.toFixed(1)} km/h`;
+                const validTempCount = rawData.temp.length;
+                const validHumCount = rawData.hum.length;
+                
+                document.getElementById('sumTemp').innerText = (maxTemp !== -999 && minTemp !== 999) ? `${maxTemp.toFixed(1)} / ${minTemp.toFixed(1)} \u00B0C` : `-- / -- \u00B0C`;
+                document.getElementById('sumViento').innerText = (maxViento !== -1) ? `${maxViento.toFixed(1)} km/h` : `-- km/h`;
                 document.getElementById('sumLluvia').innerText = `${latestLluvia2h.toFixed(1)} mm`;
-                document.getElementById('sumHum').innerText = `${(sumHumTotal / totalRecords).toFixed(1)} %`;
+                document.getElementById('sumHum').innerText = (validHumCount > 0) ? `${(sumHumTotal / validHumCount).toFixed(1)} %` : `-- %`;
             } else {
                 document.getElementById('sumTemp').innerText = `-- / -- \u00B0C`;
                 document.getElementById('sumViento').innerText = `-- km/h`;
@@ -435,10 +444,11 @@ function updateSummaryFromRaw() {
         if (rawData.hum[i]) sumHum += rawData.hum[i].y;
     }
     const latestLluvia2h = calculateLast2hPrecipitation();
-    document.getElementById('sumTemp').innerText = `${maxTemp.toFixed(1)} / ${minTemp.toFixed(1)} \u00B0C`;
-    document.getElementById('sumViento').innerText = `${maxViento.toFixed(1)} km/h`;
+    document.getElementById('sumTemp').innerText = (maxTemp !== -999 && minTemp !== 999) ? `${maxTemp.toFixed(1)} / ${minTemp.toFixed(1)} \u00B0C` : `-- / -- \u00B0C`;
+    document.getElementById('sumViento').innerText = (maxViento !== -1) ? `${maxViento.toFixed(1)} km/h` : `-- km/h`;
     document.getElementById('sumLluvia').innerText = `${latestLluvia2h.toFixed(1)} mm`;
-    document.getElementById('sumHum').innerText = `${(sumHum / tempData.length).toFixed(1)} %`;
+    const humCount = rawData.hum.length;
+    document.getElementById('sumHum').innerText = (humCount > 0) ? `${(sumHum / humCount).toFixed(1)} %` : `-- %`;
 }
 
 async function cargarExtremosTermicosGlobales() {
