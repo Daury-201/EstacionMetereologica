@@ -615,6 +615,12 @@ button:active, .btn-primary:active, .btn-secondary:active, a:active {
         display: block !important;
     }
     
+    /* Prevenir que el transform rompa el position: fixed de los dropdowns en móvil */
+    .top-badge, .top-badge:hover, .top-badge:active, .profile-dropdown, .profile-dropdown:hover {
+        transform: none !important;
+        transition: none !important;
+    }
+    
     /* Fix para todos los menús desplegables (Badges y Perfil) en móvil */
     #summary-dropdown,
     #alarms-dropdown-global,
