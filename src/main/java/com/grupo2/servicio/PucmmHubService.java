@@ -91,10 +91,18 @@ public class PucmmHubService {
                         .collect(Collectors.toList());
             }
 
+            Boolean columnExists = false;
             try {
-                jdbcTemplate.execute("ALTER TABLE lecturas_sensores ADD COLUMN IF NOT EXISTS enviado_pucmm boolean DEFAULT false;");
+                columnExists = jdbcTemplate.queryForObject(
+                    "SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='lecturas_sensores' AND column_name='enviado_pucmm')", 
+                    Boolean.class);
             } catch (Exception e) {
-                System.out.println("[API PUCMM] No se pudo ejecutar ALTER TABLE, asumiendo que la columna ya existe o Hibernate la creó.");
+                System.out.println("No se pudo verificar information_schema: " + e.getMessage());
+                columnExists = true; // Asumir que existe si falla la verificación
+            }
+
+            if (columnExists != null && !columnExists) {
+                throw new RuntimeException("DB ERROR: La columna 'enviado_pucmm' no fue creada por Hibernate en producción.");
             }
 
             String sql = "SELECT * FROM lecturas_sensores WHERE (enviado_pucmm IS NULL OR enviado_pucmm = false) " +
@@ -189,7 +197,11 @@ public class PucmmHubService {
                 errorLog.setEstacionNombre("Error Interno");
                 errorLog.setRegistrosEnviados(0);
                 errorLog.setEstado("ERROR");
-                errorLog.setMensaje("Fallo de sistema: " + ex.getMessage());
+                String exMsg = ex.getMessage() != null ? ex.getMessage() : "Null";
+                if (exMsg.length() > 400) {
+                    exMsg = exMsg.substring(0, 400) + "...";
+                }
+                errorLog.setMensaje("Fallo de sistema: " + exMsg);
                 syncLogRepository.save(errorLog);
                 
                 java.util.Map<String, Object> wsPayload = new java.util.HashMap<>();

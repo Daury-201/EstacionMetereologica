@@ -96,7 +96,6 @@ public class IntegracionService {
             sincronizarOpenWeatherMap(configOpt.get());
         }
     }
-    @Transactional
     public void forzarSincronizacionPucmm() {
         Optional<IntegracionConfig> configOpt = integracionRepository.findByPlataformaIgnoreCase("pucmm");
         if (configOpt.isPresent() && configOpt.get().getActiva()) {
