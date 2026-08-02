@@ -1568,24 +1568,23 @@ body.theme-light .forecast-day.active .day-temp {
     left: 50%;
     width: 100%;
     height: 100%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%) scale(1);
     border-radius: 50%;
     background-color: transparent;
     border: 2px solid var(--pulse-color, #34D399);
     animation: radarPulse 2s infinite ease-out;
     z-index: 1;
     pointer-events: none;
+    will-change: transform, opacity;
 }
 
 @keyframes radarPulse {
     0% {
-        width: 100%;
-        height: 100%;
+        transform: translate(-50%, -50%) scale(1);
         opacity: 0.8;
     }
     100% {
-        width: 300%;
-        height: 300%;
+        transform: translate(-50%, -50%) scale(3);
         opacity: 0;
     }
 }
