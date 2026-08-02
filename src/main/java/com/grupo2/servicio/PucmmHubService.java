@@ -179,8 +179,8 @@ public class PucmmHubService {
             headers.set("SEGURIDAD-TOKEN", auth);
 
             Map<String, Object> body = new HashMap<>();
-            body.put("grupo", "2"); 
-            body.put("estacion", String.valueOf(lectura.getEstacionId()));
+            body.put("grupo", 2); 
+            body.put("estacion", lectura.getEstacionId());
             body.put("fecha", lectura.getFechaHora().format(FORMATO_FECHA_API));
             body.put("temperatura", lectura.getTemperatura() != null ? lectura.getTemperatura() : 0.0);
             body.put("humedad", lectura.getHumedadAire() != null ? lectura.getHumedadAire() : 0.0);
