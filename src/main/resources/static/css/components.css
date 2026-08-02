@@ -719,15 +719,15 @@ button:active, .btn-primary:active, .btn-secondary:active, a:active {
         display: none; /* Ocultar el texto 'Alarmas' o 'Estado' pero dejar el icono */
     }
     
-    /* Dropdowns en móvil: Posición absoluta hacia la izquierda para no romper el ancho de pantalla */
-    .summary-dropdown, [id^="alarms-dropdown-"] {
-        position: absolute !important;
-        top: calc(100% + 15px) !important;
-        right: -10px !important; /* Ligeramente desplazado para alinear con el borde de la pantalla */
-        left: auto !important;
+    /* Dropdowns en móvil: Posición fija para no romper el ancho de pantalla ni salirse del borde */
+    .summary-dropdown, [id^="alarms-dropdown-"], #profile-menu {
+        position: fixed !important;
+        top: 80px !important; /* Debajo de la top bar */
+        left: 16px !important;
+        right: 16px !important;
+        width: auto !important;
+        max-width: none !important;
         transform: none !important;
-        width: 300px !important;
-        max-width: calc(100vw - 32px) !important;
         z-index: 1000 !important;
     }
     /* Sombra extra gruesa para simular modal sin backdrop */

@@ -210,7 +210,7 @@
         </button>
         <h1 th:utext="${pageTitle}">Título</h1>
     </div>
-    <div class="nav-center" th:if="${pageTitle != 'Configuración' and pageTitle != 'Gráficos y Análisis'}">
+    <div class="nav-center" th:if="${not #strings.startsWith(pageTitle, 'Configuraci') and not #strings.startsWith(pageTitle, 'Gráficos')}">
         <div class="search-container" style="position: relative;">
             <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input type="text" id="station-search" class="search-input" placeholder="Buscar por nombre o código..." autocomplete="off">
