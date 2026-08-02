@@ -627,48 +627,54 @@ button:active, .btn-primary:active, .btn-secondary:active, a:active {
     }
     
     .nav-item {
-        padding: 8px 4px;
+        height: 44px;
+        padding: 0 8px;
         justify-content: center;
-        border-radius: 100px; /* Forma de píldora */
+        border-radius: 22px; /* Píldora perfecta */
         min-width: 0;
         flex: 1;
-        font-size: 11px;
-        font-weight: 700;
-        color: var(--sidebar-text-muted);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        flex-shrink: 1;
-        flex-direction: row; /* Preparado para alinear icono y texto horizontalmente */
+        max-width: 50px; /* Ítems inactivos no ocupan mucho espacio */
+        font-size: 13px;
+        font-weight: 600;
+        color: #94A3B8; /* Color más claro y premium para inactivos */
+        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); /* Animación "bouncy" fluida y hermosa */
+        flex-direction: row;
         align-items: center;
         text-align: center;
         gap: 6px;
+        -webkit-tap-highlight-color: transparent; /* Evitar destello feo en Android */
+    }
+    
+    .nav-item:active {
+        transform: scale(0.9); /* Micro-interacción al tocar */
     }
     
     /* Ocultar texto por defecto en móvil para ahorrar espacio */
     .nav-item span {
         display: none;
         white-space: nowrap;
+        opacity: 0;
+        transform: translateX(-5px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
     }
     
     /* Ítem activo: Expandir y mostrar texto como una píldora elegante */
     .sidebar .nav-item.active {
-        background-color: var(--primary);
+        background: linear-gradient(135deg, var(--primary), #9333EA); /* Gradiente muy premium */
         color: white;
-        box-shadow: 0 4px 15px -3px rgba(124, 58, 237, 0.4);
-        flex: 2.5; /* Ocupa más espacio que los inactivos */
-        padding: 8px 16px;
+        box-shadow: 0 4px 14px rgba(124, 58, 237, 0.4);
+        flex: 0 1 auto; /* Ajuste perfecto al contenido real, sin ser artificialmente ancho */
+        max-width: 140px; 
+        padding: 0 16px;
     }
     
     .sidebar .nav-item.active span {
         display: block;
-        animation: fadeInText 0.3s ease forwards;
+        opacity: 1;
+        transform: translateX(0);
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 110px; /* Prevenir que un texto largo rompa la barra */
-    }
-    
-    @keyframes fadeInText {
-        from { opacity: 0; transform: translateX(-5px); }
-        to { opacity: 1; transform: translateX(0); }
+        max-width: 100px;
     }
     
     .top-nav {
