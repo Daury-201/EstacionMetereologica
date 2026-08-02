@@ -49,6 +49,8 @@ public class EstacionService {
             dto.setEstado(est.getEstado());
             dto.setLatitud(est.getLatitud());
             dto.setLongitud(est.getLongitud());
+            dto.setTimeoutSenalValor(est.getTimeoutSenalValor());
+            dto.setTimeoutSenalUnidad(est.getTimeoutSenalUnidad());
             lecturaRepository.findTopByEstacionIdOrderByFechaHoraDesc(est.getId().intValue())
                 .ifPresent(lectura -> {
                     dto.setTemperatura(lectura.getTemperatura());
@@ -90,6 +92,8 @@ public class EstacionService {
             dto.setEstado(est.getEstado());
             dto.setLatitud(est.getLatitud());
             dto.setLongitud(est.getLongitud());
+            dto.setTimeoutSenalValor(est.getTimeoutSenalValor());
+            dto.setTimeoutSenalUnidad(est.getTimeoutSenalUnidad());
             resultado.add(dto);
         }
         return resultado;
@@ -120,8 +124,12 @@ public class EstacionService {
                 .ifPresentOrElse(lectura -> {
                     long segundos = ChronoUnit.SECONDS.between(lectura.getFechaHora(), LocalDateTime.now());
                     
-                    Integer valor = configuracionService.obtenerConfiguracionActual().getTimeoutSenalValor();
-                    String unidad = configuracionService.obtenerConfiguracionActual().getTimeoutSenalUnidad();
+                    Integer valorGlobal = configuracionService.obtenerConfiguracionActual().getTimeoutSenalValor();
+                    String unidadGlobal = configuracionService.obtenerConfiguracionActual().getTimeoutSenalUnidad();
+                    
+                    Integer valor = est.getTimeoutSenalValor() != null ? est.getTimeoutSenalValor() : valorGlobal;
+                    String unidad = (est.getTimeoutSenalUnidad() != null && !est.getTimeoutSenalUnidad().isEmpty()) ? est.getTimeoutSenalUnidad() : unidadGlobal;
+                    
                     long timeoutSegundos = "minutos".equalsIgnoreCase(unidad) ? (valor * 60L) : valor.longValue();
                     
                     if (segundos >= timeoutSegundos) {

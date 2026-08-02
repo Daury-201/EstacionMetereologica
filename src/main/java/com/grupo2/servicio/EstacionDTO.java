@@ -54,4 +54,11 @@ public class EstacionDTO {
     public void setAlarmasActivas(java.util.List<String> alarmasActivas) { this.alarmasActivas = alarmasActivas; }
     public String getUltimaLectura() { return ultimaLectura; }
     public void setUltimaLectura(String ultimaLectura) { this.ultimaLectura = ultimaLectura; }
+
+    private Integer timeoutSenalValor;
+    private String timeoutSenalUnidad;
+    public Integer getTimeoutSenalValor() { return timeoutSenalValor; }
+    public void setTimeoutSenalValor(Integer timeoutSenalValor) { this.timeoutSenalValor = timeoutSenalValor; }
+    public String getTimeoutSenalUnidad() { return timeoutSenalUnidad; }
+    public void setTimeoutSenalUnidad(String timeoutSenalUnidad) { this.timeoutSenalUnidad = timeoutSenalUnidad; }
 }

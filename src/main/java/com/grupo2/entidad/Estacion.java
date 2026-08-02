@@ -60,4 +60,26 @@ public class Estacion {
     public void setEstado(String estado) {
         this.estado = estado;
     }
+
+    @Column(name = "timeout_senal_valor")
+    private Integer timeoutSenalValor;
+
+    @Column(name = "timeout_senal_unidad", length = 20)
+    private String timeoutSenalUnidad;
+
+    public Integer getTimeoutSenalValor() {
+        return timeoutSenalValor;
+    }
+
+    public void setTimeoutSenalValor(Integer timeoutSenalValor) {
+        this.timeoutSenalValor = timeoutSenalValor;
+    }
+
+    public String getTimeoutSenalUnidad() {
+        return timeoutSenalUnidad;
+    }
+
+    public void setTimeoutSenalUnidad(String timeoutSenalUnidad) {
+        this.timeoutSenalUnidad = timeoutSenalUnidad;
+    }
 }
