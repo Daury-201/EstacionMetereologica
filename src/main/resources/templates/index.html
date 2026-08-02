@@ -561,19 +561,22 @@ document.addEventListener("DOMContentLoaded", function() {
                 } catch(e) {}
             }, 500);
             
-            // A los 3.4s, mostrar texto para que el usuario toque la pantalla y así sortear el bloqueo de Auto-Play en móviles
+            // A los 3.4s, mostrar texto en móviles, o entrar automáticamente en PC
             setTimeout(() => {
-                let tapBtn = document.createElement('div');
-                tapBtn.innerHTML = "Toca la pantalla para entrar";
-                // Ubicado en la parte superior (top: 12%) para evitar cruce con controles del sistema
-                tapBtn.style.cssText = "position:absolute; top:12%; left:50%; transform:translateX(-50%); color:rgba(255,255,255,0.9); font-size:16px; letter-spacing:1px; font-weight:500; cursor:pointer; padding:20px; z-index:100; animation:pulse 1.5s infinite; text-align:center; white-space:nowrap;";
-                splash.appendChild(tapBtn);
+                let isMobileEnv = (window.innerWidth < 768);
+                let tapBtn = null;
                 
-                splash.style.cursor = 'pointer';
+                if (isMobileEnv) {
+                    tapBtn = document.createElement('div');
+                    tapBtn.innerHTML = "Toca la pantalla para entrar";
+                    tapBtn.style.cssText = "position:absolute; top:12%; left:50%; transform:translateX(-50%); color:rgba(255,255,255,0.9); font-size:16px; letter-spacing:1px; font-weight:500; cursor:pointer; padding:20px; z-index:100; animation:pulse 1.5s infinite; text-align:center; white-space:nowrap;";
+                    splash.appendChild(tapBtn);
+                    splash.style.cursor = 'pointer';
+                }
                 
-                // Función que ejecuta el final del splash al tocar
+                // Función que ejecuta el final del splash al tocar o automáticamente
                 function triggerEnter() {
-                    tapBtn.style.display = 'none';
+                    if (tapBtn) tapBtn.style.display = 'none';
                     
                     // Iniciar explosión visual
                     lightningPaths = generateLightning();
@@ -600,9 +603,23 @@ document.addEventListener("DOMContentLoaded", function() {
                     try {
                         const sonidoActivoStr = document.body.getAttribute('data-sonido-activo');
                         if (sonidoActivoStr !== 'false') {
-                            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                            if (audioCtx.state === 'suspended') audioCtx.resume();
-                            playSyntheticThunder(audioCtx);
+                            if (isMobileEnv) {
+                                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                                if (audioCtx.state === 'suspended') audioCtx.resume();
+                                playSyntheticThunder(audioCtx);
+                            } else {
+                                // PC: reproducir audio real original sin tap obligatorio
+                                const pcThunder = new Audio("https://actions.google.com/sounds/v1/weather/thunder_crack.ogg");
+                                pcThunder.volume = 1.0;
+                                let p = pcThunder.play();
+                                if (p !== undefined) {
+                                    p.catch(e => {
+                                        // Fallback a sonido sintético si el PC bloquea autoplay
+                                        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                                        playSyntheticThunder(audioCtx);
+                                    });
+                                }
+                            }
                         }
                         if (navigator.vibrate) navigator.vibrate([100, 50, 150, 50, 200]);
                     } catch(e) { console.log(e); }
@@ -618,16 +635,20 @@ document.addEventListener("DOMContentLoaded", function() {
                         
                         setTimeout(() => {
                             if(splash && splash.parentNode) splash.remove();
-                            // Ya no es necesario limpiar el Audio tag porque usamos Web Audio API puro
                         }, 600);
                     }, 600);
                 }
                 
-                // Esperar el click
-                splash.addEventListener('click', function onSplashTap() {
-                    splash.removeEventListener('click', onSplashTap);
-                    triggerEnter();
-                });
+                if (isMobileEnv) {
+                    // Esperar el click en móviles
+                    splash.addEventListener('click', function onSplashTap() {
+                        splash.removeEventListener('click', onSplashTap);
+                        triggerEnter();
+                    });
+                } else {
+                    // Entrar automáticamente en PC (0.5s de delay extra para apreciar el 100%)
+                    setTimeout(triggerEnter, 500);
+                }
 
             }, 3400);
         } // Cierra if (splash)
