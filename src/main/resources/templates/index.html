@@ -490,6 +490,18 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // --- Efectos de Sonido Sintéticos (Sin widgets multimedia nativos) ---
         let audioCtx = null;
+        let realThunderBuffer = null;
+        
+        // Descargamos el sonido original en segundo plano (para Móviles).
+        // Así podemos usar el audio real de PC sin que iOS/Android detecten un reproductor de medios.
+        fetch("https://actions.google.com/sounds/v1/weather/thunder_crack.ogg")
+            .then(res => res.arrayBuffer())
+            .then(data => {
+                let tempCtx = new (window.AudioContext || window.webkitAudioContext)();
+                return tempCtx.decodeAudioData(data);
+            })
+            .then(buffer => { realThunderBuffer = buffer; })
+            .catch(e => console.log("Fetch de audio original bloqueado. Usará sintético."));
         
         function playSyntheticThunder(ctx) {
             if (!ctx) return;
@@ -606,7 +618,18 @@ document.addEventListener("DOMContentLoaded", function() {
                             if (isMobileEnv) {
                                 if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                                 if (audioCtx.state === 'suspended') audioCtx.resume();
-                                playSyntheticThunder(audioCtx);
+                                
+                                if (realThunderBuffer) {
+                                    let src = audioCtx.createBufferSource();
+                                    src.buffer = realThunderBuffer;
+                                    let gainNode = audioCtx.createGain();
+                                    gainNode.gain.value = 1.3;
+                                    src.connect(gainNode);
+                                    gainNode.connect(audioCtx.destination);
+                                    src.start();
+                                } else {
+                                    playSyntheticThunder(audioCtx);
+                                }
                             } else {
                                 // PC: reproducir audio real original sin tap obligatorio
                                 const pcThunder = new Audio("https://actions.google.com/sounds/v1/weather/thunder_crack.ogg");
