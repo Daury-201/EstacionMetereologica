@@ -637,13 +637,17 @@ button:active, .btn-primary:active, .btn-secondary:active, a:active {
     
     .nav-menu {
         flex-direction: row;
-        justify-content: space-around;
+        justify-content: flex-start;
         align-items: center;
         width: 100%;
-        padding: 0 8px;
+        padding: 0 16px; /* Padding extra para que el primero y ultimo no queden pegados a los bordes */
         margin: 0;
-        gap: 4px;
-        overflow-x: visible; /* Remover scroll horizontal */
+        gap: 8px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        scroll-snap-type: x mandatory;
+        scroll-behavior: auto; /* Para evitar animaciones indeseadas en la carga inicial */
     }
     
     .nav-menu::-webkit-scrollbar {
@@ -652,11 +656,11 @@ button:active, .btn-primary:active, .btn-secondary:active, a:active {
     
     .nav-item {
         height: 48px;
-        padding: 0 10px;
+        padding: 0 12px;
         justify-content: center;
         border-radius: 24px;
-        min-width: 48px; 
-        flex: 1 1 auto; /* Permitir que se compriman y expandan inteligentemente */
+        min-width: 56px; 
+        flex: 0 0 auto; /* Importante para el scroll horizontal, NO comprimir */
         font-size: 13px;
         font-weight: 600;
         color: #94A3B8;
@@ -666,6 +670,7 @@ button:active, .btn-primary:active, .btn-secondary:active, a:active {
         text-align: center;
         gap: 6px;
         -webkit-tap-highlight-color: transparent;
+        scroll-snap-align: center; /* Se alinea bonito al hacer scroll */
     }
     
     .nav-item:active {

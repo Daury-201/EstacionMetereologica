@@ -187,6 +187,18 @@
             </a>
         </li>
     </ul>
+    <script>
+        (function() {
+            if (window.innerWidth <= 768) {
+                var activeItem = document.querySelector('.sidebar .nav-item.active');
+                var navMenu = document.querySelector('.nav-menu');
+                if (activeItem && navMenu) {
+                    var scrollPos = activeItem.offsetLeft - (window.innerWidth / 2) + (activeItem.offsetWidth / 2);
+                    navMenu.scrollLeft = scrollPos;
+                }
+            }
+        })();
+    </script>
     <div class="sidebar-footer">
         <form th:action="@{/logout}" method="post" style="width: 100%; margin: 0; padding: 0;">
             <button type="submit" class="logout-btn" style="width: 100%; background: transparent; border: none; cursor: pointer; text-align: left;">
