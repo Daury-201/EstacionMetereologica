@@ -26,6 +26,11 @@ public class NotificacionService {
 
     @Async
     public void notificarAlarma(Alarma alarma) {
+        if ("conexion".equalsIgnoreCase(alarma.getSensor())) {
+            // Se maneja independientemente por notificarDesconexion en EstacionService
+            return;
+        }
+        
         List<Usuario> usuarios = usuarioRepository.findAll();
         for (Usuario u : usuarios) {
             if (Boolean.TRUE.equals(u.getNotificarAlarmas()) && u.getEmail() != null) {

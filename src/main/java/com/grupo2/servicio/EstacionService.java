@@ -29,6 +29,8 @@ public class EstacionService {
     private SimpMessagingTemplate messagingTemplate;
     @Autowired
     private NotificacionService notificacionService;
+    @Autowired
+    private AlarmaService alarmaService;
 
     private List<EstacionDTO> cachedEstaciones = null;
     private long lastEstacionesTime = 0;
@@ -138,6 +140,9 @@ public class EstacionService {
                             dto.setId(est.getId());
                             dto.setEstado("Sin señal");
                             messagingTemplate.convertAndSend("/topic/estaciones-estado", dto);
+                            
+                            // Registrar alarma en BD y emitir websocket
+                            alarmaService.registrarDesconexion(est);
                         }
 
                         if (canNotify) {
@@ -152,6 +157,9 @@ public class EstacionService {
                             dto.setId(est.getId());
                             dto.setEstado("En línea");
                             messagingTemplate.convertAndSend("/topic/estaciones-estado", dto);
+                            
+                            // Resolver alarma de conexión automáticamente
+                            alarmaService.resolverDesconexion(est);
                         }
                     }
                 }, () -> {
@@ -170,6 +178,9 @@ public class EstacionService {
                         dto.setId(est.getId());
                         dto.setEstado("Sin señal");
                         messagingTemplate.convertAndSend("/topic/estaciones-estado", dto);
+                        
+                        // Registrar alarma en BD y emitir websocket
+                        alarmaService.registrarDesconexion(est);
                     }
 
                     if (canNotify) {

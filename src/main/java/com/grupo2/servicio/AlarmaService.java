@@ -115,6 +115,33 @@ public class AlarmaService {
             lecturasAnormales.put(cacheKey, 0);
         }
     }
+
+    @Transactional
+    public void registrarDesconexion(Estacion estacion) {
+        Optional<Alarma> alarmaExistente = alarmaRepository.findFirstByEstacionIdAndSensorAndResueltaFalse(estacion.getId().intValue(), "conexion");
+        if (alarmaExistente.isEmpty()) {
+            Alarma nuevaAlarma = new Alarma();
+            nuevaAlarma.setEstacionId(estacion.getId().intValue());
+            nuevaAlarma.setEstacionNombre(estacion.getNombre());
+            nuevaAlarma.setSensor("conexion");
+            nuevaAlarma.setValor(0.0);
+            nuevaAlarma.setUmbralExcedido("Pérdida de señal");
+            nuevaAlarma.setGravedad("CRITICA");
+            nuevaAlarma.setFechaHora(LocalDateTime.now());
+            nuevaAlarma.setResuelta(false);
+            nuevaAlarma.setReconocida(false);
+            alarmaRepository.save(nuevaAlarma);
+            notificarAlarma(nuevaAlarma);
+        }
+    }
+
+    @Transactional
+    public void resolverDesconexion(Estacion estacion) {
+        Optional<Alarma> alarmaExistente = alarmaRepository.findFirstByEstacionIdAndSensorAndResueltaFalse(estacion.getId().intValue(), "conexion");
+        if (alarmaExistente.isPresent()) {
+            resolverAlarma(alarmaExistente.get().getId(), "Señal restablecida automáticamente");
+        }
+    }
     private void notificarAlarma(Alarma alarma) {
         try {
             messagingTemplate.convertAndSend("/topic/alarmas", alarma);

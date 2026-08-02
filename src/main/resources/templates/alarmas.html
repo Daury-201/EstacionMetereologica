@@ -241,10 +241,14 @@
                                         <span th:if="${#strings.containsIgnoreCase(alarma.sensor, 'vien')}" style="color: #8B5CF6;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></svg></span>
                                         <span th:if="${#strings.containsIgnoreCase(alarma.sensor, 'lluv')}" style="color: #0EA5E9;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M20 16.2A6.5 6.5 0 0 0 17.5 4h-1.6A7.5 7.5 0 0 0 2 11.5c0 1.2.3 2.3.8 3.3"/><path d="M16 14v6"/><path d="M8 14v6"/><path d="M12 16v6"/></svg></span>
                                         <span th:if="${#strings.containsIgnoreCase(alarma.sensor, 'pres')}" style="color: #10B981;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="m12 14 4-4"/><path d="M3.34 16A10 10 0 1 1 20.66 16"/><circle cx="12" cy="14" r="2"/></svg></span>
+                                        <span th:if="${#strings.containsIgnoreCase(alarma.sensor, 'conexion')}" style="color: #64748B;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
                                         <span style="text-transform: capitalize; font-weight: 500;" th:text="${#strings.replace(alarma.sensor, '_', ' ')}">Temperatura</span>
                                     </div>
                                 </td>
-                                <td class="value-cell" th:classappend="${alarma.gravedad == 'CRITICA' ? 'text-danger' : 'text-warning'}" style="font-weight: 600;" th:text="${alarma.valor}">38.7°C</td>
+                                <td class="value-cell" th:classappend="${alarma.gravedad == 'CRITICA' ? 'text-danger' : 'text-warning'}" style="font-weight: 600;">
+                                    <span th:if="${alarma.sensor != 'conexion'}" th:text="${alarma.valor}">38.7°C</span>
+                                    <span th:if="${alarma.sensor == 'conexion'}">N/A</span>
+                                </td>
                                 <td>
                                     <div th:if="${#strings.contains(alarma.umbralExcedido, '>')}" class="umbral-pill umbral-up">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
@@ -384,10 +388,14 @@
                                     <span th:if="${#strings.containsIgnoreCase(alarma.sensor, 'vien')}" style="color: #8B5CF6;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></svg></span>
                                     <span th:if="${#strings.containsIgnoreCase(alarma.sensor, 'lluv')}" style="color: #0EA5E9;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M20 16.2A6.5 6.5 0 0 0 17.5 4h-1.6A7.5 7.5 0 0 0 2 11.5c0 1.2.3 2.3.8 3.3"/><path d="M16 14v6"/><path d="M8 14v6"/><path d="M12 16v6"/></svg></span>
                                     <span th:if="${#strings.containsIgnoreCase(alarma.sensor, 'pres')}" style="color: #10B981;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="m12 14 4-4"/><path d="M3.34 16A10 10 0 1 1 20.66 16"/><circle cx="12" cy="14" r="2"/></svg></span>
+                                    <span th:if="${#strings.containsIgnoreCase(alarma.sensor, 'conexion')}" style="color: #64748B;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
                                     <span style="text-transform: capitalize; font-weight: 500;" th:text="${#strings.replace(alarma.sensor, '_', ' ')}">Temperatura</span>
                                 </div>
                             </td>
-                            <td th:text="${alarma.valor}" style="font-weight: 600;">38.7°C</td>
+                            <td style="font-weight: 600;">
+                                <span th:if="${alarma.sensor != 'conexion'}" th:text="${alarma.valor}">38.7°C</span>
+                                <span th:if="${alarma.sensor == 'conexion'}">N/A</span>
+                            </td>
                             <td>
                                 <div th:if="${#strings.contains(alarma.umbralExcedido, '>')}" class="umbral-pill umbral-up">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M12 19V5M5 12l7-7 7 7"/></svg>

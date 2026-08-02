@@ -36,12 +36,17 @@ function showGlobalToast(alarma) {
     toast.className = `toast ${alarma.gravedad.toLowerCase()}`;
     const icon = alarma.gravedad === "CRITICA" ? "🚨" : "⚠️";
     const sensorName = alarma.sensor.replace('_', ' ');
+    let msgHtml = `Sensor <span style="text-transform: capitalize;">${sensorName}</span>: <strong>${alarma.valor}</strong> (${alarma.umbralExcedido})`;
+    if (alarma.sensor.toLowerCase() === 'conexion') {
+        msgHtml = `<strong>Pérdida de conexión</strong> con la estación.`;
+    }
+
     toast.innerHTML = `
         <div style="font-size: 20px; margin-right: 8px;">${icon}</div>
         <div class="toast-content" style="flex: 1;">
             <div class="toast-title" style="font-weight: 700; font-size: 13px; margin-bottom: 2px;">¡Alerta en ${alarma.estacionNombre}!</div>
             <div class="toast-message" style="font-size: 12px; color: #4B5563;">
-                Sensor <span style="text-transform: capitalize;">${sensorName}</span>: <strong>${alarma.valor}</strong> (${alarma.umbralExcedido})
+                ${msgHtml}
             </div>
         </div>
         <div class="toast-close" style="cursor: pointer; font-size: 16px; margin-left: 8px; font-weight: bold; line-height: 1;">&times;</div>
@@ -111,13 +116,17 @@ function cargarAlarmasDropdown() {
                 const icon = alarma.gravedad === 'CRITICA' ? '🚨' : '⚠️';
                 const statusClass = alarma.gravedad === 'CRITICA' ? 'status-offline' : 'status-online';
                 const gravedadLabel = alarma.gravedad === 'CRITICA' ? 'Crítica' : 'Advertencia';
+                let descHtml = `Valor: ${alarma.valor} (${alarma.umbralExcedido})`;
+                if (alarma.sensor.toLowerCase() === 'conexion') {
+                    descHtml = `Pérdida de conexión`;
+                }
                 const itemHTML = `
                     <div class="summary-item" style="cursor: pointer; padding: 12px 16px; border-bottom: 1px solid #F3F4F6; display: flex; justify-content: space-between; align-items: center; gap: 8px;" onclick="window.location.href='/alarmas'">
                         <div class="summary-info" style="text-align: left; flex: 1;">
                             <h4 style="margin: 0; font-size: 13px; font-weight: 600; color: #111827; text-transform: capitalize; display: flex; align-items: center; gap: 6px;">
                                 <span>${icon}</span> ${sensorName}
                             </h4>
-                            <p style="margin: 4px 0 0 0; font-size: 11px; font-weight: 500; color: #374151;">Valor: ${alarma.valor} (${alarma.umbralExcedido})</p>
+                            <p style="margin: 4px 0 0 0; font-size: 11px; font-weight: 500; color: #374151;">${descHtml}</p>
                             <p style="margin: 2px 0 0 0; font-size: 10px; color: #9CA3AF;">${alarma.estacionNombre}</p>
                         </div>
                         <div class="summary-status ${statusClass}" style="padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; flex-shrink: 0;">
