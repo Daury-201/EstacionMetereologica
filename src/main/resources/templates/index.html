@@ -576,6 +576,15 @@ document.addEventListener("DOMContentLoaded", function() {
             sessionStorage.setItem('splashShown', 'true');
             setTimeout(() => {
                 if(splash && splash.parentNode) splash.remove();
+                
+                // Limpiar el audio para evitar que se quede el widget reproductor en el sistema (iOS/Android)
+                try {
+                    if (thunderAudio) {
+                        thunderAudio.pause();
+                        thunderAudio.removeAttribute('src');
+                        thunderAudio.load();
+                    }
+                } catch(e) {}
             }, 600);
         }, 4000); // 4 seconds so they can play with it
     }

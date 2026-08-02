@@ -654,13 +654,17 @@ button:active, .btn-primary:active, .btn-secondary:active, a:active {
         display: none;
     }
     
+    .nav-menu li {
+        flex: 0 0 auto; /* Importante para Chrome: evita que los elementos se encojan */
+        display: flex;
+    }
+    
     .nav-item {
         height: 48px;
         padding: 0 12px;
         justify-content: center;
         border-radius: 24px;
         min-width: 56px; 
-        flex: 0 0 auto; /* Importante para el scroll horizontal, NO comprimir */
         font-size: 13px;
         font-weight: 600;
         color: #94A3B8;
