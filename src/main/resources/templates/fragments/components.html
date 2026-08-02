@@ -530,13 +530,11 @@
     </script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Scroll bottom navigation to active item so it doesn't reset to the left on page load
+            // Scroll bottom navigation to active item INSTANTLY so it doesn't glitch on page load
             const activeNavItem = document.querySelector('.sidebar .nav-item.active');
             if (activeNavItem && window.innerWidth <= 768) {
-                // Pequeño retraso para asegurar que CSS Flexbox haya renderizado los anchos finales
-                setTimeout(() => {
-                    activeNavItem.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                }, 100);
+                // Hacerlo de forma instantánea y centrada, sin timeouts ni animaciones (evita el "intento" visible)
+                activeNavItem.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'center' });
             }
         });
     </script>
