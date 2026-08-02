@@ -479,8 +479,29 @@ async function cargarExtremosTermicosGlobales() {
                     endingShape: 'rounded'
                 },
             },
-            dataLabels: { enabled: true, formatter: val => val.toFixed(1) + '°' },
-            stroke: { show: true, width: 2, colors: ['transparent'] }
+            dataLabels: { 
+                enabled: true, 
+                formatter: val => val.toFixed(1) + '°',
+                style: { fontSize: window.innerWidth < 768 ? '10px' : '12px' }
+            },
+            stroke: { show: true, width: 2, colors: ['transparent'] },
+            responsive: [{
+                breakpoint: 768,
+                options: {
+                    plotOptions: {
+                        bar: {
+                            columnWidth: '95%' // Barras más gruesas en móvil
+                        }
+                    },
+                    dataLabels: {
+                        enabled: true,
+                        style: {
+                            fontSize: '9px'
+                        },
+                        orientation: 'vertical' // Girar el texto para que quepa en la barra vertical
+                    }
+                }
+            }]
         };
 
         if (chartExtremos) chartExtremos.destroy();
