@@ -251,6 +251,13 @@ public class IntegracionService {
         } catch (Exception e) {
             System.err.println("Error al enviar WebSocket de integración: " + e.getMessage());
         }
+        
+        // Disparar sincronización con PUCMM inmediatamente para enviar las nuevas lecturas
+        try {
+            forzarSincronizacionPucmm();
+        } catch (Exception e) {
+            System.err.println("Error al forzar sincronización con PUCMM tras OWM: " + e.getMessage());
+        }
     }
     private String convertirGradosADireccion(double grados) {
         String[] direcciones = {"N", "NE", "E", "SE", "S", "SW", "W", "NW", "N"};
