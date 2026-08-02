@@ -91,9 +91,9 @@ public class PucmmHubService {
                     .collect(Collectors.toList());
         }
 
-        String sql = "SELECT * FROM lecturas_sensores WHERE fecha_hora > ? AND fecha_hora <= ? " +
+        String sql = "SELECT * FROM lecturas_sensores WHERE (enviado_pucmm IS NULL OR enviado_pucmm = false) " +
                      (estaciones != null && !estaciones.isEmpty() ? "AND estacion_id IN (" + estaciones.stream().map(String::valueOf).collect(Collectors.joining(",")) + ") " : "") +
-                     "ORDER BY fecha_hora ASC";
+                     "ORDER BY id ASC LIMIT 500"; // Procesar máximo 500 por lote para no saturar
 
         List<LecturaSensor> lecturas = jdbcTemplate.query(sql, (rs, rowNum) -> {
             LecturaSensor l = new LecturaSensor();
@@ -106,13 +106,20 @@ public class PucmmHubService {
             v = rs.getDouble("humedad_aire");
             l.setHumedadAire(rs.wasNull() ? null : v);
             return l;
-        }, java.sql.Timestamp.valueOf(desde), java.sql.Timestamp.valueOf(hasta));
+        });
 
         int enviados = 0;
+        List<Long> sentIds = new java.util.ArrayList<>();
         for (LecturaSensor lectura : lecturas) {
             if (enviarLectura(lectura, url, tokenAuth)) {
                 enviados++;
+                sentIds.add(lectura.getId());
             }
+        }
+        
+        if (!sentIds.isEmpty()) {
+            String idsStr = sentIds.stream().map(String::valueOf).collect(Collectors.joining(","));
+            jdbcTemplate.update("UPDATE lecturas_sensores SET enviado_pucmm = true WHERE id IN (" + idsStr + ")");
         }
 
         System.out.println("[API PUCMM] Batch completado. Lecturas enviadas: " + enviados);

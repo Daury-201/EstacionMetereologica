@@ -31,6 +31,9 @@ public class LecturaSensores {
     @Column(name = "origen", length = 50)
     private String origen;
 
+    @Column(name = "enviado_pucmm", columnDefinition = "boolean default false")
+    private Boolean enviadoPucmm = false;
+
     public LecturaSensores() {
     }
     public Long getId() {
@@ -104,5 +107,11 @@ public class LecturaSensores {
     }
     public void setOrigen(String origen) {
         this.origen = origen;
+    }
+    public Boolean getEnviadoPucmm() {
+        return enviadoPucmm;
+    }
+    public void setEnviadoPucmm(Boolean enviadoPucmm) {
+        this.enviadoPucmm = enviadoPucmm;
     }
 }
