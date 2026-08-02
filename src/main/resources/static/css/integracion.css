@@ -18,9 +18,23 @@
     box-shadow: 0 4px 6px rgba(124, 58, 237, 0.05);
 }
 .platform-item.active {
-    border-color: #CBD5E1;
-    background: #F8FAFC;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    border-color: var(--primary);
+    background: rgba(124, 58, 237, 0.04);
+    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.1);
+    transform: translateY(-2px);
+    position: relative;
+    overflow: hidden;
+}
+
+.platform-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--primary);
+    border-radius: 4px 0 0 4px;
 }
 .platform-icon {
     width: 48px;
