@@ -208,7 +208,7 @@
                 <line x1="3" y1="18" x2="21" y2="18"></line>
             </svg>
         </button>
-        <h1 th:text="${pageTitle}">Título</h1>
+        <h1 th:utext="${pageTitle}">Título</h1>
     </div>
     <div class="nav-center" th:if="${pageTitle != 'Configuración' and pageTitle != 'Gráficos y Análisis'}">
         <div class="search-container" style="position: relative;">
@@ -527,6 +527,21 @@
         // Pero para ser eficientes, mejor solo conectamos.
         connectGlobalEstacionesStatus();
         /*]]>*/
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Scroll bottom navigation to active item so it doesn't reset to the left on page load
+            const activeNavItem = document.querySelector('.nav-item.active');
+            if (activeNavItem && window.innerWidth <= 768) {
+                const navMenu = document.querySelector('.nav-menu');
+                if (navMenu) {
+                    const navMenuRect = navMenu.getBoundingClientRect();
+                    const activeNavItemRect = activeNavItem.getBoundingClientRect();
+                    // Center the active item
+                    navMenu.scrollLeft = activeNavItem.offsetLeft - (navMenuRect.width / 2) + (activeNavItemRect.width / 2);
+                }
+            }
+        });
     </script>
 </header>
 </body>

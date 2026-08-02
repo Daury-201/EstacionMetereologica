@@ -649,42 +649,22 @@ th:last-child, td:last-child {
         width: 100%;
     }
     
-    .top-nav {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 16px;
-        padding: 20px 16px;
-    }
-    
     .top-nav > div:first-child {
         display: flex;
-        justify-content: space-between;
-        width: 100%;
         align-items: center;
+        gap: 8px !important;
+        flex-shrink: 0;
     }
     
     .top-actions {
-        width: 100%;
-        justify-content: space-between;
-    }
-    
-    /* Nueva Estación botón reducido a icono redondo */
-    .top-nav .btn-primary {
-        font-size: 0; 
-        padding: 0;
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
         display: flex;
-        justify-content: center;
         align-items: center;
-    }
-    .top-nav .btn-primary svg {
-        margin: 0 !important;
-        width: 24px;
-        height: 24px;
+        gap: 8px;
+        margin-left: auto;
+        flex-shrink: 0;
     }
     
+
     /* Evitar que las pestañas (tabs) se desborden o rompan el ancho */
     .tabs {
         flex-wrap: nowrap;
@@ -722,6 +702,8 @@ th:last-child, td:last-child {
         margin: 0;
         padding-bottom: 90px;
         animation: slideUpSheet 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        max-height: 90dvh;
+        overflow-y: auto;
     }
     
     @keyframes slideUpSheet {

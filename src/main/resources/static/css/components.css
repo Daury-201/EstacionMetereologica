@@ -448,6 +448,20 @@ button:active, .btn-primary:active, .btn-secondary:active, a:active {
 .profile-role { font-size: 11px; color: #6B7280; margin-left: 2px; align-self: flex-end; }
 
 
+.top-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 32px;
+    background-color: #FFFFFF;
+    border-bottom: 1px solid #E5E7EB;
+}
+.top-nav h1, .page-title {
+    font-size: 24px !important;
+    font-weight: 700 !important;
+    color: #111827 !important;
+    margin: 0 !important;
+}
 .nav-left {
     display: flex;
     align-items: center;
@@ -544,6 +558,10 @@ button:active, .btn-primary:active, .btn-secondary:active, a:active {
     box-shadow: 0 2px 5px rgba(239, 68, 68, 0.4);
 }
 
+.mobile-only {
+    display: none !important;
+}
+
 /* ==========================================================================
    RESPONSIVE DESIGN (Mobile & Tablet)
    ========================================================================== */
@@ -571,7 +589,7 @@ button:active, .btn-primary:active, .btn-secondary:active, a:active {
 @media (max-width: 768px) {
     .sidebar {
         position: fixed;
-        bottom: env(safe-area-inset-bottom, 15px);
+        bottom: calc(env(safe-area-inset-bottom, 15px) + 8px); /* Elevado para no estar tan al borde */
         left: 15px;
         width: calc(100% - 30px);
         height: 64px;
@@ -593,6 +611,10 @@ button:active, .btn-primary:active, .btn-secondary:active, a:active {
         display: none !important;
     }
     
+    .mobile-only {
+        display: block !important;
+    }
+    
     .nav-menu {
         flex-direction: row;
         justify-content: flex-start;
@@ -611,19 +633,51 @@ button:active, .btn-primary:active, .btn-secondary:active, a:active {
     }
     
     .nav-item {
-        flex-direction: column;
         padding: 8px 12px;
-        gap: 4px;
+        justify-content: center;
         border-radius: 12px;
+        min-width: 64px;
+        flex: 1;
         font-size: 10px;
         font-weight: 600;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
         color: var(--sidebar-text-muted);
         transition: all 0.2s ease;
         flex-shrink: 0;
-        min-width: 64px;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .sidebar .nav-item.active {
+        background-color: var(--primary);
+        color: white;
+        box-shadow: 0 4px 15px -3px rgba(124, 58, 237, 0.4);
+    }
+    
+    .top-nav {
+        padding: 20px 16px !important;
+    }
+    
+    /* Touch-friendly Tables Globally */
+    .table-container, div:has(> table), .card:has(> table) {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        width: 100%;
+        /* Opcional: una sombra sutil para indicar que hay más contenido */
+        background: linear-gradient(to right, white 30%, rgba(255,255,255,0)),
+                    linear-gradient(to right, rgba(255,255,255,0), white 70%) 100% 0,
+                    radial-gradient(farthest-side at 0 50%, rgba(0,0,0,.1), rgba(0,0,0,0)),
+                    radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,.1), rgba(0,0,0,0)) 100% 0;
+        background-repeat: no-repeat;
+        background-color: white;
+        background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+        background-attachment: local, local, scroll, scroll;
+    }
+    table {
+        min-width: 650px !important;
+    }
+    th, td {
+        padding: 16px 12px !important;
     }
     
     .nav-item svg {
@@ -633,15 +687,6 @@ button:active, .btn-primary:active, .btn-secondary:active, a:active {
         transition: all 0.2s ease;
     }
     
-    .nav-item.active {
-        background-color: rgba(139, 92, 246, 0.15); /* Soft purple background */
-        color: var(--primary);
-    }
-    
-    .nav-item.active svg {
-        fill: rgba(139, 92, 246, 0.2);
-        color: var(--primary);
-    }
     
     .sidebar-toggle-btn, #mobileMenuBtn, .nav-center {
         display: none !important;
@@ -650,17 +695,44 @@ button:active, .btn-primary:active, .btn-secondary:active, a:active {
     .nav-left {
         gap: 8px;
     }
+    .top-actions {
+        gap: 16px;
+    }
     .nav-right {
-        gap: 8px;
+        gap: 16px;
     }
     
-    /* Reducir badges */
+    /* Badges y Dropdowns en móvil */
     .top-badge {
-        padding: 8px 10px;
-        border-radius: 50%;
+        padding: 8px 12px;
+        border-radius: 20px; /* No 50% para que el texto encaje */
     }
-    .top-badge > span:not(.notification-dot) {
-        display: none;
+    .desktop-only, .desktop-sync-text, .last-sync-badge span {
+        display: none !important;
+    }
+    .top-badge.badge-alarms, .top-badge.badge-status, .last-sync-badge {
+        padding: 8px 10px !important;
+        border-radius: 50% !important;
+    }
+    .top-badge.badge-alarms > span:not(.notification-dot),
+    .top-badge.badge-status > span {
+        display: none; /* Ocultar el texto 'Alarmas' o 'Estado' pero dejar el icono */
+    }
+    
+    /* Dropdowns en móvil: Posición absoluta hacia la izquierda para no romper el ancho de pantalla */
+    .summary-dropdown, [id^="alarms-dropdown-"] {
+        position: absolute !important;
+        top: calc(100% + 15px) !important;
+        right: -10px !important; /* Ligeramente desplazado para alinear con el borde de la pantalla */
+        left: auto !important;
+        transform: none !important;
+        width: 300px !important;
+        max-width: calc(100vw - 32px) !important;
+        z-index: 1000 !important;
+    }
+    /* Sombra extra gruesa para simular modal sin backdrop */
+    .summary-dropdown, [id^="alarms-dropdown-"] {
+        box-shadow: 0 0 0 100vmax rgba(0,0,0,0.4), 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
     }
     .profile-dropdown {
         padding: 4px;

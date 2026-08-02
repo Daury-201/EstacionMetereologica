@@ -114,7 +114,22 @@ public class PucmmHubService {
         IntegracionSyncLog log = new IntegracionSyncLog();
         log.setFechaHora(hasta);
         log.setPlataforma("PUCMM");
-        log.setEstacionNombre(estaciones != null && !estaciones.isEmpty() ? "Estaciones " + estaciones.toString() : "Todas las estaciones");
+        
+        String estacionNombreResolved = "Todas las estaciones";
+        if (estaciones != null && !estaciones.isEmpty()) {
+            try {
+                String ids = estaciones.stream().map(String::valueOf).collect(Collectors.joining(","));
+                List<String> nombres = jdbcTemplate.queryForList("SELECT nombre FROM estaciones WHERE id IN (" + ids + ")", String.class);
+                if (!nombres.isEmpty()) {
+                    estacionNombreResolved = String.join(", ", nombres);
+                } else {
+                    estacionNombreResolved = "Estaciones " + estaciones.toString();
+                }
+            } catch (Exception e) {
+                estacionNombreResolved = "Estaciones " + estaciones.toString();
+            }
+        }
+        log.setEstacionNombre(estacionNombreResolved);
         log.setRegistrosEnviados(enviados);
         if (enviados > 0) {
             log.setEstado("EXITOSO");

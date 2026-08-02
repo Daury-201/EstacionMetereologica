@@ -104,3 +104,19 @@ const Utils = {
     }
 };
 window.Utils = Utils;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Scroll bottom navigation to active item so it doesn't reset to the left on page load
+    requestAnimationFrame(() => {
+        const activeNavItem = document.querySelector('.nav-item.active');
+        if (activeNavItem && window.innerWidth <= 768) {
+            const navMenu = document.querySelector('.nav-menu');
+            if (navMenu) {
+                const navMenuRect = navMenu.getBoundingClientRect();
+                const activeNavItemRect = activeNavItem.getBoundingClientRect();
+                // Center the active item
+                navMenu.scrollLeft = activeNavItem.offsetLeft - (navMenuRect.width / 2) + (activeNavItemRect.width / 2);
+            }
+        }
+    });
+});
