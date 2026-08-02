@@ -504,13 +504,16 @@ document.addEventListener("DOMContentLoaded", function() {
             
             const filter = ctx.createBiquadFilter();
             filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(150, ctx.currentTime);
-            filter.frequency.exponentialRampToValueAtTime(30, ctx.currentTime + 2);
+            // El "Crack" inicial debe tener alta frecuencia (3000Hz) para escucharse en las bocinas pequeñas de los celulares
+            filter.frequency.setValueAtTime(3000, ctx.currentTime);
+            filter.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.2);
+            filter.frequency.linearRampToValueAtTime(50, ctx.currentTime + 2.5);
             
             const gain = ctx.createGain();
             gain.gain.setValueAtTime(0, ctx.currentTime);
-            gain.gain.linearRampToValueAtTime(2.0, ctx.currentTime + 0.05);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 2);
+            // Ganancia muy agresiva al principio (4.0) para un fuerte estruendo
+            gain.gain.linearRampToValueAtTime(5.0, ctx.currentTime + 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 2.5);
             
             noise.connect(filter);
             filter.connect(gain);
