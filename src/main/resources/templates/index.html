@@ -543,8 +543,9 @@ document.addEventListener("DOMContentLoaded", function() {
                 setTimeout(() => { if(ripple && ripple.parentNode) ripple.remove() }, 800);
             });
             
-            // Sonido de fondo tipo "viento" anticipado
+            // Sonido de fondo tipo "viento" anticipado (Solo PC, en móvil Apple bloquea AudioContext sin click)
             setTimeout(() => {
+                if (window.innerWidth < 768) return; 
                 try {
                     if (navigator.vibrate) navigator.vibrate(50);
                     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
