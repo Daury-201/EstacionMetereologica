@@ -379,7 +379,10 @@ document.addEventListener("DOMContentLoaded", function() {
             let segments = [{x: startX, y: startY, angle: Math.PI / 2, life: 1.0, gen: 0}];
             let currentPaths = [segments];
             
-            for(let i=0; i<6; i++) {
+            // Reducir la cantidad de iteraciones en móviles para evitar lag
+            let iterations = (width < 768) ? 5 : 6;
+            
+            for(let i=0; i<iterations; i++) {
                 let nextPaths = [];
                 currentPaths.forEach(path => {
                     let last = path[path.length - 1];
@@ -390,7 +393,8 @@ document.addEventListener("DOMContentLoaded", function() {
                     
                     path.push({x, y, angle: nextAngle, life: last.life, gen: last.gen});
                     
-                    if(Math.random() > 0.6 && last.gen < 3) {
+                    // Menos probabilidad de ramificación para mejorar rendimiento
+                    if(Math.random() > 0.75 && last.gen < 2) {
                         let branchAngle = last.angle + (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 0.8 + 0.4);
                         nextPaths.push([{x, y, angle: branchAngle, life: last.life * 0.6, gen: last.gen + 1}]);
                     }
@@ -401,7 +405,9 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         function createSparks(x, y) {
-            for(let i=0; i<80; i++) {
+            // Drástica reducción de chispas en móviles
+            let sparkCount = (width < 768) ? 15 : 40;
+            for(let i=0; i<sparkCount; i++) {
                 let angle = Math.random() * Math.PI * 2;
                 let speed = Math.random() * 25 + 5;
                 sparks.push({
@@ -409,7 +415,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     vx: Math.cos(angle) * speed,
                     vy: Math.sin(angle) * speed,
                     life: 1.0,
-                    size: Math.random() * 4 + 1
+                    size: Math.random() * 3 + 1
                 });
             }
         }
@@ -418,13 +424,14 @@ document.addEventListener("DOMContentLoaded", function() {
             ctx.clearRect(0, 0, width, height);
             
             if (lightningActive) {
-                // Flash masivo de fondo (Bloom simulado)
-                // Reducido al 15% de opacidad para que el destello no lave el contraste y permita distinguir la forma del rayo
+                // Flash masivo de fondo
                 ctx.fillStyle = `rgba(255, 255, 255, ${lightningOpacity * 0.15})`;
                 ctx.fillRect(0, 0, width, height);
                 
                 ctx.lineCap = "round";
                 ctx.lineJoin = "round";
+                
+                let isMobile = (width < 768);
                 
                 // Dibujar rayo
                 lightningPaths.forEach(path => {
@@ -435,14 +442,14 @@ document.addEventListener("DOMContentLoaded", function() {
                     }
                     
                     let gen = path[0].gen;
-                    // Outer electric glow (Grueso y de color índigo/azul eléctrico para dar contraste)
-                    ctx.shadowBlur = gen === 0 ? 25 : 10;
-                    ctx.shadowColor = "#818cf8"; 
+                    // Outer electric glow (Simulado con stroke más grueso para evitar shadowBlur en móviles)
+                    ctx.shadowBlur = (!isMobile && gen === 0) ? 20 : 0;
+                    ctx.shadowColor = (!isMobile && gen === 0) ? "#818cf8" : "transparent"; 
                     ctx.strokeStyle = `rgba(165, 180, 252, ${lightningOpacity * path[0].life})`;
-                    ctx.lineWidth = gen === 0 ? 8 : 3;
+                    ctx.lineWidth = gen === 0 ? (isMobile ? 12 : 8) : 3;
                     ctx.stroke();
                     
-                    // Inner hot core (Núcleo interno muy fino y blanco puro para definir perfectamente la forma)
+                    // Inner hot core
                     ctx.shadowBlur = 0;
                     ctx.strokeStyle = `rgba(255, 255, 255, ${lightningOpacity * path[0].life * 1.5})`;
                     ctx.lineWidth = gen === 0 ? 3 : 1;
@@ -450,14 +457,13 @@ document.addEventListener("DOMContentLoaded", function() {
                 });
                 
                 // Dibujar chispas
-                // Optimización: Desactivar shadowBlur en chispas (muy costoso en móviles) y usar iteración inversa para evitar tirones al eliminar elementos
                 ctx.shadowBlur = 0;
                 for (let i = sparks.length - 1; i >= 0; i--) {
                     let spark = sparks[i];
                     spark.x += spark.vx;
                     spark.y += spark.vy;
                     spark.vy += 0.8; // Gravedad
-                    spark.life -= 0.02;
+                    spark.life -= 0.03; // Mueren más rápido
                     
                     if (spark.life <= 0) {
                         sparks.splice(i, 1);
@@ -467,24 +473,50 @@ document.addEventListener("DOMContentLoaded", function() {
                         ctx.arc(spark.x, spark.y, spark.size, 0, Math.PI*2);
                         ctx.fill();
                         
-                        // Brillo simulado (más barato que shadowBlur)
-                        ctx.fillStyle = `rgba(255, 255, 255, ${spark.life * 0.3})`;
-                        ctx.beginPath();
-                        ctx.arc(spark.x, spark.y, spark.size * 2.5, 0, Math.PI*2);
-                        ctx.fill();
+                        if (!isMobile) {
+                            ctx.fillStyle = `rgba(255, 255, 255, ${spark.life * 0.3})`;
+                            ctx.beginPath();
+                            ctx.arc(spark.x, spark.y, spark.size * 2.5, 0, Math.PI*2);
+                            ctx.fill();
+                        }
                     }
                 }
                 
-                lightningOpacity *= 0.82;
+                lightningOpacity *= (isMobile ? 0.75 : 0.82); // Fade más rápido en móviles
                 if(lightningOpacity < 0.01 && sparks.length === 0) lightningActive = false;
             }
             if(lightningActive || sparks.length > 0) requestAnimationFrame(drawExplosion);
         }
 
-        // --- Efectos de Sonido (Viento ambiente + Trueno Realista) ---
-        const thunderAudio = new Audio("https://actions.google.com/sounds/v1/weather/thunder_crack.ogg");
-        thunderAudio.preload = "auto";
+        // --- Efectos de Sonido Sintéticos (Sin widgets multimedia nativos) ---
         let audioCtx = null;
+        
+        function playSyntheticThunder(ctx) {
+            if (!ctx) return;
+            const bufferSize = ctx.sampleRate * 2.5;
+            const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = (Math.random() * 2 - 1);
+            }
+            const noise = ctx.createBufferSource();
+            noise.buffer = buffer;
+            
+            const filter = ctx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(150, ctx.currentTime);
+            filter.frequency.exponentialRampToValueAtTime(30, ctx.currentTime + 2);
+            
+            const gain = ctx.createGain();
+            gain.gain.setValueAtTime(0, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(2.0, ctx.currentTime + 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 2);
+            
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(ctx.destination);
+            noise.start();
+        }
         
         if (splash) {
             splash.addEventListener('click', function(e) {
@@ -530,7 +562,8 @@ document.addEventListener("DOMContentLoaded", function() {
             setTimeout(() => {
                 let tapBtn = document.createElement('div');
                 tapBtn.innerHTML = "Toca la pantalla para entrar";
-                tapBtn.style.cssText = "position:absolute; bottom:60px; left:50%; transform:translateX(-50%); color:rgba(255,255,255,0.9); font-size:16px; letter-spacing:1px; font-weight:500; cursor:pointer; padding:20px; z-index:100; animation:pulse 1.5s infinite; text-align:center; white-space:nowrap;";
+                // Ubicado en la parte superior (top: 12%) para evitar cruce con controles del sistema
+                tapBtn.style.cssText = "position:absolute; top:12%; left:50%; transform:translateX(-50%); color:rgba(255,255,255,0.9); font-size:16px; letter-spacing:1px; font-weight:500; cursor:pointer; padding:20px; z-index:100; animation:pulse 1.5s infinite; text-align:center; white-space:nowrap;";
                 splash.appendChild(tapBtn);
                 
                 splash.style.cursor = 'pointer';
@@ -564,12 +597,9 @@ document.addEventListener("DOMContentLoaded", function() {
                     try {
                         const sonidoActivoStr = document.body.getAttribute('data-sonido-activo');
                         if (sonidoActivoStr !== 'false') {
-                            thunderAudio.volume = 1.0;
-                            // Al ser ejecutado dentro del evento click, el audio siempre sonará en móvil
-                            let playPromise = thunderAudio.play();
-                            if (playPromise !== undefined) {
-                                playPromise.catch(error => { console.log("Auto-play prevented", error); });
-                            }
+                            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                            if (audioCtx.state === 'suspended') audioCtx.resume();
+                            playSyntheticThunder(audioCtx);
                         }
                         if (navigator.vibrate) navigator.vibrate([100, 50, 150, 50, 200]);
                     } catch(e) { console.log(e); }
@@ -585,14 +615,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         
                         setTimeout(() => {
                             if(splash && splash.parentNode) splash.remove();
-                            // Limpiar el audio para evitar el widget
-                            try {
-                                if (thunderAudio) {
-                                    thunderAudio.pause();
-                                    thunderAudio.removeAttribute('src');
-                                    thunderAudio.load();
-                                }
-                            } catch(e) {}
+                            // Ya no es necesario limpiar el Audio tag porque usamos Web Audio API puro
                         }, 600);
                     }, 600);
                 }
