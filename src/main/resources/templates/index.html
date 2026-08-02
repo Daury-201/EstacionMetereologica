@@ -526,67 +526,84 @@ document.addEventListener("DOMContentLoaded", function() {
                 } catch(e) {}
             }, 500);
             
-            // Tocar estruendo original y explosión Canvas sincronizado a los 3.4s
+            // A los 3.4s, mostrar texto para que el usuario toque la pantalla y así sortear el bloqueo de Auto-Play en móviles
             setTimeout(() => {
-                // Iniciar explosión visual
-                lightningPaths = generateLightning();
-                lightningOpacity = 1.0;
-                lightningActive = true;
+                let tapBtn = document.createElement('div');
+                tapBtn.innerHTML = "Toca la pantalla para entrar";
+                tapBtn.style.cssText = "position:absolute; bottom:60px; left:50%; transform:translateX(-50%); color:rgba(255,255,255,0.9); font-size:16px; letter-spacing:1px; font-weight:500; cursor:pointer; padding:20px; z-index:100; animation:pulse 1.5s infinite; text-align:center; white-space:nowrap;";
+                splash.appendChild(tapBtn);
                 
-                lightningPaths.forEach(path => {
-                    if(path[0].gen === 0 || Math.random() > 0.5) {
-                        let tip = path[path.length - 1];
-                        createSparks(tip.x, tip.y);
-                    }
-                });
+                splash.style.cursor = 'pointer';
                 
-                drawExplosion();
+                // Función que ejecuta el final del splash al tocar
+                function triggerEnter() {
+                    tapBtn.style.display = 'none';
+                    
+                    // Iniciar explosión visual
+                    lightningPaths = generateLightning();
+                    lightningOpacity = 1.0;
+                    lightningActive = true;
+                    
+                    lightningPaths.forEach(path => {
+                        if(path[0].gen === 0 || Math.random() > 0.5) {
+                            let tip = path[path.length - 1];
+                            createSparks(tip.x, tip.y);
+                        }
+                    });
+                    
+                    drawExplosion();
 
-                splash.style.animation = "screenFlash 0.6s ease-out forwards";
-                
-                const cloudIcon = document.getElementById('cloudIcon');
-                if(cloudIcon) {
-                    cloudIcon.style.filter = "drop-shadow(0 0 50px #ffffff) brightness(2)";
+                    splash.style.animation = "screenFlash 0.6s ease-out forwards";
+                    
+                    const cloudIcon = document.getElementById('cloudIcon');
+                    if(cloudIcon) {
+                        cloudIcon.style.filter = "drop-shadow(0 0 50px #ffffff) brightness(2)";
+                        setTimeout(() => { cloudIcon.style.filter = "none"; }, 500);
+                    }
+                    
+                    try {
+                        const sonidoActivoStr = document.body.getAttribute('data-sonido-activo');
+                        if (sonidoActivoStr !== 'false') {
+                            thunderAudio.volume = 1.0;
+                            // Al ser ejecutado dentro del evento click, el audio siempre sonará en móvil
+                            let playPromise = thunderAudio.play();
+                            if (playPromise !== undefined) {
+                                playPromise.catch(error => { console.log("Auto-play prevented", error); });
+                            }
+                        }
+                        if (navigator.vibrate) navigator.vibrate([100, 50, 150, 50, 200]);
+                    } catch(e) { console.log(e); }
+                    
+                    // Finalizar y ocultar splash 600ms después del click (tiempo del destello)
                     setTimeout(() => {
-                        cloudIcon.style.filter = "none";
-                    }, 500);
+                        if (window.loadDashboardGlobal) window.loadDashboardGlobal();
+                        
+                        splash.style.transform = 'scale(1.5)';
+                        splash.style.opacity = '0';
+                        splash.style.visibility = 'hidden';
+                        sessionStorage.setItem('splashShown', 'true');
+                        
+                        setTimeout(() => {
+                            if(splash && splash.parentNode) splash.remove();
+                            // Limpiar el audio para evitar el widget
+                            try {
+                                if (thunderAudio) {
+                                    thunderAudio.pause();
+                                    thunderAudio.removeAttribute('src');
+                                    thunderAudio.load();
+                                }
+                            } catch(e) {}
+                        }, 600);
+                    }, 600);
                 }
                 
-                try {
-                    const sonidoActivoStr = document.body.getAttribute('data-sonido-activo');
-                    if (sonidoActivoStr !== 'false') {
-                        thunderAudio.volume = 1.0;
-                        let playPromise = thunderAudio.play();
-                        if (playPromise !== undefined) {
-                            playPromise.catch(error => { console.log("Auto-play prevented", error); });
-                        }
-                    }
-                    if (navigator.vibrate) navigator.vibrate([100, 50, 150, 50, 200]);
-                } catch(e) { console.log(e); }
-                
-            }, 3400);
-        }
+                // Esperar el click
+                splash.addEventListener('click', function onSplashTap() {
+                    splash.removeEventListener('click', onSplashTap);
+                    triggerEnter();
+                });
 
-        setTimeout(() => {
-            if (window.loadDashboardGlobal) window.loadDashboardGlobal();
-            
-            splash.style.transform = 'scale(1.5)';
-            splash.style.opacity = '0';
-            splash.style.visibility = 'hidden';
-            sessionStorage.setItem('splashShown', 'true');
-            setTimeout(() => {
-                if(splash && splash.parentNode) splash.remove();
-                
-                // Limpiar el audio para evitar que se quede el widget reproductor en el sistema (iOS/Android)
-                try {
-                    if (thunderAudio) {
-                        thunderAudio.pause();
-                        thunderAudio.removeAttribute('src');
-                        thunderAudio.load();
-                    }
-                } catch(e) {}
-            }, 600);
-        }, 4000); // 4 seconds so they can play with it
+            }, 3400);
     }
 });
 </script>
