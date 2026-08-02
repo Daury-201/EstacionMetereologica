@@ -594,7 +594,7 @@ button:active, .btn-primary:active, .btn-secondary:active, a:active {
         width: calc(100% - 30px);
         height: 64px;
         flex-direction: row;
-        padding: 0 10px;
+        padding: 0 4px;
         border-right: none;
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 20px;
@@ -617,32 +617,26 @@ button:active, .btn-primary:active, .btn-secondary:active, a:active {
     
     .nav-menu {
         flex-direction: row;
-        justify-content: flex-start;
-        align-items: stretch;
+        justify-content: space-between;
+        align-items: center;
         width: 100%;
-        padding: 0 8px;
+        padding: 0;
         margin: 0;
-        gap: 4px;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-    }
-    
-    .nav-menu::-webkit-scrollbar {
-        display: none;
+        gap: 2px;
+        overflow: hidden;
     }
     
     .nav-item {
-        padding: 8px 12px;
+        padding: 6px 4px;
         justify-content: center;
         border-radius: 12px;
-        min-width: 64px;
+        min-width: 0;
         flex: 1;
         font-size: 10px;
         font-weight: 600;
         color: var(--sidebar-text-muted);
         transition: all 0.2s ease;
-        flex-shrink: 0;
+        flex-shrink: 1;
         flex-direction: column;
         align-items: center;
         text-align: center;
@@ -758,5 +752,17 @@ button:active, .btn-primary:active, .btn-secondary:active, a:active {
     }
     table {
         min-width: 800px;
+    }
+    
+    /* Paginación responsiva global */
+    .pagination-area {
+        flex-direction: column !important;
+        gap: 16px !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 16px !important;
+    }
+    .pagination-info {
+        text-align: center;
     }
 }
