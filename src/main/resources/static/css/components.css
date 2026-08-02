@@ -767,21 +767,43 @@ button:active, .btn-primary:active, .btn-secondary:active, a:active {
         display: none; /* Ocultar el texto 'Alarmas' o 'Estado' pero dejar el icono */
     }
     
-    /* Dropdowns en móvil: Posición fija para no romper el ancho de pantalla ni salirse del borde */
-    .summary-dropdown, [id^="alarms-dropdown-"], #profile-menu {
+    /* Dropdowns en móvil: Posición fija y reseteo de herencia para evitar solapamiento (squish) vertical */
+    #summary-dropdown, 
+    [id^="alarms-dropdown-"], 
+    .profile-dropdown-container .dropdown-menu {
         position: fixed !important;
-        top: 80px !important; /* Debajo de la top bar */
+        top: 75px !important; /* Debajo de la top bar */
         left: 16px !important;
         right: 16px !important;
-        width: auto !important;
+        width: calc(100% - 32px) !important;
         max-width: none !important;
+        height: auto !important;
+        max-height: 80vh !important;
         transform: none !important;
         z-index: 1000 !important;
+        margin: 0 !important;
+        white-space: normal !important; /* Resetear el nowrap del padre */
+        line-height: normal !important;
+        text-align: left !important;
+        display: flex !important; /* Usar flex en columna para organizar a los hijos */
+        flex-direction: column !important;
     }
+    
     /* Sombra extra gruesa para simular modal sin backdrop */
-    .summary-dropdown, [id^="alarms-dropdown-"] {
+    #summary-dropdown, 
+    [id^="alarms-dropdown-"] {
         box-shadow: 0 0 0 100vmax rgba(0,0,0,0.4), 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
     }
+    
+    /* Dado que forzamos display: flex, necesitamos ocultarlos inicialmente con opacidad y pointer-events si están cerrados por JS */
+    #summary-dropdown[style*="display: none"],
+    [id^="alarms-dropdown-"][style*="display: none"],
+    .profile-dropdown-container .dropdown-menu[style*="display: none"] {
+        opacity: 0 !important;
+        pointer-events: none !important;
+        visibility: hidden !important;
+    }
+    
     .profile-dropdown {
         padding: 4px;
         border-radius: 50%;
