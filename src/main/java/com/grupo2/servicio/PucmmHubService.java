@@ -82,97 +82,123 @@ public class PucmmHubService {
             String url = (config.getWebhookUrl() != null && !config.getWebhookUrl().isEmpty()) ? config.getWebhookUrl() : apiUrl;
             String tokenAuth = (config.getToken() != null && !config.getToken().isEmpty()) ? config.getToken() : token;
 
-        List<Integer> estaciones = null;
-        if (config.getEstacionesIds() != null && !config.getEstacionesIds().trim().isEmpty()) {
-            estaciones = Arrays.stream(config.getEstacionesIds().split(","))
-                    .map(String::trim)
-                    .filter(s -> !s.isEmpty())
-                    .map(Integer::parseInt)
-                    .collect(Collectors.toList());
-        }
-
-        String sql = "SELECT * FROM lecturas_sensores WHERE (enviado_pucmm IS NULL OR enviado_pucmm = false) " +
-                     (estaciones != null && !estaciones.isEmpty() ? "AND estacion_id IN (" + estaciones.stream().map(String::valueOf).collect(Collectors.joining(",")) + ") " : "") +
-                     "ORDER BY id ASC LIMIT 500"; // Procesar máximo 500 por lote para no saturar
-
-        List<LecturaSensor> lecturas = jdbcTemplate.query(sql, (rs, rowNum) -> {
-            LecturaSensor l = new LecturaSensor();
-            l.setId(rs.getLong("id"));
-            l.setEstacionId(rs.getInt("estacion_id"));
-            l.setFechaHora(rs.getTimestamp("fecha_hora").toLocalDateTime());
-            double v;
-            v = rs.getDouble("temperatura");
-            l.setTemperatura(rs.wasNull() ? null : v);
-            v = rs.getDouble("humedad_aire");
-            l.setHumedadAire(rs.wasNull() ? null : v);
-            return l;
-        });
-
-        int enviados = 0;
-        List<Long> sentIds = new java.util.ArrayList<>();
-        for (LecturaSensor lectura : lecturas) {
-            if (enviarLectura(lectura, url, tokenAuth)) {
-                enviados++;
-                sentIds.add(lectura.getId());
+            List<Integer> estaciones = null;
+            if (config.getEstacionesIds() != null && !config.getEstacionesIds().trim().isEmpty()) {
+                estaciones = Arrays.stream(config.getEstacionesIds().split(","))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .map(Integer::parseInt)
+                        .collect(Collectors.toList());
             }
-        }
-        
-        if (!sentIds.isEmpty()) {
-            String idsStr = sentIds.stream().map(String::valueOf).collect(Collectors.joining(","));
-            jdbcTemplate.update("UPDATE lecturas_sensores SET enviado_pucmm = true WHERE id IN (" + idsStr + ")");
-        }
 
-        System.out.println("[API PUCMM] Batch completado. Lecturas enviadas: " + enviados);
-        config.setUltimaSincronizacion(hasta);
-        integracionRepository.save(config);
-
-        IntegracionSyncLog log = new IntegracionSyncLog();
-        log.setFechaHora(hasta);
-        log.setPlataforma("PUCMM");
-        
-        String estacionNombreResolved = "Todas las estaciones";
-        if (estaciones != null && !estaciones.isEmpty()) {
             try {
-                String ids = estaciones.stream().map(String::valueOf).collect(Collectors.joining(","));
-                List<String> nombres = jdbcTemplate.queryForList("SELECT nombre FROM estaciones WHERE id IN (" + ids + ")", String.class);
-                if (!nombres.isEmpty()) {
-                    estacionNombreResolved = String.join(", ", nombres);
-                } else {
+                jdbcTemplate.execute("ALTER TABLE lecturas_sensores ADD COLUMN IF NOT EXISTS enviado_pucmm boolean DEFAULT false;");
+            } catch (Exception e) {
+                System.out.println("[API PUCMM] No se pudo ejecutar ALTER TABLE, asumiendo que la columna ya existe o Hibernate la creó.");
+            }
+
+            String sql = "SELECT * FROM lecturas_sensores WHERE (enviado_pucmm IS NULL OR enviado_pucmm = false) " +
+                         (estaciones != null && !estaciones.isEmpty() ? "AND estacion_id IN (" + estaciones.stream().map(String::valueOf).collect(Collectors.joining(",")) + ") " : "") +
+                         "ORDER BY id ASC LIMIT 500"; // Procesar máximo 500 por lote para no saturar
+
+            List<LecturaSensor> lecturas = jdbcTemplate.query(sql, (rs, rowNum) -> {
+                LecturaSensor l = new LecturaSensor();
+                l.setId(rs.getLong("id"));
+                l.setEstacionId(rs.getInt("estacion_id"));
+                l.setFechaHora(rs.getTimestamp("fecha_hora").toLocalDateTime());
+                double v;
+                v = rs.getDouble("temperatura");
+                l.setTemperatura(rs.wasNull() ? null : v);
+                v = rs.getDouble("humedad_aire");
+                l.setHumedadAire(rs.wasNull() ? null : v);
+                return l;
+            });
+
+            int enviados = 0;
+            List<Long> sentIds = new java.util.ArrayList<>();
+            for (LecturaSensor lectura : lecturas) {
+                if (enviarLectura(lectura, url, tokenAuth)) {
+                    enviados++;
+                    sentIds.add(lectura.getId());
+                }
+            }
+            
+            if (!sentIds.isEmpty()) {
+                String idsStr = sentIds.stream().map(String::valueOf).collect(Collectors.joining(","));
+                jdbcTemplate.update("UPDATE lecturas_sensores SET enviado_pucmm = true WHERE id IN (" + idsStr + ")");
+            }
+
+            System.out.println("[API PUCMM] Batch completado. Lecturas enviadas: " + enviados);
+            config.setUltimaSincronizacion(hasta);
+            integracionRepository.save(config);
+
+            IntegracionSyncLog log = new IntegracionSyncLog();
+            log.setFechaHora(hasta);
+            log.setPlataforma("PUCMM");
+            
+            String estacionNombreResolved = "Todas las estaciones";
+            if (estaciones != null && !estaciones.isEmpty()) {
+                try {
+                    String ids = estaciones.stream().map(String::valueOf).collect(Collectors.joining(","));
+                    List<String> nombres = jdbcTemplate.queryForList("SELECT nombre FROM estaciones WHERE id IN (" + ids + ")", String.class);
+                    if (!nombres.isEmpty()) {
+                        estacionNombreResolved = String.join(", ", nombres);
+                    } else {
+                        estacionNombreResolved = "Estaciones " + estaciones.toString();
+                    }
+                } catch (Exception e) {
                     estacionNombreResolved = "Estaciones " + estaciones.toString();
                 }
-            } catch (Exception e) {
-                estacionNombreResolved = "Estaciones " + estaciones.toString();
             }
-        }
-        log.setEstacionNombre(estacionNombreResolved);
-        log.setRegistrosEnviados(enviados);
-        if (enviados > 0) {
-            log.setEstado("EXITOSO");
-            log.setMensaje("Sincronización completa con Hub PUCMM");
-        } else if (!lecturas.isEmpty()) {
-            log.setEstado("ERROR");
-            log.setMensaje("Fallo al enviar lecturas al Hub PUCMM");
-        } else {
-            log.setEstado("EXITOSO");
-            log.setMensaje("No hay datos nuevos para enviar");
-        }
-        syncLogRepository.save(log);
+            log.setEstacionNombre(estacionNombreResolved);
+            log.setRegistrosEnviados(enviados);
+            if (enviados > 0) {
+                log.setEstado("EXITOSO");
+                log.setMensaje("Sincronización completa con Hub PUCMM");
+            } else if (!lecturas.isEmpty()) {
+                log.setEstado("ERROR");
+                log.setMensaje("Fallo al enviar lecturas al Hub PUCMM");
+            } else {
+                log.setEstado("EXITOSO");
+                log.setMensaje("No hay datos nuevos para enviar");
+            }
+            syncLogRepository.save(log);
 
-        try {
-            java.util.Map<String, Object> wsPayload = new java.util.HashMap<>();
-            wsPayload.put("fechaHora", log.getFechaHora().toString());
-            wsPayload.put("plataforma", log.getPlataforma());
-            wsPayload.put("estacionNombre", log.getEstacionNombre());
-            wsPayload.put("registrosEnviados", log.getRegistrosEnviados());
-            wsPayload.put("estado", log.getEstado());
-            wsPayload.put("mensaje", log.getMensaje());
-            wsPayload.put("syncsHoy", syncLogRepository.countByFechaHoraAfter(hasta.toLocalDate().atStartOfDay()));
-            wsPayload.put("plataformasConectadas", integracionRepository.findByActivaTrue().size());
-            wsPayload.put("ultimaSincronizacion", hasta.toString());
-            messagingTemplate.convertAndSend("/topic/integracion", (Object) wsPayload);
-        } catch (Exception e) {
-            System.err.println("Error al enviar WebSocket de integración: " + e.getMessage());
-        }
+            try {
+                java.util.Map<String, Object> wsPayload = new java.util.HashMap<>();
+                wsPayload.put("fechaHora", log.getFechaHora().toString());
+                wsPayload.put("plataforma", log.getPlataforma());
+                wsPayload.put("estacionNombre", log.getEstacionNombre());
+                wsPayload.put("registrosEnviados", log.getRegistrosEnviados());
+                wsPayload.put("estado", log.getEstado());
+                wsPayload.put("mensaje", log.getMensaje());
+                wsPayload.put("syncsHoy", syncLogRepository.countByFechaHoraAfter(hasta.toLocalDate().atStartOfDay()));
+                wsPayload.put("plataformasConectadas", integracionRepository.findByActivaTrue().size());
+                wsPayload.put("ultimaSincronizacion", hasta.toString());
+                messagingTemplate.convertAndSend("/topic/integracion", (Object) wsPayload);
+            } catch (Exception e) {
+                System.err.println("Error al enviar WebSocket de integración: " + e.getMessage());
+            }
+        } catch (Exception ex) {
+            System.err.println("[API PUCMM] Error inesperado en enviarBatchAhora: " + ex.getMessage());
+            ex.printStackTrace();
+            try {
+                IntegracionSyncLog errorLog = new IntegracionSyncLog();
+                errorLog.setFechaHora(LocalDateTime.now());
+                errorLog.setPlataforma("PUCMM");
+                errorLog.setEstacionNombre("Error Interno");
+                errorLog.setRegistrosEnviados(0);
+                errorLog.setEstado("ERROR");
+                errorLog.setMensaje("Fallo de sistema: " + ex.getMessage());
+                syncLogRepository.save(errorLog);
+                
+                java.util.Map<String, Object> wsPayload = new java.util.HashMap<>();
+                wsPayload.put("fechaHora", errorLog.getFechaHora().toString());
+                wsPayload.put("plataforma", "PUCMM");
+                wsPayload.put("estado", "ERROR");
+                wsPayload.put("mensaje", errorLog.getMensaje());
+                messagingTemplate.convertAndSend("/topic/integracion", (Object) wsPayload);
+            } catch (Exception ignored) {}
         } finally {
             syncInProgress.set(false);
         }
