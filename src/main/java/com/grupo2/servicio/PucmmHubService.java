@@ -67,12 +67,20 @@ public class PucmmHubService {
         }
     }
 
+    private final java.util.concurrent.atomic.AtomicBoolean syncInProgress = new java.util.concurrent.atomic.AtomicBoolean(false);
+
     public void enviarBatchAhora(IntegracionConfig config) {
-        LocalDateTime desde = config.getUltimaSincronizacion() != null ? config.getUltimaSincronizacion() : LocalDateTime.now().minusHours(1);
-        LocalDateTime hasta = LocalDateTime.now();
-        
-        String url = (config.getWebhookUrl() != null && !config.getWebhookUrl().isEmpty()) ? config.getWebhookUrl() : apiUrl;
-        String tokenAuth = (config.getToken() != null && !config.getToken().isEmpty()) ? config.getToken() : token;
+        if (!syncInProgress.compareAndSet(false, true)) {
+            System.out.println("[API PUCMM] Sincronización ya en progreso. Saltando petición concurrente.");
+            return;
+        }
+
+        try {
+            LocalDateTime desde = config.getUltimaSincronizacion() != null ? config.getUltimaSincronizacion() : LocalDateTime.now().minusHours(1);
+            LocalDateTime hasta = LocalDateTime.now();
+            
+            String url = (config.getWebhookUrl() != null && !config.getWebhookUrl().isEmpty()) ? config.getWebhookUrl() : apiUrl;
+            String tokenAuth = (config.getToken() != null && !config.getToken().isEmpty()) ? config.getToken() : token;
 
         List<Integer> estaciones = null;
         if (config.getEstacionesIds() != null && !config.getEstacionesIds().trim().isEmpty()) {
@@ -157,6 +165,9 @@ public class PucmmHubService {
             messagingTemplate.convertAndSend("/topic/integracion", (Object) wsPayload);
         } catch (Exception e) {
             System.err.println("Error al enviar WebSocket de integración: " + e.getMessage());
+        }
+        } finally {
+            syncInProgress.set(false);
         }
     }
 

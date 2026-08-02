@@ -769,7 +769,7 @@ button:active, .btn-primary:active, .btn-secondary:active, a:active {
     
     /* Dropdowns en móvil: Posición fija y reseteo de herencia para evitar solapamiento (squish) vertical */
     #summary-dropdown, 
-    [id^="alarms-dropdown-"], 
+    #alarms-dropdown-global, 
     .profile-dropdown-container .dropdown-menu {
         position: fixed !important;
         top: 75px !important; /* Debajo de la top bar */
@@ -791,13 +791,13 @@ button:active, .btn-primary:active, .btn-secondary:active, a:active {
     
     /* Sombra extra gruesa para simular modal sin backdrop */
     #summary-dropdown, 
-    [id^="alarms-dropdown-"] {
+    #alarms-dropdown-global {
         box-shadow: 0 0 0 100vmax rgba(0,0,0,0.4), 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
     }
     
     /* Dado que forzamos display: flex, necesitamos ocultarlos inicialmente con opacidad y pointer-events si están cerrados por JS */
     #summary-dropdown[style*="display: none"],
-    [id^="alarms-dropdown-"][style*="display: none"],
+    #alarms-dropdown-global[style*="display: none"],
     .profile-dropdown-container .dropdown-menu[style*="display: none"] {
         opacity: 0 !important;
         pointer-events: none !important;
