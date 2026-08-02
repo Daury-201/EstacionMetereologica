@@ -401,8 +401,8 @@
                     </div>
                     <div class="form-group" style="flex: 1; margin-bottom: 0;">
                         <label style="font-size: 11px;">Unidad de tiempo</label>
-                        <select id="timeoutSenalUnidad" name="timeoutSenalUnidad">
-                            <option value="">-- Automático (Global) --</option>
+                        <select id="timeoutSenalUnidad" name="timeoutSenalUnidad" onchange="toggleTimeoutValorInput(this, 'timeoutSenalValor')">
+                            <option value="">Automático (Global)</option>
                             <option value="segundos" th:selected="${estacionConError != null and modalToOpen == 'estacionModal' and estacionConError.timeoutSenalUnidad == 'segundos'}">Segundos</option>
                             <option value="minutos" th:selected="${estacionConError != null and modalToOpen == 'estacionModal' and estacionConError.timeoutSenalUnidad == 'minutos'}">Minutos</option>
                         </select>
@@ -539,8 +539,8 @@
                     </div>
                     <div class="form-group" style="flex: 1; margin-bottom: 0;">
                         <label style="font-size: 11px;">Unidad de tiempo</label>
-                        <select id="edit-timeoutSenalUnidad" name="timeoutSenalUnidad" onchange="checkEditChanges()">
-                            <option value="">-- Automático (Global) --</option>
+                        <select id="edit-timeoutSenalUnidad" name="timeoutSenalUnidad" onchange="toggleTimeoutValorInput(this, 'edit-timeoutSenalValor'); checkEditChanges()">
+                            <option value="">Automático (Global)</option>
                             <option value="segundos" th:selected="${estacionConError != null and modalToOpen == 'estacionEditModal' and estacionConError.timeoutSenalUnidad == 'segundos'}">Segundos</option>
                             <option value="minutos" th:selected="${estacionConError != null and modalToOpen == 'estacionEditModal' and estacionConError.timeoutSenalUnidad == 'minutos'}">Minutos</option>
                         </select>
@@ -725,6 +725,13 @@
             setTimeout(() => editAlert.style.display = 'none', 500);
         }
     }, 3500);
+
+    document.addEventListener('DOMContentLoaded', () => {
+        let createSelect = document.getElementById('timeoutSenalUnidad');
+        if (createSelect) toggleTimeoutValorInput(createSelect, 'timeoutSenalValor');
+        let editSelect = document.getElementById('edit-timeoutSenalUnidad');
+        if (editSelect) toggleTimeoutValorInput(editSelect, 'edit-timeoutSenalValor');
+    });
     /*]]>*/
     // --- Lógica del Modal de Telemetría ---
     let currentTelemetryEstacionId = null;
@@ -794,8 +801,26 @@
         currentTelemetryEstacionId = null;
         document.getElementById('telemetryModal').style.display = 'none';
     }
+    function toggleTimeoutValorInput(selectEl, targetInputId) {
+        const inputEl = document.getElementById(targetInputId);
+        if (inputEl) {
+            if (selectEl.value === "") {
+                inputEl.disabled = true;
+                inputEl.style.backgroundColor = '#F3F4F6';
+                inputEl.style.cursor = 'not-allowed';
+                inputEl.style.color = '#9CA3AF';
+            } else {
+                inputEl.disabled = false;
+                inputEl.style.backgroundColor = '';
+                inputEl.style.cursor = '';
+                inputEl.style.color = '';
+            }
+        }
+    }
+
     function openModal() {
         document.getElementById('estacionModal').style.display = 'flex';
+        toggleTimeoutValorInput(document.getElementById('timeoutSenalUnidad'), 'timeoutSenalValor');
     }
     function closeModal() {
         document.getElementById('estacionModal').style.display = 'none';
@@ -812,7 +837,10 @@
         let valField = document.getElementById('edit-timeoutSenalValor');
         let uniField = document.getElementById('edit-timeoutSenalUnidad');
         if (valField) valField.value = timeoutValor && timeoutValor !== 'null' ? timeoutValor : '';
-        if (uniField) uniField.value = timeoutUnidad && timeoutUnidad !== 'null' ? timeoutUnidad : '';
+        if (uniField) {
+            uniField.value = timeoutUnidad && timeoutUnidad !== 'null' ? timeoutUnidad : '';
+            toggleTimeoutValorInput(uniField, 'edit-timeoutSenalValor');
+        }
 
         originalEditValues = {
             codigo: codigo,
