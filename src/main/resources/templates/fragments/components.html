@@ -528,16 +528,6 @@
         connectGlobalEstacionesStatus();
         /*]]>*/
     </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Scroll bottom navigation to active item INSTANTLY so it doesn't glitch on page load
-            const activeNavItem = document.querySelector('.sidebar .nav-item.active');
-            if (activeNavItem && window.innerWidth <= 768) {
-                // Hacerlo de forma instantánea y centrada, sin timeouts ni animaciones (evita el "intento" visible)
-                activeNavItem.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'center' });
-            }
-        });
-    </script>
 </header>
 </body>
 </html>
