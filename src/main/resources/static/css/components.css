@@ -627,25 +627,48 @@ button:active, .btn-primary:active, .btn-secondary:active, a:active {
     }
     
     .nav-item {
-        padding: 6px 4px;
+        padding: 8px 4px;
         justify-content: center;
-        border-radius: 12px;
+        border-radius: 100px; /* Forma de píldora */
         min-width: 0;
         flex: 1;
-        font-size: 10px;
-        font-weight: 600;
+        font-size: 11px;
+        font-weight: 700;
         color: var(--sidebar-text-muted);
-        transition: all 0.2s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         flex-shrink: 1;
-        flex-direction: column;
+        flex-direction: row; /* Preparado para alinear icono y texto horizontalmente */
         align-items: center;
         text-align: center;
+        gap: 6px;
     }
     
+    /* Ocultar texto por defecto en móvil para ahorrar espacio */
+    .nav-item span {
+        display: none;
+        white-space: nowrap;
+    }
+    
+    /* Ítem activo: Expandir y mostrar texto como una píldora elegante */
     .sidebar .nav-item.active {
         background-color: var(--primary);
         color: white;
         box-shadow: 0 4px 15px -3px rgba(124, 58, 237, 0.4);
+        flex: 2.5; /* Ocupa más espacio que los inactivos */
+        padding: 8px 16px;
+    }
+    
+    .sidebar .nav-item.active span {
+        display: block;
+        animation: fadeInText 0.3s ease forwards;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 110px; /* Prevenir que un texto largo rompa la barra */
+    }
+    
+    @keyframes fadeInText {
+        from { opacity: 0; transform: translateX(-5px); }
+        to { opacity: 1; transform: translateX(0); }
     }
     
     .top-nav {
