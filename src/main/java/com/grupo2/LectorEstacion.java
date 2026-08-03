@@ -131,7 +131,7 @@ public class LectorEstacion {
                             }
                         }
 
-                        // Marcar la estación como en línea inmediatamente al recibir datos
+                    
                         try {
                             estacionService.marcarEnLineaPorId(estacionId);
                         } catch (Exception ex) {

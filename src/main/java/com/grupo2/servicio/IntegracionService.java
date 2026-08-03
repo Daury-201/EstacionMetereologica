@@ -105,10 +105,10 @@ public class IntegracionService {
         }
     }
     public boolean testPucmmConnection(LecturaSensores dummy, String url, String token) {
-        return pucmmHubService.enviarLectura(new com.grupo2.modelo.LecturaSensor(), url, token);
+        return "OK".equals(pucmmHubService.enviarLectura(new com.grupo2.modelo.LecturaSensor(), url, token));
     }
     public boolean testPucmmConnection(com.grupo2.modelo.LecturaSensor dummy, String url, String token) {
-        return pucmmHubService.enviarLectura(dummy, url, token);
+        return "OK".equals(pucmmHubService.enviarLectura(dummy, url, token));
     }
     public Map<String, Object> testConnection(String apiKey) {
         Map<String, Object> resultado = new java.util.HashMap<>();

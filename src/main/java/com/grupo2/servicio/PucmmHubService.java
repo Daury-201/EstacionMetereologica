@@ -45,11 +45,34 @@ public class PucmmHubService {
                            IntegracionSyncLogRepository syncLogRepository,
                            JdbcTemplate jdbcTemplate,
                            SimpMessagingTemplate messagingTemplate) {
-        this.restTemplate = new RestTemplate();
+        this.restTemplate = createRestTemplate();
         this.integracionRepository = integracionRepository;
         this.syncLogRepository = syncLogRepository;
         this.jdbcTemplate = jdbcTemplate;
         this.messagingTemplate = messagingTemplate;
+    }
+
+    private RestTemplate createRestTemplate() {
+        try {
+            javax.net.ssl.TrustManager[] trustAllCerts = new javax.net.ssl.TrustManager[]{
+                new javax.net.ssl.X509TrustManager() {
+                    public java.security.cert.X509Certificate[] getAcceptedIssuers() { return null; }
+                    public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) { }
+                    public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) { }
+                }
+            };
+            javax.net.ssl.SSLContext sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
+            sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+            javax.net.ssl.HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
+            javax.net.ssl.HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
+
+            org.springframework.http.client.SimpleClientHttpRequestFactory requestFactory = new org.springframework.http.client.SimpleClientHttpRequestFactory();
+            requestFactory.setConnectTimeout(15000);
+            requestFactory.setReadTimeout(15000);
+            return new RestTemplate(requestFactory);
+        } catch (Exception e) {
+            return new RestTemplate();
+        }
     }
 
     @Scheduled(fixedDelay = 60000) // Check every minute
@@ -124,10 +147,14 @@ public class PucmmHubService {
 
             int enviados = 0;
             List<Long> sentIds = new java.util.ArrayList<>();
+            String ultimoError = null;
             for (LecturaSensor lectura : lecturas) {
-                if (enviarLectura(lectura, url, tokenAuth)) {
+                String resultado = enviarLectura(lectura, url, tokenAuth);
+                if ("OK".equals(resultado)) {
                     enviados++;
                     sentIds.add(lectura.getId());
+                } else {
+                    ultimoError = resultado;
                 }
             }
             
@@ -165,7 +192,7 @@ public class PucmmHubService {
                 log.setMensaje("Sincronización completa con Hub PUCMM");
             } else if (!lecturas.isEmpty()) {
                 log.setEstado("ERROR");
-                log.setMensaje("Fallo al enviar lecturas al Hub PUCMM");
+                log.setMensaje("Fallo al enviar lecturas al Hub PUCMM: " + (ultimoError != null ? ultimoError : "Error desconocido"));
             } else {
                 log.setEstado("EXITOSO");
                 log.setMensaje("No hay datos nuevos para enviar");
@@ -216,7 +243,7 @@ public class PucmmHubService {
         }
     }
 
-    public boolean enviarLectura(LecturaSensor lectura, String endpoint, String auth) {
+    public String enviarLectura(LecturaSensor lectura, String endpoint, String auth) {
         try {
             // Preparar los headers
             HttpHeaders headers = new HttpHeaders();
@@ -234,14 +261,12 @@ public class PucmmHubService {
             ResponseEntity<String> response = restTemplate.postForEntity(endpoint, requestEntity, String.class);
             
             if (response.getStatusCode().is2xxSuccessful()) {
-                return true;
+                return "OK";
             } else {
-                System.err.println("[API PUCMM] Fallo al enviar al HUB. Status: " + response.getStatusCode().value());
-                return false;
+                return "HTTP " + response.getStatusCode().value() + " " + response.getBody();
             }
         } catch (Exception e) {
-            System.err.println("[API PUCMM] Error de conexión: " + e.getMessage());
-            return false;
+            return e.getMessage();
         }
     }
 }
