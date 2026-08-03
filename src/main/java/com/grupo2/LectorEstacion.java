@@ -27,15 +27,18 @@ public class LectorEstacion {
     private final LecturaController lecturaController;
     private final AlarmaService alarmaService;
     private final IntegracionRepository integracionRepository;
+    private final com.grupo2.servicio.EstacionService estacionService;
 
     public LectorEstacion(JdbcTemplate jdbcTemplate,
                           LecturaController lecturaController,
                           AlarmaService alarmaService,
-                          IntegracionRepository integracionRepository) {
+                          IntegracionRepository integracionRepository,
+                          com.grupo2.servicio.EstacionService estacionService) {
         this.jdbcTemplate = jdbcTemplate;
         this.lecturaController = lecturaController;
         this.alarmaService = alarmaService;
         this.integracionRepository = integracionRepository;
+        this.estacionService = estacionService;
     }
     private static final DateTimeFormatter FORMATO_ENTRADA =
             DateTimeFormatter.ISO_LOCAL_DATE_TIME;
@@ -126,6 +129,13 @@ public class LectorEstacion {
                                 System.err.println("Estación no encontrada en la BD con el código: " + estacionCodigo + " ni ID: " + numeroEstacion);
                                 return;
                             }
+                        }
+
+                        // Marcar la estación como en línea inmediatamente al recibir datos
+                        try {
+                            estacionService.marcarEnLineaPorId(estacionId);
+                        } catch (Exception ex) {
+                            System.err.println("Error marcando estación en línea: " + ex.getMessage());
                         }
 
                         Object valorDb = sensor.equals("direccion_viento") ? valor : Double.parseDouble(valor);

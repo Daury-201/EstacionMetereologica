@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+function initNotificaciones() {
     let container = document.getElementById('toastContainer');
     if (!container) {
         container = document.createElement('div');
@@ -9,7 +9,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!window.location.pathname.includes('/alarmas')) {
         connectNotificationWebSocket();
     }
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initNotificaciones);
+} else {
+    initNotificaciones();
+}
+
 function connectNotificationWebSocket() {
     if (typeof SockJS === 'undefined' || typeof Stomp === 'undefined') return;
     const socket = new SockJS('/ws');
@@ -19,8 +26,10 @@ function connectNotificationWebSocket() {
         stompClient.subscribe('/topic/alarmas', function (mensaje) {
             const alarma = JSON.parse(mensaje.body);
             if (!alarma.resuelta) {
-                showGlobalToast(alarma);
-                incrementGlobalAlarmBadge();
+                if (!alarma.actualizacionSilenciosa) {
+                    showGlobalToast(alarma);
+                    incrementGlobalAlarmBadge();
+                }
             } else {
                 decrementGlobalAlarmBadge();
             }
@@ -38,7 +47,7 @@ function showGlobalToast(alarma) {
     const sensorName = alarma.sensor.replace('_', ' ');
     let msgHtml = `Sensor <span style="text-transform: capitalize;">${sensorName}</span>: <strong>${alarma.valor}</strong> (${alarma.umbralExcedido})`;
     if (alarma.sensor.toLowerCase() === 'conexion') {
-        msgHtml = `<strong>Pérdida de conexión</strong> con la estación.`;
+        msgHtml = `<strong>Pérdida de conexión</strong> — Sin señal por <strong>${alarma.valor} min</strong> (${alarma.umbralExcedido})`;
     }
 
     toast.innerHTML = `

@@ -49,8 +49,6 @@ public class EstacionService {
             dto.setEstado(est.getEstado());
             dto.setLatitud(est.getLatitud());
             dto.setLongitud(est.getLongitud());
-            dto.setTimeoutSenalValor(est.getTimeoutSenalValor());
-            dto.setTimeoutSenalUnidad(est.getTimeoutSenalUnidad());
             lecturaRepository.findTopByEstacionIdOrderByFechaHoraDesc(est.getId().intValue())
                 .ifPresent(lectura -> {
                     dto.setTemperatura(lectura.getTemperatura());
@@ -92,8 +90,6 @@ public class EstacionService {
             dto.setEstado(est.getEstado());
             dto.setLatitud(est.getLatitud());
             dto.setLongitud(est.getLongitud());
-            dto.setTimeoutSenalValor(est.getTimeoutSenalValor());
-            dto.setTimeoutSenalUnidad(est.getTimeoutSenalUnidad());
             resultado.add(dto);
         }
         return resultado;
@@ -116,86 +112,124 @@ public class EstacionService {
     @Scheduled(fixedDelay = 10000)
     @Transactional
     public void revisarEstadoEstaciones() {
-        int timeoutSenalMin = configuracionService.obtenerConfiguracionActual().getTimeoutSenalMin();
-        List<Estacion> estaciones = estacionRepository.findAll();
-        
-        for (Estacion est : estaciones) {
-            lecturaRepository.findTopByEstacionIdOrderByFechaHoraDesc(est.getId().intValue())
-                .ifPresentOrElse(lectura -> {
-                    long segundos = ChronoUnit.SECONDS.between(lectura.getFechaHora(), LocalDateTime.now());
-                    
-                    Integer valorGlobal = configuracionService.obtenerConfiguracionActual().getTimeoutSenalValor();
-                    String unidadGlobal = configuracionService.obtenerConfiguracionActual().getTimeoutSenalUnidad();
-                    
-                    Integer valor = est.getTimeoutSenalValor() != null ? est.getTimeoutSenalValor() : valorGlobal;
-                    String unidad = (est.getTimeoutSenalUnidad() != null && !est.getTimeoutSenalUnidad().isEmpty()) ? est.getTimeoutSenalUnidad() : unidadGlobal;
-                    
-                    long timeoutSegundos = "minutos".equalsIgnoreCase(unidad) ? (valor * 60L) : valor.longValue();
-                    
-                    if (segundos >= timeoutSegundos) {
-                        boolean canNotify = true;
-                        if (ultimoAvisoDesconexion.containsKey(est.getId())) {
-                            long minutesSinceLastNotify = ChronoUnit.MINUTES.between(ultimoAvisoDesconexion.get(est.getId()), LocalDateTime.now());
-                            if (minutesSinceLastNotify < 60) {
-                                canNotify = false;
+        try {
+            int timeoutSenalMin = configuracionService.obtenerConfiguracionActual().getTimeoutSenalMin();
+            List<Estacion> estaciones = estacionRepository.findAll();
+            
+            for (Estacion est : estaciones) {
+                try {
+                    lecturaRepository.findTopByEstacionIdOrderByFechaHoraDesc(est.getId().intValue())
+                        .ifPresentOrElse(lectura -> {
+                            long segundos = ChronoUnit.SECONDS.between(lectura.getFechaHora(), LocalDateTime.now());
+                            
+                            Integer valor = configuracionService.obtenerConfiguracionActual().getTimeoutSenalValor();
+                            if (valor == null) valor = 5;
+                            String unidad = configuracionService.obtenerConfiguracionActual().getTimeoutSenalUnidad();
+                            if (unidad == null) unidad = "minutos";
+                            long timeoutSegundos = "minutos".equalsIgnoreCase(unidad) ? (valor * 60L) : valor.longValue();
+                            
+                            String timeoutDescripcion = "Sin señal > " + valor + " " + unidad;
+                            if (segundos >= timeoutSegundos) {
+                                boolean canNotify = true;
+                                if (ultimoAvisoDesconexion.containsKey(est.getId())) {
+                                    long minutesSinceLastNotify = ChronoUnit.MINUTES.between(ultimoAvisoDesconexion.get(est.getId()), LocalDateTime.now());
+                                    if (minutesSinceLastNotify < 60) {
+                                        canNotify = false;
+                                    }
+                                }
+
+                                if (!"Sin señal".equals(est.getEstado())) {
+                                    est.setEstado("Sin señal");
+                                    estacionRepository.save(est);
+                                    EstacionDTO dto = new EstacionDTO();
+                                    dto.setId(est.getId());
+                                    dto.setEstado("Sin señal");
+                                    messagingTemplate.convertAndSend("/topic/estaciones-estado", dto);
+                                    
+                                    alarmaService.registrarDesconexion(est, segundos, timeoutDescripcion);
+                                } else {
+                                    alarmaService.actualizarDesconexion(est, segundos);
+                                }
+
+                                if (canNotify) {
+                                    notificacionService.notificarDesconexion(est);
+                                    ultimoAvisoDesconexion.put(est.getId(), LocalDateTime.now());
+                                }
+                            } else {
+                                if (!"En línea".equals(est.getEstado())) {
+                                    est.setEstado("En línea");
+                                    estacionRepository.save(est);
+                                    EstacionDTO dto = new EstacionDTO();
+                                    dto.setId(est.getId());
+                                    dto.setEstado("En línea");
+                                    messagingTemplate.convertAndSend("/topic/estaciones-estado", dto);
+                                    
+                                    alarmaService.resolverDesconexion(est);
+                                }
                             }
-                        }
+                        }, () -> {
+                            boolean canNotify = true;
+                            if (ultimoAvisoDesconexion.containsKey(est.getId())) {
+                                long minutesSinceLastNotify = ChronoUnit.MINUTES.between(ultimoAvisoDesconexion.get(est.getId()), LocalDateTime.now());
+                                if (minutesSinceLastNotify < 60) {
+                                    canNotify = false;
+                                }
+                            }
 
-                        if (!"Sin señal".equals(est.getEstado())) {
-                            est.setEstado("Sin señal");
-                            estacionRepository.save(est);
-                            EstacionDTO dto = new EstacionDTO();
-                            dto.setId(est.getId());
-                            dto.setEstado("Sin señal");
-                            messagingTemplate.convertAndSend("/topic/estaciones-estado", dto);
-                            
-                            // Registrar alarma en BD y emitir websocket
-                            alarmaService.registrarDesconexion(est);
-                        }
+                            if (!"Sin señal".equals(est.getEstado())) {
+                                est.setEstado("Sin señal");
+                                estacionRepository.save(est);
+                                EstacionDTO dto = new EstacionDTO();
+                                dto.setId(est.getId());
+                                dto.setEstado("Sin señal");
+                                messagingTemplate.convertAndSend("/topic/estaciones-estado", dto);
+                                
+                                Integer valor = configuracionService.obtenerConfiguracionActual().getTimeoutSenalValor();
+                                if (valor == null) valor = 5;
+                                String unidad = configuracionService.obtenerConfiguracionActual().getTimeoutSenalUnidad();
+                                if (unidad == null) unidad = "minutos";
+                                long timeoutSegundos = "minutos".equalsIgnoreCase(unidad) ? (valor * 60L) : valor.longValue();
+                                String timeoutDescripcion = "Sin señal > " + valor + " " + unidad;
+                                
+                                alarmaService.registrarDesconexion(est, timeoutSegundos, timeoutDescripcion);
+                            } else {
+                                Integer valor = configuracionService.obtenerConfiguracionActual().getTimeoutSenalValor();
+                                if (valor == null) valor = 5;
+                                String unidad = configuracionService.obtenerConfiguracionActual().getTimeoutSenalUnidad();
+                                if (unidad == null) unidad = "minutos";
+                                long timeoutSegundos = "minutos".equalsIgnoreCase(unidad) ? (valor * 60L) : valor.longValue();
+                                alarmaService.actualizarDesconexion(est, timeoutSegundos);
+                            }
 
-                        if (canNotify) {
-                            notificacionService.notificarDesconexion(est);
-                            ultimoAvisoDesconexion.put(est.getId(), LocalDateTime.now());
-                        }
-                    } else {
-                        if (!"En línea".equals(est.getEstado())) {
-                            est.setEstado("En línea");
-                            estacionRepository.save(est);
-                            EstacionDTO dto = new EstacionDTO();
-                            dto.setId(est.getId());
-                            dto.setEstado("En línea");
-                            messagingTemplate.convertAndSend("/topic/estaciones-estado", dto);
-                            
-                            // Resolver alarma de conexión automáticamente
-                            alarmaService.resolverDesconexion(est);
-                        }
-                    }
-                }, () -> {
-                    boolean canNotify = true;
-                    if (ultimoAvisoDesconexion.containsKey(est.getId())) {
-                        long minutesSinceLastNotify = ChronoUnit.MINUTES.between(ultimoAvisoDesconexion.get(est.getId()), LocalDateTime.now());
-                        if (minutesSinceLastNotify < 60) {
-                            canNotify = false;
-                        }
-                    }
-
-                    if (!"Sin señal".equals(est.getEstado())) {
-                        est.setEstado("Sin señal");
-                        estacionRepository.save(est);
-                        EstacionDTO dto = new EstacionDTO();
-                        dto.setId(est.getId());
-                        dto.setEstado("Sin señal");
-                        messagingTemplate.convertAndSend("/topic/estaciones-estado", dto);
-                        
-                        // Registrar alarma en BD y emitir websocket
-                        alarmaService.registrarDesconexion(est);
-                    }
-
-                    if (canNotify) {
-                        notificacionService.notificarDesconexion(est);
-                        ultimoAvisoDesconexion.put(est.getId(), LocalDateTime.now());
-                    }
-                });
+                            if (canNotify) {
+                                notificacionService.notificarDesconexion(est);
+                                ultimoAvisoDesconexion.put(est.getId(), LocalDateTime.now());
+                            }
+                        });
+                } catch (Exception e) {
+                    System.err.println("Error revisando estado de la estación ID " + est.getId() + ": " + e.getMessage());
+                }
+            }
+        } catch (Exception ex) {
+            System.err.println("Error general en revisarEstadoEstaciones: " + ex.getMessage());
         }
+    }
+
+    @Transactional
+    public void marcarEnLinea(Estacion est) {
+        if (!"En línea".equals(est.getEstado())) {
+            est.setEstado("En línea");
+            estacionRepository.save(est);
+            EstacionDTO dto = new EstacionDTO();
+            dto.setId(est.getId());
+            dto.setEstado("En línea");
+            messagingTemplate.convertAndSend("/topic/estaciones-estado", dto);
+            alarmaService.resolverDesconexion(est);
+        }
+    }
+
+    @Transactional
+    public void marcarEnLineaPorId(Integer id) {
+        estacionRepository.findById(id.longValue()).ifPresent(this::marcarEnLinea);
     }
 }

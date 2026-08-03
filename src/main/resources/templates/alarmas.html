@@ -247,7 +247,7 @@
                                 </td>
                                 <td class="value-cell" th:classappend="${alarma.gravedad == 'CRITICA' ? 'text-danger' : 'text-warning'}" style="font-weight: 600;">
                                     <span th:if="${alarma.sensor != 'conexion'}" th:text="${alarma.valor}">38.7°C</span>
-                                    <span th:if="${alarma.sensor == 'conexion'}">N/A</span>
+                                    <span th:if="${alarma.sensor == 'conexion'}" th:text="${alarma.valor + ' min'}">0 min</span>
                                 </td>
                                 <td>
                                     <div th:if="${#strings.contains(alarma.umbralExcedido, '>')}" class="umbral-pill umbral-up">
@@ -352,6 +352,7 @@
                         <option value="velocidad_viento">Velocidad Viento</option>
                         <option value="lluvia">Lluvia</option>
                         <option value="presion">Presión Atmosférica</option>
+                        <option value="conexion">Conexión</option>
                     </select>
                 </div>
                 <div class="filter-group">
@@ -394,7 +395,7 @@
                             </td>
                             <td style="font-weight: 600;">
                                 <span th:if="${alarma.sensor != 'conexion'}" th:text="${alarma.valor}">38.7°C</span>
-                                <span th:if="${alarma.sensor == 'conexion'}">N/A</span>
+                                <span th:if="${alarma.sensor == 'conexion'}" th:text="${alarma.valor + ' min'}">0 min</span>
                             </td>
                             <td>
                                 <div th:if="${#strings.contains(alarma.umbralExcedido, '>')}" class="umbral-pill umbral-up">

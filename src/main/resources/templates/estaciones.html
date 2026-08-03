@@ -313,7 +313,7 @@
                                         onclick="openTelemetryModalFromBtn(this)">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                                 </button>
-                                <button th:if="${usuarioGlobal != null and (usuarioGlobal.rol == 'ADMIN' or usuarioGlobal.rol == 'TECNICO')}" class="action-btn" title="Editar" th:attr="onclick=|openEditModal('${est.id}', '${est.codigo}', '${est.nombre}', '${est.ubicacion}', '${est.latitud}', '${est.longitud}', '${est.estado}', '${est.timeoutSenalValor}', '${est.timeoutSenalUnidad}')|">
+                                <button th:if="${usuarioGlobal != null and (usuarioGlobal.rol == 'ADMIN' or usuarioGlobal.rol == 'TECNICO')}" class="action-btn" title="Editar" th:attr="onclick=|openEditModal('${est.id}', '${est.codigo}', '${est.nombre}', '${est.ubicacion}', '${est.latitud}', '${est.longitud}', '${est.estado}')|">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                 </button>
                                 <button th:if="${usuarioGlobal != null and (usuarioGlobal.rol == 'ADMIN' or usuarioGlobal.rol == 'TECNICO')}" type="button" class="action-btn delete" title="Eliminar" th:attr="onclick=|openDeleteModal('${est.id}', '${est.nombre}')|">
@@ -383,33 +383,6 @@
                     <input type="number" step="any" id="longitud" name="longitud" required placeholder="-0.000000" th:value="${estacionConError != null and modalToOpen == 'estacionModal' ? estacionConError.longitud : ''}" readonly style="background-color: #F3F4F6; cursor: not-allowed; color: #6B7280;">
                 </div>
             </div>
-            <div class="form-section-modern" style="margin-top: 24px; padding: 16px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; margin-bottom: 24px;">
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2" width="20" height="20">
-                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-                    </svg>
-                    <h4 style="margin: 0; color: #1E293B; font-size: 14px; font-weight: 600;">Sensibilidad de Desconexión</h4>
-                </div>
-                <p style="font-size: 12px; color: #64748B; margin: 0 0 16px 0;">Tiempo límite de inactividad antes de lanzar alarma. Déjalo en blanco para usar la configuración global.</p>
-                
-                <div style="display: flex; gap: 12px;">
-                    <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                        <label style="font-size: 11px;">Valor numérico</label>
-                        <input type="number" id="timeoutSenalValor" name="timeoutSenalValor" placeholder="Ej: 15" min="1" 
-                        th:value="${estacionConError != null and modalToOpen == 'estacionModal' ? estacionConError.timeoutSenalValor : ''}">
-                    </div>
-                    <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                        <label style="font-size: 11px;">Unidad de tiempo</label>
-                        <select id="timeoutSenalUnidad" name="timeoutSenalUnidad" onchange="toggleTimeoutValorInput(this, 'timeoutSenalValor')">
-                            <option value="">Automático (Global)</option>
-                            <option value="segundos" th:selected="${estacionConError != null and modalToOpen == 'estacionModal' and estacionConError.timeoutSenalUnidad == 'segundos'}">Segundos</option>
-                            <option value="minutos" th:selected="${estacionConError != null and modalToOpen == 'estacionModal' and estacionConError.timeoutSenalUnidad == 'minutos'}">Minutos</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-            
             <div class="form-group">
                 <label>Estado Inicial</label>
                 <select id="estado" name="estado">
@@ -521,33 +494,6 @@
                     <input type="number" step="any" id="edit-longitud" name="longitud" required placeholder="-0.000000" th:value="${estacionConError != null and modalToOpen == 'estacionEditModal' ? estacionConError.longitud : ''}" readonly style="background-color: #F3F4F6; cursor: not-allowed; color: #6B7280;">
                 </div>
             </div>
-            <div class="form-section-modern" style="margin-top: 24px; padding: 16px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; margin-bottom: 24px;">
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2" width="20" height="20">
-                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-                    </svg>
-                    <h4 style="margin: 0; color: #1E293B; font-size: 14px; font-weight: 600;">Sensibilidad de Desconexión</h4>
-                </div>
-                <p style="font-size: 12px; color: #64748B; margin: 0 0 16px 0;">Tiempo límite de inactividad antes de lanzar alarma. Déjalo en blanco para usar la configuración global.</p>
-                
-                <div style="display: flex; gap: 12px;">
-                    <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                        <label style="font-size: 11px;">Valor numérico</label>
-                        <input type="number" id="edit-timeoutSenalValor" name="timeoutSenalValor" placeholder="Ej: 15" min="1" 
-                        th:value="${estacionConError != null and modalToOpen == 'estacionEditModal' ? estacionConError.timeoutSenalValor : ''}" oninput="checkEditChanges()">
-                    </div>
-                    <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                        <label style="font-size: 11px;">Unidad de tiempo</label>
-                        <select id="edit-timeoutSenalUnidad" name="timeoutSenalUnidad" onchange="toggleTimeoutValorInput(this, 'edit-timeoutSenalValor'); checkEditChanges()">
-                            <option value="">Automático (Global)</option>
-                            <option value="segundos" th:selected="${estacionConError != null and modalToOpen == 'estacionEditModal' and estacionConError.timeoutSenalUnidad == 'segundos'}">Segundos</option>
-                            <option value="minutos" th:selected="${estacionConError != null and modalToOpen == 'estacionEditModal' and estacionConError.timeoutSenalUnidad == 'minutos'}">Minutos</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
             <div class="form-group">
                 <label>Estado Inicial</label>
                 <select id="edit-estado" name="estado" onchange="checkEditChanges()">
@@ -725,13 +671,6 @@
             setTimeout(() => editAlert.style.display = 'none', 500);
         }
     }, 3500);
-
-    document.addEventListener('DOMContentLoaded', () => {
-        let createSelect = document.getElementById('timeoutSenalUnidad');
-        if (createSelect) toggleTimeoutValorInput(createSelect, 'timeoutSenalValor');
-        let editSelect = document.getElementById('edit-timeoutSenalUnidad');
-        if (editSelect) toggleTimeoutValorInput(editSelect, 'edit-timeoutSenalValor');
-    });
     /*]]>*/
     // --- Lógica del Modal de Telemetría ---
     let currentTelemetryEstacionId = null;
@@ -801,31 +740,13 @@
         currentTelemetryEstacionId = null;
         document.getElementById('telemetryModal').style.display = 'none';
     }
-    function toggleTimeoutValorInput(selectEl, targetInputId) {
-        const inputEl = document.getElementById(targetInputId);
-        if (inputEl) {
-            if (selectEl.value === "") {
-                inputEl.disabled = true;
-                inputEl.style.backgroundColor = '#F3F4F6';
-                inputEl.style.cursor = 'not-allowed';
-                inputEl.style.color = '#9CA3AF';
-            } else {
-                inputEl.disabled = false;
-                inputEl.style.backgroundColor = '';
-                inputEl.style.cursor = '';
-                inputEl.style.color = '';
-            }
-        }
-    }
-
     function openModal() {
         document.getElementById('estacionModal').style.display = 'flex';
-        toggleTimeoutValorInput(document.getElementById('timeoutSenalUnidad'), 'timeoutSenalValor');
     }
     function closeModal() {
         document.getElementById('estacionModal').style.display = 'none';
     }
-    function openEditModal(id, codigo, nombre, ubicacion, latitud, longitud, estado, timeoutValor, timeoutUnidad) {
+    function openEditModal(id, codigo, nombre, ubicacion, latitud, longitud, estado) {
         document.getElementById('edit-id').value = id;
         document.getElementById('edit-codigo').value = codigo;
         document.getElementById('edit-nombre').value = nombre;
@@ -833,24 +754,13 @@
         document.getElementById('edit-latitud').value = latitud;
         document.getElementById('edit-longitud').value = longitud;
         document.getElementById('edit-estado').value = estado;
-        
-        let valField = document.getElementById('edit-timeoutSenalValor');
-        let uniField = document.getElementById('edit-timeoutSenalUnidad');
-        if (valField) valField.value = timeoutValor && timeoutValor !== 'null' ? timeoutValor : '';
-        if (uniField) {
-            uniField.value = timeoutUnidad && timeoutUnidad !== 'null' ? timeoutUnidad : '';
-            toggleTimeoutValorInput(uniField, 'edit-timeoutSenalValor');
-        }
-
         originalEditValues = {
             codigo: codigo,
             nombre: nombre,
             ubicacion: ubicacion,
             latitud: latitud || '',
             longitud: longitud || '',
-            estado: estado,
-            timeoutValor: timeoutValor && timeoutValor !== 'null' ? timeoutValor : '',
-            timeoutUnidad: timeoutUnidad && timeoutUnidad !== 'null' ? timeoutUnidad : ''
+            estado: estado
         };
         document.getElementById('btn-edit-submit').disabled = true;
         document.getElementById('btn-edit-submit').style.opacity = '0.5';
@@ -858,20 +768,14 @@
         document.getElementById('estacionEditModal').style.display = 'flex';
     }
     function checkEditChanges() {
-        let valField = document.getElementById('edit-timeoutSenalValor');
-        let uniField = document.getElementById('edit-timeoutSenalUnidad');
-        
         const current = {
             codigo: document.getElementById('edit-codigo').value,
             nombre: document.getElementById('edit-nombre').value,
             ubicacion: document.getElementById('edit-ubicacion').value,
             latitud: document.getElementById('edit-latitud').value,
             longitud: document.getElementById('edit-longitud').value,
-            estado: document.getElementById('edit-estado').value,
-            timeoutValor: valField ? valField.value : '',
-            timeoutUnidad: uniField ? uniField.value : ''
+            estado: document.getElementById('edit-estado').value
         };
-
         let hasChanged = false;
         for (let key in current) {
             if (current[key] !== originalEditValues[key]) {

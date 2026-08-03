@@ -637,14 +637,13 @@ function actualizarAlarmaEnVivo(alarma) {
         est.alarmasActivas = [];
     }
     if (alarma.resuelta) {
-        est.alarmasActivas = est.alarmasActivas.filter(a => {
-            if (typeof a === 'string') return a !== alarma.sensor;
-            return a.id !== alarma.id && a.sensor !== alarma.sensor;
-        });
+        est.alarmasActivas = est.alarmasActivas.filter(a => a.id !== alarma.id);
     } else {
-        const exists = est.alarmasActivas.find(a => (typeof a === 'string' ? a : a.sensor) === alarma.sensor);
-        if (!exists) {
-            est.alarmasActivas.push(alarma.sensor);
+        const idx = est.alarmasActivas.findIndex(a => a.id === alarma.id);
+        if (idx >= 0) {
+            est.alarmasActivas[idx] = alarma;
+        } else {
+            est.alarmasActivas.push(alarma);
         }
     }
     const marker = stationMarkers[est.id];

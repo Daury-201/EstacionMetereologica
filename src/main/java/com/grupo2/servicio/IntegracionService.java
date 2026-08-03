@@ -37,6 +37,8 @@ public class IntegracionService {
     private SimpMessagingTemplate messagingTemplate;
     @Autowired
     private NotificacionService notificacionService;
+    @Autowired
+    private EstacionService estacionService;
     @Value("${api.openweathermap.key}")
     private String openWeatherMapApiKey;
 
@@ -182,6 +184,7 @@ public class IntegracionService {
                     lectura.setHumedadSuelo(null);
                     
                     lecturaRepository.save(lectura);
+                    estacionService.marcarEnLinea(est);
                     try {
                         messagingTemplate.convertAndSend("/topic/lecturas", lectura);
                     } catch (Exception e) {

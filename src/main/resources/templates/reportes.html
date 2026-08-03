@@ -9,7 +9,7 @@
     <link rel="stylesheet" th:href="@{/css/reportes.css(v='5.0')}" href="../static/css/reportes.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <link rel="stylesheet" th:href="@{/css/components.css(v='1.2')}">
     <script th:src="@{/js/utils.js(v='1.0')}" defer></script>
@@ -213,7 +213,7 @@
 <script th:inline="javascript">
     window.estacionesData = /*[[${estaciones}]]*/ [];
 </script>
-<script th:src="@{/js/notificaciones.js(v='1.2')}"></script>
+<script th:src="@{/js/notificaciones.js(v='1.4')}"></script>
 <script src="../static/js/reportes.js" th:src="@{/js/reportes.js(v='11.0')}"></script>
 </body>
 </html>

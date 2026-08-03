@@ -475,6 +475,7 @@
         // Conexión global WebSocket para actualización en vivo de estado de estaciones
         function connectGlobalEstacionesStatus() {
             if (typeof SockJS === 'undefined' || typeof Stomp === 'undefined') {
+                setTimeout(connectGlobalEstacionesStatus, 500);
                 return;
             }
             var socket = new SockJS('/ws');
@@ -483,15 +484,19 @@
             globalStomp.connect({}, function (frame) {
                 globalStomp.subscribe('/topic/estaciones-estado', function (mensaje) {
                     var update = JSON.parse(mensaje.body);
-                    if (estacionesGlobal) {
+                    var textEl = document.getElementById('global-activas-text');
+                    
+                    if (!estacionesGlobal || estacionesGlobal.length === 0) {
+                        // Fallback bulletproof: if it's empty for some reason, fetch from API
+                        fetch('/api/estaciones')
+                            .then(res => res.json())
+                            .then(data => {
+                                estacionesGlobal = data;
+                                renderSummaryDropdown();
+                            }).catch(e => console.error(e));
+                    } else {
                         for (var i = 0; i < estacionesGlobal.length; i++) {
                             if (estacionesGlobal[i].id === update.id) {
-                                // Show toast if state changed to 'Sin señal'
-                                if (estacionesGlobal[i].estado !== 'Sin señal' && update.estado === 'Sin señal') {
-                                    if (typeof Utils !== 'undefined' && typeof Utils.showToast === 'function') {
-                                        Utils.showToast('¡ALERTA! Se ha perdido la conexión con ' + estacionesGlobal[i].nombre, 'error');
-                                    }
-                                }
                                 estacionesGlobal[i].estado = update.estado;
                                 break;
                             }

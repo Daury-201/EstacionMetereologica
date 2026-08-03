@@ -35,11 +35,18 @@ public class Alarma {
     private LocalDateTime fechaHoraReconocimiento;
     @Column(name = "reconocido_por")
     private String reconocidoPor;
+    @Transient
+    private boolean actualizacionSilenciosa = false;
+
     public Alarma() {
         this.fechaHora = LocalDateTime.now();
         this.resuelta = false;
         this.reconocida = false;
     }
+
+    public boolean isActualizacionSilenciosa() { return actualizacionSilenciosa; }
+    public void setActualizacionSilenciosa(boolean actualizacionSilenciosa) { this.actualizacionSilenciosa = actualizacionSilenciosa; }
+
     public Long getId() {
         return id;
     }

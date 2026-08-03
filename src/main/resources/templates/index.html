@@ -879,7 +879,14 @@ document.addEventListener("DOMContentLoaded", function() {
         const urlNotificaciones = /*[[@{/js/notificaciones.js(v='1.2')}]]*/ '/js/notificaciones.js';
         window.urlDashboard = /*[[@{/js/dashboard.js(v='2.19')}]]*/ '/js/dashboard.js';
         
+        window.appScriptsLoaded = false;
+        window.pendingDashboardLoad = false;
+        
         window.loadDashboardGlobal = function() {
+            if (!window.appScriptsLoaded) {
+                window.pendingDashboardLoad = true;
+                return;
+            }
             const ds = document.createElement('script');
             ds.src = window.urlDashboard;
             document.body.appendChild(ds);
@@ -896,25 +903,31 @@ document.addEventListener("DOMContentLoaded", function() {
         
         let i = 0;
         function loadNext() {
-            if (i >= scriptsToLoad.length) return;
+            if (i >= scriptsToLoad.length) {
+                window.appScriptsLoaded = true;
+                if (window.pendingDashboardLoad) {
+                    window.loadDashboardGlobal();
+                }
+                return;
+            }
             const s = document.createElement('script');
             s.src = scriptsToLoad[i];
             s.onload = () => {
                 i++;
-                // Cedemos el control al hilo principal (Main Thread) por 150ms entre cada script.
-                // Esto permite que el navegador dibuje los fotogramas de la animación de carga a 60fps sin congelarse.
-                setTimeout(loadNext, 150);
+                setTimeout(loadNext, 50);
+            };
+            s.onerror = () => {
+                console.error("Error loading script: " + scriptsToLoad[i]);
+                i++;
+                setTimeout(loadNext, 50);
             };
             document.body.appendChild(s);
         }
         loadNext();
     }
 
-
     if (!sessionStorage.getItem('splashShown')) {
-        // Iniciamos la carga de librerías de fondo a los 1000ms (cuando el texto ya terminó de aparecer).
-        // Las librerías base (Mapbox, SockJS, etc) cargarán silenciosamente gracias al retraso de 150ms.
-        // Pero dashboard.js (que enciende WebGL) NO se cargará aquí.
+        // Iniciamos la carga de librerías de fondo a los 1000ms.
         setTimeout(loadDeferredAppScripts, 1000);
     } else {
         loadDeferredAppScripts();

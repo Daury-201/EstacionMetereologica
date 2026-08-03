@@ -94,6 +94,16 @@ function openDetailsModal(id) {
             detailUmbral.innerText = cells[4].innerText;
             detailFecha.innerText = cells[5].innerText;
             detailGravedad.innerText = cells[6].innerText.trim();
+
+                    // Adaptar etiquetas para alarmas de conexión
+                    if (detailSensor.innerText.toLowerCase().includes('conexion') || detailSensor.innerText.toLowerCase().includes('conexión')) {
+                        document.querySelector('#detailsModal .detail-item:nth-child(3) strong').textContent = 'Tiempo sin señal:';
+                        document.querySelector('#detailsModal .detail-item:nth-child(4) strong').textContent = 'Timeout configurado:';
+                    } else {
+                        document.querySelector('#detailsModal .detail-item:nth-child(3) strong').textContent = 'Valor Leído:';
+                        document.querySelector('#detailsModal .detail-item:nth-child(4) strong').textContent = 'Límite Excedido:';
+                    }
+
             fetch(`/api/alarmas/${id}`)
                 .then(res => {
                     if (res.ok) return res.json();
@@ -147,7 +157,7 @@ function connectWebSocket() {
     });
 }
 function handleIncomingAlarm(alarma) {
-    if (!alarma.resuelta) {
+    if (!alarma.resuelta && !alarma.actualizacionSilenciosa) {
         showToast(alarma);
     }
     updateAlarmUI(alarma);
@@ -159,11 +169,17 @@ function showToast(alarma) {
     toast.className = `toast ${alarma.gravedad.toLowerCase()}`;
     const icon = alarma.gravedad === "CRITICA" ? "🚨" : "⚠️";
     const sensorName = alarma.sensor.replace('_', ' ');
+    let toastMsg;
+    if (alarma.sensor.toLowerCase() === 'conexion') {
+        toastMsg = `<strong>Pérdida de conexión</strong> — Sin señal por <strong>${alarma.valor} min</strong>`;
+    } else {
+        toastMsg = `El sensor de <strong style="text-transform: capitalize;">${sensorName}</strong> reportó <strong>${alarma.valor}</strong> (Umbral: ${alarma.umbralExcedido})`;
+    }
     toast.innerHTML = `
         <div style="font-size: 20px;">${icon}</div>
         <div class="toast-content">
             <div class="toast-title">¡Nueva Alerta en ${alarma.estacionNombre}!</div>
-            <div class="toast-message">El sensor de <strong style="text-transform: capitalize;">${sensorName}</strong> reportó <strong>${alarma.valor}</strong> (Umbral: ${alarma.umbralExcedido})</div>
+            <div class="toast-message">${toastMsg}</div>
         </div>
         <div class="toast-close">&times;</div>
     `;
@@ -187,6 +203,7 @@ function getSensorSvg(sensor) {
     if (s.includes('vien')) return `<span style="color: #8B5CF6;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></svg></span>`;
     if (s.includes('lluv')) return `<span style="color: #0EA5E9;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M20 16.2A6.5 6.5 0 0 0 17.5 4h-1.6A7.5 7.5 0 0 0 2 11.5c0 1.2.3 2.3.8 3.3"/><path d="M16 14v6"/><path d="M8 14v6"/><path d="M12 16v6"/></svg></span>`;
     if (s.includes('pres')) return `<span style="color: #10B981;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="m12 14 4-4"/><path d="M3.34 16A10 10 0 1 1 20.66 16"/><circle cx="12" cy="14" r="2"/></svg></span>`;
+    if (s.includes('conexion')) return `<span style="color: #64748B;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>`;
     return '';
 }
 function getUmbralHtml(umbralStr) {
@@ -226,7 +243,7 @@ function updateAlarmUI(alarma) {
                     <span style="text-transform: capitalize; font-weight: 500;">${sensorName}</span>
                 </div>
             </td>
-            <td style="font-weight: 600;">${alarma.valor}</td>
+            <td style="font-weight: 600;">${alarma.sensor === 'conexion' ? alarma.valor + ' min' : alarma.valor}</td>
             <td>${umbralHtml}</td>
             <td class="time-cell" style="color: #64748B;">
                 <div style="display: flex; align-items: center; gap: 4px;">
@@ -262,7 +279,7 @@ function updateAlarmUI(alarma) {
                     <span style="text-transform: capitalize; font-weight: 500;">${sensorName}</span>
                 </div>
             </td>
-            <td class="value-cell ${valClass}" style="font-weight: 600;">${alarma.valor}</td>
+            <td class="value-cell ${valClass}" style="font-weight: 600;">${alarma.sensor === 'conexion' ? alarma.valor + ' min' : alarma.valor}</td>
             <td>${umbralHtml}</td>
             <td class="time-cell" style="color: #64748B;">
                 <div style="display: flex; align-items: center; gap: 4px;">

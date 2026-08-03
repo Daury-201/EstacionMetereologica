@@ -117,15 +117,15 @@ public class AlarmaService {
     }
 
     @Transactional
-    public void registrarDesconexion(Estacion estacion) {
+    public void registrarDesconexion(Estacion estacion, long segundosSinSenal, String timeoutDescripcion) {
         Optional<Alarma> alarmaExistente = alarmaRepository.findFirstByEstacionIdAndSensorAndResueltaFalse(estacion.getId().intValue(), "conexion");
         if (alarmaExistente.isEmpty()) {
             Alarma nuevaAlarma = new Alarma();
             nuevaAlarma.setEstacionId(estacion.getId().intValue());
             nuevaAlarma.setEstacionNombre(estacion.getNombre());
             nuevaAlarma.setSensor("conexion");
-            nuevaAlarma.setValor(0.0);
-            nuevaAlarma.setUmbralExcedido("Pérdida de señal");
+            nuevaAlarma.setValor(Math.round(segundosSinSenal / 60.0 * 10.0) / 10.0); // minutos sin señal
+            nuevaAlarma.setUmbralExcedido(timeoutDescripcion);
             nuevaAlarma.setGravedad("CRITICA");
             nuevaAlarma.setFechaHora(LocalDateTime.now());
             nuevaAlarma.setResuelta(false);
@@ -136,10 +136,39 @@ public class AlarmaService {
     }
 
     @Transactional
+    public void actualizarDesconexion(Estacion estacion, long segundosSinSenal) {
+        Optional<Alarma> alarmaExistente = alarmaRepository.findFirstByEstacionIdAndSensorAndResueltaFalse(estacion.getId().intValue(), "conexion");
+        if (alarmaExistente.isPresent()) {
+            Alarma alarma = alarmaExistente.get();
+            double minutosActuales = Math.round(segundosSinSenal / 60.0 * 10.0) / 10.0;
+            // Solo actualizar si el cambio es significativo (al menos 1 minuto de diferencia)
+            if (Math.abs(minutosActuales - alarma.getValor()) >= 1.0) {
+                alarma.setValor(minutosActuales);
+                alarmaRepository.save(alarma);
+                // Notificar por WebSocket para actualizar la UI en tiempo real
+                try {
+                    alarma.setActualizacionSilenciosa(true);
+                    messagingTemplate.convertAndSend("/topic/alarmas", alarma);
+                    alarma.setActualizacionSilenciosa(false);
+                } catch (Exception e) {
+                    System.err.println("Error actualizando alarma de desconexión via WS: " + e.getMessage());
+                }
+            }
+        } else {
+            // Si la estación está sin señal pero no tiene alarma activa, la creamos
+            String timeoutDescripcion = "Pérdida de conexión detectada";
+            registrarDesconexion(estacion, segundosSinSenal, timeoutDescripcion);
+        }
+    }
+
+    @Transactional
     public void resolverDesconexion(Estacion estacion) {
         Optional<Alarma> alarmaExistente = alarmaRepository.findFirstByEstacionIdAndSensorAndResueltaFalse(estacion.getId().intValue(), "conexion");
         if (alarmaExistente.isPresent()) {
-            resolverAlarma(alarmaExistente.get().getId(), "Señal restablecida automáticamente");
+            Alarma alarma = alarmaExistente.get();
+            long minutos = Duration.between(alarma.getFechaHora(), LocalDateTime.now()).toMinutes();
+            String nota = "Señal restablecida automáticamente. Duración de la desconexión: " + Math.max(1, minutos) + " min";
+            resolverAlarma(alarma.getId(), nota);
         }
     }
     private void notificarAlarma(Alarma alarma) {
